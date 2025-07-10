@@ -1,0 +1,27 @@
+# Copyright (c) 2021 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+manifest:
+  self:
+    west-commands: scripts/west-commands.yml
+
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+
+  projects:
+    - name: zephyr
+      remote: zephyrproject-rtos
+      revision: main #NOTE: v4.1.0 doesn't support exteranl RAM for WiFi
+      import:
+        # By using name-allowlist we can clone only the modules that are
+        # strictly needed by the application.
+        name-allowlist:
+          - cmsis           # required by the ARM port
+          - mcuboot         # bootloader
+          - esp32           # required by the esp32 board
+          - hal_espressif   # required by the esp32 board
+          - zcbor           # CBOR light JSON like data format
+          - littlefs        # littleFS lightweight filesystem
+          - mbedtls         # esp32 WiFi
+          - picolibc        # picolibc

@@ -1,0 +1,26 @@
+# editors
+.vscode
+.cache
+*.swp
+*~
+.editorconfig
+.clang-format
+.clang-tidy
+
+# python
+.venv
+
+# build
+/build*
+flash.bin
+
+# tests
+/twister-out*
+
+__pycache__/
+
+# docs
+/doc/_build*
+
+# docker
+/docker-compose.yml

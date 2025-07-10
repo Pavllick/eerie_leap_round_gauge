@@ -1,0 +1,74 @@
+// ESP32-S3 Reference Manual:
+// https://www.espressif.com/sites/default/files/documentation/esp32-s3_technical_reference_manual_en.pdf
+
+/ {
+    aliases {
+		lfs1 = &lfs1;
+		gpioc = &gpioc;
+	};
+
+    fstab {
+        compatible = "zephyr,fstab";
+        lfs1: lfs1 {
+            compatible = "zephyr,fstab,littlefs";
+            read-size = <16>;
+			prog-size = <16>;
+			cache-size = <64>;
+			lookahead-size = <32>;
+            block-cycles = <512>;
+            partition = <&lfs1_partition>;
+            mount-point = "/lfs1";
+            automount;
+        };
+    };
+
+    ap_wifi: ap_wifi {
+        compatible = "espressif,esp32-wifi";
+        status = "okay";
+    };
+
+	gpioc: gpioc {
+		compatible = "gpio-keys";
+
+		di_0: di_0 {
+			gpios = < &gpio0 9 GPIO_PULL_UP >;
+		};
+
+		di_1: di_1 {
+			gpios = < &gpio0 10 GPIO_PULL_UP >;
+		};
+
+		di_2: di_2 {
+			gpios = < &gpio0 11 GPIO_PULL_UP >;
+		};
+
+		di_3: di_3 {
+			gpios = < &gpio0 12 GPIO_PULL_UP >;
+		};
+
+		di_4: di_4 {
+			gpios = < &gpio0 13 GPIO_PULL_UP >;
+		};
+
+		di_5: di_5 {
+			gpios = < &gpio0 14 GPIO_PULL_UP >;
+		};
+	};
+};
+
+&flash0 {
+    partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
+
+        lfs1_partition: partition@700000 {
+            label = "lfs1_storage";
+            reg = <0x700000 DT_SIZE_M(1)>; // 1MB at offset 7MB
+        };
+    };
+};
+
+&psram0 {
+	size = <DT_SIZE_M(8)>;
+};

@@ -1,0 +1,80 @@
+/ {
+	aliases {
+		lfs1 = &lfs1;
+		gpioc = &gpioc;
+	};
+
+	fstab {
+		compatible = "zephyr,fstab";
+		lfs1: lfs1 {
+			compatible = "zephyr,fstab,littlefs";
+			read-size = <16>;
+			prog-size = <16>;
+			cache-size = <64>;
+			lookahead-size = <32>;
+			block-cycles = <512>;
+			partition = <&lfs1_partition>;
+			mount-point = "/lfs1";
+			automount;
+		};
+	};
+
+	gpioc: gpioc {
+		compatible = "gpio-keys";
+
+		di_0: di_0 {
+			gpios = < &gpio0 9 (GPIO_PULL_UP | GPIO_ACTIVE_LOW) >;
+		};
+
+		di_1: di_1 {
+			gpios = < &gpio0 10 (GPIO_PULL_UP | GPIO_ACTIVE_LOW) >;
+		};
+
+		di_2: di_2 {
+			gpios = < &gpio0 11 (GPIO_PULL_UP | GPIO_ACTIVE_LOW) >;
+		};
+
+		di_3: di_3 {
+			gpios = < &gpio0 12 (GPIO_PULL_UP | GPIO_ACTIVE_LOW) >;
+		};
+
+		di_4: di_4 {
+			gpios = < &gpio0 13 (GPIO_PULL_UP | GPIO_ACTIVE_LOW) >;
+		};
+
+		di_5: di_5 {
+			gpios = < &gpio0 14 (GPIO_PULL_UP | GPIO_ACTIVE_LOW) >;
+		};
+	};
+
+	gpio0: gpio_emul {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+};
+
+&flashcontroller0 {
+	reg = <0x00000000 DT_SIZE_M(4)>;  // 4MB flash controller
+};
+
+// HEX Flash dump can be found in the duild/flash.bin file
+&flash0 {
+	reg = <0x00000000 DT_SIZE_M(4)>;  // 4MB total flash
+
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		lfs1_partition: partition@1000 {
+			label = "lfs1_storage";
+			reg = <0x00001000 DT_SIZE_M(1)>;  // 0x00001000 offset, 1MB size
+		};
+	};
+};

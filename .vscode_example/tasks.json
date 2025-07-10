@@ -1,0 +1,95 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build ESP32S3",
+            "type": "shell",
+            "command": "west build -p auto -b esp32s3_devkitc/esp32s3/procpu ./app",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "Build the Zephyr project using native_sim POSIX board"
+        },
+        {
+            "label": "Build ESP32S3 With Bootloader",
+            "type": "shell",
+            "command": "west build -p auto -b esp32s3_devkitc/esp32s3/procpu --sysbuild ./app",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "Build the Zephyr project using native_sim POSIX board",
+            "options": {
+                "statusbar": {
+                    "hide": true
+                }
+            }
+        },
+        {
+            "label": "Build NativeSim",
+            "type": "shell",
+            "command": "west build -p auto -b native_sim ./app",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "Build the Zephyr project using native_sim POSIX board"
+        },
+        {
+            "label": "Build QEMU Cortex A9",
+            "type": "shell",
+            "command": "west build -p auto -b qemu_cortex_a9 ./app",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "Build the Zephyr project using qemu_cortex_a9 board"
+        },
+        {
+            "label": "Run DBG Server",
+            "group": "build",
+            "detail": "Prepare debugserver for QEMU. Press F5",
+            "type": "shell",
+			"command": "ninja debugserver -C build -v",
+            "args": [
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": true,
+            },
+            "problemMatcher": [],
+            "options": {
+                "statusbar": {
+                    "hide": false
+                }
+            }
+        },
+        {
+            "label": "Run Emulator",
+            "type": "shell",
+            "command": "west build -t run",
+            "group": "none",
+            "detail": "Run the Zephyr project using latest build"
+        },
+        {
+            "label": "Run Tests",
+            "type": "shell",
+            "command": "west twister -c --disable-warnings-as-errors -O ./twister-out -T ./tests",
+            "group": "none",
+            "detail": "Run tests using twister"
+        },
+        {
+            "label": "Clean Build",
+            "type": "shell",
+            "command": "rm -rf ./build",
+            "group": "none",
+            "detail": "Clean up the build directory"
+        }
+    ]
+}

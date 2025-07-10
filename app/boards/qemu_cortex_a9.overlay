@@ -1,0 +1,48 @@
+/ {
+	aliases {
+		lfs1 = &lfs1;
+	};
+
+	fstab {
+		compatible = "zephyr,fstab";
+		lfs1: lfs1 {
+			compatible = "zephyr,fstab,littlefs";
+			read-size = <16>;
+			prog-size = <16>;
+			cache-size = <64>;
+			lookahead-size = <32>;
+			block-cycles = <512>;
+			partition = <&lfs1_partition>;
+			mount-point = "/lfs1";
+			automount;
+		};
+	};
+
+    flash_controller: flash_controller {
+		compatible = "zephyr,sim-flash";
+
+		#address-cells = <1>;
+		#size-cells = <1>;
+		erase-value = <0xff>;
+
+		flash_sim0: flash_sim@0 {
+			compatible = "soc-nv-flash";
+			reg = < 0x0 0x400000 >;
+
+			erase-block-size = <1024>;
+			write-block-size = <4>;
+
+			partitions {
+				compatible = "fixed-partitions";
+				#address-cells = <1>;
+				#size-cells = <1>;
+
+				lfs1_partition: partition@1000 {
+                    label = "lfs1_storage";
+                    reg = < 0x100000 0x100000 >;
+                    phandle = < 0x3 >;
+                };
+			};
+		};
+	};
+};

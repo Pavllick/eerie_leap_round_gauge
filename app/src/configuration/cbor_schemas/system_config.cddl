@@ -1,0 +1,4 @@
+SystemConfig = [
+  hw_version: uint,
+  sw_version: uint
+]
