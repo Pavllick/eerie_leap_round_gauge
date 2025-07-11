@@ -4,7 +4,6 @@
 / {
     aliases {
 		lfs1 = &lfs1;
-		gpioc = &gpioc;
 	};
 
     fstab {
@@ -26,34 +25,6 @@
         compatible = "espressif,esp32-wifi";
         status = "okay";
     };
-
-	gpioc: gpioc {
-		compatible = "gpio-keys";
-
-		di_0: di_0 {
-			gpios = < &gpio0 9 GPIO_PULL_UP >;
-		};
-
-		di_1: di_1 {
-			gpios = < &gpio0 10 GPIO_PULL_UP >;
-		};
-
-		di_2: di_2 {
-			gpios = < &gpio0 11 GPIO_PULL_UP >;
-		};
-
-		di_3: di_3 {
-			gpios = < &gpio0 12 GPIO_PULL_UP >;
-		};
-
-		di_4: di_4 {
-			gpios = < &gpio0 13 GPIO_PULL_UP >;
-		};
-
-		di_5: di_5 {
-			gpios = < &gpio0 14 GPIO_PULL_UP >;
-		};
-	};
 };
 
 &flash0 {

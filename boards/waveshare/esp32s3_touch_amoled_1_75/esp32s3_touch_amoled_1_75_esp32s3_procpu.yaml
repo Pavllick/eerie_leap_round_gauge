@@ -1,0 +1,19 @@
+identifier: esp32s3_touch_amoled_1_75/esp32s3/procpu
+name: ESP32-S3-Touch-AMOLED-1.75 PROCPU
+type: mcu
+arch: xtensa
+toolchain:
+  - zephyr
+supported:
+  - gpio
+  - i2c
+  - spi
+  - mspi
+  - watchdog
+  - regulator
+  - uart
+  - pwm
+  - pinmux
+  - nvs
+  - display
+vendor: waveshare
