@@ -1,0 +1,62 @@
+# Copyright (c) 2024 OSPTEK Co., Ltd.
+# SPDX-License-Identifier: Apache-2.0
+
+description: CO5300 QSPI Display Controller
+
+compatible: "chipone,co5300"
+
+include: [mspi-device.yaml, display-controller.yaml, lcd-controller.yaml, pinctrl-device.yaml]
+
+properties:
+  dc-gpios:
+    type: phandle-array
+    description: |
+      Data/command GPIO pins. Required when using 4 wire SPI mode (Mode C1).
+      Set to low when sending a command, or high when sending data.
+
+  reset-gpios:
+    type: phandle-array
+    description: |
+      Reset GPIO pins. Set high to reset the display
+
+  write-only:
+    type: boolean
+    description: |
+      Only writes to display controller, do not perform reads.
+      If all controllers are write-only, read functions will be
+      optimized out for size.
+      It can also be used as an alternative to half duplex when
+      only one data line is connected.
+
+  orientation:
+    type: string
+    default: "normal"
+    enum:
+      - "normal"
+      - "90"
+      - "180"
+      - "270"
+    description: Display orientation (CW) in degrees.
+
+  display-invert:
+    type: boolean
+    description: |
+      Display inversion mode. Every bit is inverted from the frame memory to
+      the display.
+
+  color-invert:
+    type: boolean
+    description: |
+      Enable color inversion.
+
+  sram-size:
+    type: int
+    default: 230400
+    description: |
+      Total SRAM size in bytes. CO5300 has 230.4KB (230400 bytes) of internal SRAM.
+
+  max-buf-size:
+    type: int
+    default: 1024
+    description: |
+      Maximum number of pixels that are sent in one transfer.

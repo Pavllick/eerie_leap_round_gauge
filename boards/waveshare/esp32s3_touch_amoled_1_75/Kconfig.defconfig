@@ -6,9 +6,6 @@ if BOARD_ESP32S3_TOUCH_AMOLED_1_75_ESP32S3_PROCPU
 config KERNEL_MEM_POOL
 	default y
 
-config PWM
-	default y if DISPLAY
-
 configdefault LV_COLOR_16_SWAP
 	default y if LVGL
 

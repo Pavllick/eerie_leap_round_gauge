@@ -1,0 +1,3 @@
+# Project configuration options
+
+rsource "drivers/Kconfig"

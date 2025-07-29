@@ -11,8 +11,8 @@
 #include <espressif/partitions_0x0_amp_16M.dtsi>
 
 / {
-	model = "ESP32-S3-Touch-LCD-1.28 PROCPU";
-	compatible = "waveshare,esp32-s3-touch-lcd-1.28";
+	model = "ESP32-S3-Touch-AMOLED-1.75 PROCPU";
+	compatible = "waveshare,esp32-s3-touch-amoled-1.75";
 
 	aliases {
 		sw0 = &button0;
@@ -26,6 +26,7 @@
 		zephyr,shell-uart = &uart0;
 		zephyr,flash = &flash0;
 		zephyr,code-partition = &slot0_partition;
+		zephyr,display = &co5300_display;
 		zephyr,bt-hci = &esp32_bt_hci;
 	};
 
@@ -36,6 +37,51 @@
 			gpios = <&gpio0 0 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
 			label = "BOOT Button";
 			zephyr,code = <INPUT_KEY_0>;
+		};
+	};
+
+	mspi2: mspi2@60024000 {
+		status = "okay";
+		compatible = "espressif,esp32-mspi";
+		reg = <0x60024000 DT_SIZE_K(4)>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		peripheral-id = <0>;
+		clocks = <&clock ESP32_SPI2_MODULE>;
+		dma-enabled;
+		dma-clk = <ESP32_GDMA_MODULE>;
+		dma-host = <0>;
+		max-dma-buf-size = <(1024 * 16 + 8)>;
+		mspi-cpp-mode = "MSPI_CPP_MODE_0";
+		duplex = "MSPI_HALF_DUPLEX";
+		clock-frequency = <40000000>;
+
+		pinctrl-0 = <&mspi2_default>;
+		pinctrl-names = "default";
+		ce-gpios = <&gpio0 12 GPIO_ACTIVE_LOW>;
+
+		// CO5300 display as MSPI device
+		co5300_display: co5300-display@0 {
+			compatible = "chipone,co5300";
+			reg = <0>;
+			status = "okay";
+
+			// MSPI device properties
+			mspi-max-frequency = <40000000>;
+			mspi-io-mode = "MSPI_IO_MODE_QUAD_1_1_4";
+			mspi-cpp-mode = "MSPI_CPP_MODE_0";
+			mspi-data-rate = "MSPI_DATA_RATE_SINGLE";
+
+			// Display-specific GPIOs
+			dc-gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;  // D/C pin
+			reset-gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>; // Reset pin
+
+			// Display properties
+			pixel-format = <PANEL_PIXEL_FORMAT_RGB_565>;
+			width = <466>;
+			height = <466>;
+			write-only;
 		};
 	};
 };

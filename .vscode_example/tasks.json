@@ -2,9 +2,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build ESP32S3",
+            "label": "Build 1.75AMO",
             "type": "shell",
-            "command": "west build -p auto -b esp32s3_devkitc/esp32s3/procpu ./app",
+            "command": "west build -p auto -b esp32s3_touch_amoled_1_75/esp32s3/procpu ./app",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -13,9 +13,9 @@
             "detail": "Build the Zephyr project using native_sim POSIX board"
         },
         {
-            "label": "Build ESP32S3 With Bootloader",
+            "label": "Build 1.75AMO With Bootloader",
             "type": "shell",
-            "command": "west build -p auto -b esp32s3_devkitc/esp32s3/procpu --sysbuild ./app",
+            "command": "west build -p auto -b esp32s3_touch_amoled_1_75/esp32s3/procpu --sysbuild ./app",
             "group": {
                 "kind": "build",
                 "isDefault": true

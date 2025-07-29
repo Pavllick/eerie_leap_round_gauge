@@ -1,0 +1,4 @@
+menu "Drivers"
+rsource "mspi/Kconfig.esp32"
+rsource "display/Kconfig.co5300"
+endmenu

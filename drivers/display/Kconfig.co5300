@@ -1,0 +1,11 @@
+# Copyright (c) 2024
+# SPDX-License-Identifier: Apache-2.0
+
+# CO5300 QSPI Display Controller Configuration
+
+config CO5300
+	bool "CO5300 QSPI Display Controller"
+	default y
+	depends on DT_HAS_CHIPONE_CO5300_ENABLED
+	help
+	  Enable support for the CO5300 QSPI display controller.

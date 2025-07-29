@@ -2,44 +2,12 @@
 // https://www.espressif.com/sites/default/files/documentation/esp32-s3_technical_reference_manual_en.pdf
 
 / {
-    aliases {
-		lfs1 = &lfs1;
-	};
-
-    fstab {
-        compatible = "zephyr,fstab";
-        lfs1: lfs1 {
-            compatible = "zephyr,fstab,littlefs";
-            read-size = <16>;
-			prog-size = <16>;
-			cache-size = <64>;
-			lookahead-size = <32>;
-            block-cycles = <512>;
-            partition = <&lfs1_partition>;
-            mount-point = "/lfs1";
-            automount;
-        };
-    };
-
-    ap_wifi: ap_wifi {
-        compatible = "espressif,esp32-wifi";
-        status = "okay";
+    chosen {
+        zephyr,console = &usb_serial;
+        zephyr,shell-uart = &usb_serial;
     };
 };
 
-&flash0 {
-    partitions {
-        compatible = "fixed-partitions";
-        #address-cells = <1>;
-        #size-cells = <1>;
-
-        lfs1_partition: partition@700000 {
-            label = "lfs1_storage";
-            reg = <0x700000 DT_SIZE_M(1)>; // 1MB at offset 7MB
-        };
-    };
-};
-
-&psram0 {
-	size = <DT_SIZE_M(8)>;
+&usb_serial {
+    status = "okay";
 };
