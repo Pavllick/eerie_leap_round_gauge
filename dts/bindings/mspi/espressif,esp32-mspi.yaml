@@ -25,21 +25,6 @@ properties:
     required: true
     description: Clock controller phandle and clock specifier
 
-  mspi-cpp-mode:
-    type: string
-    enum:
-      - "MSPI_CPP_MODE_0"
-      - "MSPI_CPP_MODE_1"
-      - "MSPI_CPP_MODE_2"
-      - "MSPI_CPP_MODE_3"
-    default: "MSPI_CPP_MODE_0"
-    description: |
-      MSPI clock polarity and phase setting.
-      - MSPI_CPP_MODE_0: CPOL=0, CPHA=0
-      - MSPI_CPP_MODE_1: CPOL=0, CPHA=1
-      - MSPI_CPP_MODE_2: CPOL=1, CPHA=0
-      - MSPI_CPP_MODE_3: CPOL=1, CPHA=1
-
   clock-frequency:
     type: int
     default: 80000000
@@ -73,3 +58,13 @@ properties:
     default: 4092
     description: |
       Maximum size of the DMA buffer in bytes.
+
+  use-iomux:
+    type: boolean
+    description: |
+      Some pins are allowed to bypass the GPIO Matrix and use the IO_MUX
+      routing mechanism instead, this avoids extra routing latency and makes
+      possible the use of operating frequencies higher than 20 MHz.
+
+      Refer to SoC's Technical Reference Manual to check which pins are
+      allowed to use this routing path.

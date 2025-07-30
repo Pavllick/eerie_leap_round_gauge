@@ -37,89 +37,105 @@
 
 LOG_MODULE_REGISTER(mspi_esp32, CONFIG_MSPI_LOG_LEVEL);
 
-/* CS GPIO control functions */
-static int cs_gpio_set(const struct mspi_cfg *mspicfg, bool active)
+static int mspi_mode_to_esp32(enum mspi_cpp_mode mode)
 {
-    if (!mspicfg->ce_group) {
+    switch (mode) {
+        case MSPI_CPP_MODE_0:
+            return 0; /* CPOL=0, CPHA=0 */
+        case MSPI_CPP_MODE_1:
+            return 1; /* CPOL=0, CPHA=1 */
+        case MSPI_CPP_MODE_2:
+            return 2; /* CPOL=1, CPHA=0 */
+        case MSPI_CPP_MODE_3:
+            return 3; /* CPOL=1, CPHA=1 */
+        default:
+            return 0;
+    }
+}
+
+static spi_line_mode_t get_spi_line_mode(enum mspi_io_mode io_mode) {
+    spi_line_mode_t line_mode = {0};
+
+    switch (io_mode) {
+        case MSPI_IO_MODE_SINGLE:
+            line_mode.cmd_lines = 1;
+            line_mode.addr_lines = 1;
+            line_mode.data_lines = 1;
+            break;
+        case MSPI_IO_MODE_DUAL:
+        case MSPI_IO_MODE_DUAL_1_1_2:
+            line_mode.cmd_lines = 1;
+            line_mode.addr_lines = 1;
+            line_mode.data_lines = 2;
+            break;
+        case MSPI_IO_MODE_DUAL_1_2_2:
+            line_mode.cmd_lines = 1;
+            line_mode.addr_lines = 2;
+            line_mode.data_lines = 2;
+            break;
+        case MSPI_IO_MODE_QUAD:
+        case MSPI_IO_MODE_QUAD_1_1_4:
+            line_mode.cmd_lines = 1;
+            line_mode.addr_lines = 1;
+            line_mode.data_lines = 4;
+            break;
+        case MSPI_IO_MODE_QUAD_1_4_4:
+            line_mode.cmd_lines = 1;
+            line_mode.addr_lines = 4;
+            line_mode.data_lines = 4;
+            break;
+        case MSPI_IO_MODE_OCTAL:
+        case MSPI_IO_MODE_OCTAL_1_1_8:
+            line_mode.cmd_lines = 1;
+            line_mode.addr_lines = 1;
+            line_mode.data_lines = 8;
+            break;
+        case MSPI_IO_MODE_OCTAL_1_8_8:
+            line_mode.cmd_lines = 1;
+            line_mode.addr_lines = 8;
+            line_mode.data_lines = 8;
+            break;
+        default:
+            line_mode.cmd_lines = 1;
+            line_mode.addr_lines = 1;
+            line_mode.data_lines = 1;
+            break;
+    }
+
+    return line_mode;
+}
+
+static int cs_gpio_set(const struct mspi_esp32_data *data, const struct mspi_esp32_config *config, bool active)
+{
+    if (!config->mspi_config.ce_group) {
         return 0;
     }
 
-    return gpio_pin_set_dt(mspicfg->ce_group, active ? 1 : 0);
-}
-
-/* Validate clock configuration */
-static int validate_clock_config(const struct mspi_esp32_config *config)
-{
-    uint32_t clk_src_hz;
-    int ret;
-
-    /* Get the actual clock rate */
-    ret = clock_control_get_rate(config->clock_dev, config->clock_subsys, &clk_src_hz);
-    if (ret < 0) {
-        LOG_ERR("Failed to get clock rate: %d", ret);
-        return ret;
-    }
-
-    LOG_DBG("Clock source: %d Hz, requested: %d Hz", clk_src_hz, config->clock_frequency);
-
-    if (config->clock_frequency > clk_src_hz) {
-        LOG_WRN("Requested frequency (%d Hz) higher than source (%d Hz)",
-                config->clock_frequency, clk_src_hz);
-        return -EINVAL;
-    }
-
-    if (config->clock_frequency > MSPI_MAX_FREQ) {
-        LOG_WRN("Requested frequency (%d Hz) higher than maximum (%d Hz)",
-                config->clock_frequency, MSPI_MAX_FREQ);
-        return -EINVAL;
-    }
-
-    return 0;
+    return gpio_pin_set_dt(config->mspi_config.ce_group + data->mspi_dev_config.ce_num, active ? 1 : 0);
 }
 
 /* Enhanced timing configuration */
-static esp_err_t calculate_timing_config(const struct mspi_esp32_config *config,
-                                        struct mspi_esp32_data *data,
-                                        uint32_t freq_hz, bool half_duplex,
-                                        spi_hal_timing_conf_t *timing_conf)
+static esp_err_t calculate_timing_config(const struct mspi_esp32_config *config, struct mspi_esp32_data *data, spi_hal_timing_conf_t *timing_conf)
 {
-    int ret;
+    if (config->clock_frequency > MSPI_MAX_FREQ) {
+        LOG_ERR("Clock frequency %d exceeds maximum %d", config->clock_frequency, MSPI_MAX_FREQ);
+        return -EINVAL;
+    }
 
     spi_hal_timing_param_t timing_param = {
         .clk_src_hz = data->clock_source_hz,
-        .half_duplex = half_duplex,
-        .no_compensate = false,
-        .expected_freq = freq_hz,
-        .duty_cycle = SPI_DUTY_CYCLE_50_PERCENT,
-        .input_delay_ns = 0,
-        .use_gpio = true,
+        .half_duplex = data->hal_dev_config.half_duplex,
+        .no_compensate = data->hal_dev_config.no_compensate,
+        .expected_freq = config->clock_frequency,
+        .duty_cycle = config->duty_cycle,
+        .input_delay_ns = config->input_delay_ns,
+        .use_gpio = !config->use_iomux,
     };
 
-    int actual_freq;
-    ret = spi_hal_cal_clock_conf(&timing_param, &actual_freq, timing_conf);
-
-    if (ret == ESP_OK) {
-        LOG_DBG("Calculated frequency: %d Hz (requested: %d Hz, divider: %d)",
-            actual_freq, freq_hz, timing_conf->clock_reg);
-    } else {
-        LOG_ERR("Failed to calculate timing config: %d", ret);
-    }
+    int actual_freq = 0;
+    int ret = spi_hal_cal_clock_conf(&timing_param, &actual_freq, timing_conf);
 
     return ret;
-}
-
-/* Check if SPI peripheral is ready for transaction */
-static bool is_spi_ready(const struct mspi_esp32_config *config)
-{
-    spi_dev_t *hw = config->reg;
-
-    /* Check if any transaction is in progress */
-    if (hw->cmd.usr) {
-        LOG_DBG("SPI peripheral busy (USR bit set)");
-        return false;
-    }
-
-    return true;
 }
 
 static int IRAM_ATTR mspi_esp32_transfer(const struct device *dev, const struct mspi_xfer *xfer, size_t packet_index)
@@ -127,7 +143,7 @@ static int IRAM_ATTR mspi_esp32_transfer(const struct device *dev, const struct 
 	struct mspi_esp32_data *data = dev->data;
 	const struct mspi_esp32_config *config = dev->config;
 	spi_hal_context_t *hal = &data->hal_ctx;
-	spi_hal_dev_config_t *hal_dev = &data->dev_config;
+	spi_hal_dev_config_t *hal_dev = &data->hal_dev_config;
 	spi_hal_trans_config_t *trans_config = &data->trans_config;
 
     uint8_t *rx_temp = NULL;
@@ -186,9 +202,6 @@ static int IRAM_ATTR mspi_esp32_transfer(const struct device *dev, const struct 
         }
     }
 
-    LOG_DBG("Packet %zu: dir=%d, bytes=%d, addr=0x%08x",
-            packet_index, packet->dir, packet->num_bytes, packet->address);
-
     /* keep cs line active until last transmission */
     trans_config->cs_keep_active = xfer->hold_ce;
 
@@ -196,14 +209,12 @@ static int IRAM_ATTR mspi_esp32_transfer(const struct device *dev, const struct 
     if (xfer->cmd_length > 0) {
         trans_config->cmd = packet->cmd;
         trans_config->cmd_bits = xfer->cmd_length * 8;
-        LOG_DBG("Command: 0x%04x (%d bits)", packet->cmd, trans_config->cmd_bits);
     }
 
     /* Handle address phase if present */
     if (xfer->addr_length > 0) {
         trans_config->addr = packet->address;
         trans_config->addr_bits = xfer->addr_length * 8;
-        LOG_DBG("Address: 0x%08x (%d bits)", packet->address, trans_config->addr_bits);
     }
 
     /* Handle data phase if present */
@@ -218,63 +229,61 @@ static int IRAM_ATTR mspi_esp32_transfer(const struct device *dev, const struct 
         if (packet->dir == MSPI_TX) {
             trans_config->send_buffer = tx_temp ? tx_temp : (uint8_t *)packet->data_buf;
             trans_config->tx_bitlen = bit_len;
-            LOG_DBG("TX data: %d bytes", packet->num_bytes);
         } else {
             trans_config->rcv_buffer = rx_temp ? rx_temp : packet->data_buf;
             trans_config->rx_bitlen = bit_len;
-            LOG_DBG("RX data: %d bytes", packet->num_bytes);
         }
     } else if (config->dma_enabled) {
         trans_config->tx_bitlen = 8;
         trans_config->rx_bitlen = 8;
     }
 
-	/* configure SPI */
+	/* Configure SPI */
 	spi_hal_setup_trans(hal, hal_dev, trans_config);
 	spi_hal_prepare_data(hal, hal_dev, trans_config);
 
-    LOG_INF("Line mode: %d %d %d", trans_config->line_mode.cmd_lines, trans_config->line_mode.addr_lines, trans_config->line_mode.data_lines);
-
-	/* send data */
+	/* Send data */
 	spi_hal_user_start(hal);
 
 	k_timeout_t timeout = K_MSEC(xfer->timeout ?: MSPI_TIMEOUT_MS);
     int64_t start_time = k_uptime_get();
 
+    int res = 0;
     while (!spi_hal_usr_is_done(hal)) {
         if (k_uptime_get() - start_time > timeout.ticks) {
             LOG_ERR("Transfer timeout");
-            return -ETIMEDOUT;
+            res = -ETIMEDOUT;
+            goto cleanup;
         }
 
         k_yield();
     }
 
-	/* read data */
+	/* Read data */
 	spi_hal_fetch_result(hal);
 
     if (rx_temp && packet->dir == MSPI_RX && packet->data_buf) {
         memcpy(packet->data_buf, rx_temp, MIN(packet->num_bytes, dma_len));
     }
 
+cleanup:
+
     k_free(tx_temp);
     k_free(rx_temp);
 
-	return 0;
+	return res;
 }
 
-static int IRAM_ATTR mspi_esp32_configure(const struct device *dev)
+/* MSPI API: Configure the controller */
+static int IRAM_ATTR mspi_esp32_configure(const struct mspi_dt_spec *spec)
 {
+    const struct device *dev = spec->bus;
     const struct mspi_esp32_config *config = dev->config;
 	struct mspi_esp32_data *data = dev->data;
 	spi_hal_context_t *hal = &data->hal_ctx;
-	spi_hal_dev_config_t *hal_dev = &data->dev_config;
-	int ret;
+	spi_hal_dev_config_t *hal_dev = &data->hal_dev_config;
 
-	/* Calculate timing configuration */
-    ret = calculate_timing_config(config, data, config->clock_frequency,
-                                data->dev_config.half_duplex,
-                                &hal_dev->timing_conf);
+    int ret = calculate_timing_config(config, data, &hal_dev->timing_conf);
     if (ret != ESP_OK) {
         LOG_ERR("Failed to calculate timing config: %d", ret);
         return -EINVAL;
@@ -286,10 +295,7 @@ static int IRAM_ATTR mspi_esp32_configure(const struct device *dev)
 	hal_dev->tx_lsbfirst = false;
 	hal_dev->rx_lsbfirst = false;
 
-	data->trans_config.line_mode = get_spi_line_mode(data->dev_cfg.io_mode);
-
-	/* SPI mode */
-	hal_dev->mode = mspi_mode_to_esp32(config->cpp_mode);
+	data->trans_config.line_mode = get_spi_line_mode(data->mspi_dev_config.io_mode);
 
 	spi_hal_setup_device(hal, hal_dev);
 
@@ -300,9 +306,13 @@ static int IRAM_ATTR mspi_esp32_configure(const struct device *dev)
 	if (config->line_idle_low) {
 		hw->ctrl.d_pol = 0;
 		hw->ctrl.q_pol = 0;
+        hw->ctrl.hold_pol = 0;
+        hw->ctrl.wp_pol = 0;
 	} else {
 		hw->ctrl.d_pol = 1;
 		hw->ctrl.q_pol = 1;
+        hw->ctrl.hold_pol = 1;
+        hw->ctrl.wp_pol = 1;
 	}
 #endif
 
@@ -312,7 +322,7 @@ static int IRAM_ATTR mspi_esp32_configure(const struct device *dev)
 	 */
 #if defined(CONFIG_SOC_SERIES_ESP32S3) || defined(CONFIG_SOC_SERIES_ESP32C2) ||                    \
 	defined(CONFIG_SOC_SERIES_ESP32C3) || defined(CONFIG_SOC_SERIES_ESP32C6)
-	if (config->mspicfg.num_ce_gpios && (hal_dev->mode & MSPI_CPP_MODE_3)) {
+	if (config->mspi_config.num_ce_gpios && (hal_dev->mode & MSPI_CPP_MODE_3)) {
         uint8_t src[] = { 0x00 };
 
         struct mspi_xfer_packet data_packet = {
@@ -339,20 +349,29 @@ static int IRAM_ATTR mspi_esp32_configure(const struct device *dev)
 	return 0;
 }
 
-/* MSPI API: Configure the controller */
-static int mspi_esp32_config(const struct mspi_dt_spec *spec)
-{
-    return mspi_esp32_configure(spec->bus);
-}
-
 /* MSPI API: Configure device-specific settings */
 static int mspi_esp32_dev_config(const struct device *dev, const struct mspi_dev_id *dev_id,
-    const enum mspi_dev_cfg_mask cfg_mask, const struct mspi_dev_cfg *dev_cfg)
+    const enum mspi_dev_cfg_mask cfg_mask, const struct mspi_dev_cfg *mspi_dev_config)
 {
     struct mspi_esp32_data *data = dev->data;
 
     if (cfg_mask & MSPI_DEVICE_CONFIG_IO_MODE) {
-        data->dev_cfg.io_mode = dev_cfg->io_mode;
+        data->mspi_dev_config.io_mode = mspi_dev_config->io_mode;
+    }
+
+    if(cfg_mask & MSPI_DEVICE_CONFIG_CPP) {
+        data->mspi_dev_config.cpp = mspi_dev_config->cpp;
+        data->hal_dev_config.mode = mspi_mode_to_esp32(mspi_dev_config->cpp);
+    }
+
+    if(cfg_mask & MSPI_DEVICE_CONFIG_CE_NUM) {
+        data->mspi_dev_config.ce_num = mspi_dev_config->ce_num;
+        data->hal_dev_config.cs_pin_id = mspi_dev_config->ce_num;
+    }
+
+    if(cfg_mask & MSPI_DEVICE_CONFIG_CE_POL) {
+        data->mspi_dev_config.ce_polarity = mspi_dev_config->ce_polarity;
+        data->hal_dev_config.positive_cs = mspi_dev_config->ce_polarity == MSPI_CE_ACTIVE_HIGH;
     }
 
     return 0;
@@ -378,18 +397,21 @@ static int mspi_esp32_transceive(const struct device *dev,
         return -ENOTSUP;
     }
 
-    // LOG_DBG("Starting transaction: %d packets", xfer->num_packet);
-
     k_mutex_lock(&data->lock, K_FOREVER);
 
-    ret = mspi_esp32_configure(dev);
+    const struct mspi_dt_spec spec = {
+        .bus    = dev,
+        .config = config->mspi_config,
+    };
+
+    ret = mspi_esp32_configure(&spec);
     if (ret != 0) {
         LOG_ERR("Failed to configure SPI: %d", ret);
         goto unlock;
     }
 
     /* Assert CS at the beginning of transaction */
-    ret = cs_gpio_set(&config->mspicfg, true);
+    ret = cs_gpio_set(data, config, true);
     if (ret != 0) {
         LOG_ERR("Failed to assert CS: %d", ret);
         goto unlock;
@@ -405,7 +427,7 @@ static int mspi_esp32_transceive(const struct device *dev,
 
     /* Deassert CS at the end of transaction (unless hold_ce is set) */
     if (xfer->hold_ce == 0) {
-        int cs_ret = cs_gpio_set(&config->mspicfg, false);
+        int cs_ret = cs_gpio_set(data, config, false);
         if (cs_ret != 0) {
             LOG_ERR("Failed to deassert CS: %d", cs_ret);
             if (ret == 0) {
@@ -416,7 +438,7 @@ static int mspi_esp32_transceive(const struct device *dev,
 
 unlock:
     if (ret != 0) {
-        cs_gpio_set(&config->mspicfg, false);
+        cs_gpio_set(data, config, false);
     }
 
     k_mutex_unlock(&data->lock);
@@ -424,11 +446,11 @@ unlock:
     return ret;
 }
 
-static int spi_esp32_init_dma(const struct device *dev)
+static int mspi_esp32_init_dma(const struct device *dev)
 {
 	const struct mspi_esp32_config *config = dev->config;
 	struct mspi_esp32_data *data = dev->data;
-	uint8_t channel_offset;
+	uint8_t channel_offset = 0;
 
 	if (clock_control_on(config->clock_dev, (clock_control_subsys_t)config->dma_clk_src)) {
 		LOG_ERR("Could not enable DMA clock");
@@ -440,22 +462,19 @@ static int spi_esp32_init_dma(const struct device *dev)
 	gdma_ll_enable_clock(data->hal_gdma.dev, true);
 	gdma_ll_tx_reset_channel(data->hal_gdma.dev, config->dma_host);
 	gdma_ll_rx_reset_channel(data->hal_gdma.dev, config->dma_host);
-	gdma_ll_tx_connect_to_periph(data->hal_gdma.dev, config->dma_host, GDMA_TRIG_PERIPH_SPI,
-				     config->dma_host);
-	gdma_ll_rx_connect_to_periph(data->hal_gdma.dev, config->dma_host, GDMA_TRIG_PERIPH_SPI,
-				     config->dma_host);
-	channel_offset = 0;
+	gdma_ll_tx_connect_to_periph(data->hal_gdma.dev, config->dma_host, GDMA_TRIG_PERIPH_SPI, config->dma_host);
+	gdma_ll_rx_connect_to_periph(data->hal_gdma.dev, config->dma_host, GDMA_TRIG_PERIPH_SPI, config->dma_host);
 #else
 	channel_offset = 1;
 #endif /* SOC_GDMA_SUPPORTED */
+
 #ifdef CONFIG_SOC_SERIES_ESP32
 	/*Connect SPI and DMA*/
-	DPORT_SET_PERI_REG_BITS(DPORT_SPI_DMA_CHAN_SEL_REG, 3, config->dma_host + 1,
-				((config->dma_host + 1) * 2));
+	DPORT_SET_PERI_REG_BITS(DPORT_SPI_DMA_CHAN_SEL_REG, 3, config->dma_host + 1, ((config->dma_host + 1) * 2));
 #endif /* CONFIG_SOC_SERIES_ESP32 */
 
-	data->hal_config.dma_in = (spi_dma_dev_t *)config->reg;
-	data->hal_config.dma_out = (spi_dma_dev_t *)config->reg;
+	data->hal_config.dma_in = (spi_dma_dev_t *)config->spi;
+	data->hal_config.dma_out = (spi_dma_dev_t *)config->spi;
 	data->hal_config.dma_enabled = true;
 	data->hal_config.tx_dma_chan = config->dma_host + channel_offset;
 	data->hal_config.rx_dma_chan = config->dma_host + channel_offset;
@@ -474,18 +493,10 @@ static int spi_esp32_init_dma(const struct device *dev)
 	return 0;
 }
 
-/*
- * This function initializes all the chip select GPIOs associated with a spi controller.
- * The context first must be initialized using the SPI_CONTEXT_CS_GPIOS_INITIALIZE macro.
- * This function should be called during the device init sequence so that
- * all the CS lines are configured properly before the first transfer begins.
- * Note: If a controller has native CS control in SPI hardware, they should also be initialized
- * during device init by the driver with hardware-specific code.
- */
- static inline int spi_context_cs_configure_all(const struct mspi_cfg *mspicfg)
- {
-    for (int i = 0; i < mspicfg->num_ce_gpios; ++i) {
-        const struct gpio_dt_spec *cs_gpio = mspicfg->ce_group + i;
+static inline int mspi_esp32_cs_configure(const struct mspi_cfg *mspi_config)
+{
+    for (int i = 0; i < mspi_config->num_ce_gpios; ++i) {
+        const struct gpio_dt_spec *cs_gpio = mspi_config->ce_group + i;
         if (!device_is_ready(cs_gpio->port)) {
             LOG_ERR("CS GPIO port %s pin %d is not ready",
                 cs_gpio->port->name, cs_gpio->pin);
@@ -499,7 +510,7 @@ static int spi_esp32_init_dma(const struct device *dev)
     }
 
     return 0;
- }
+}
 
 /* Driver initialization */
 static int mspi_esp32_init(const struct device *dev)
@@ -546,72 +557,41 @@ static int mspi_esp32_init(const struct device *dev)
         return -EINVAL;
     }
 
-    LOG_INF("Clock source: %d Hz", data->clock_source_hz);
-
-    /* Validate clock configuration first */
-    ret = validate_clock_config(config);
-    if (ret != 0) {
-        LOG_ERR("Clock configuration validation failed: %d", ret);
-        k_mutex_unlock(&data->lock);
-        return ret;
-    }
-
     /* Configure device settings */
-    memset(&data->dev_config, 0, sizeof(data->dev_config));
+    memset(&data->hal_dev_config, 0, sizeof(data->hal_dev_config));
 
-    /* Set default CPP mode (Mode 0), will be configured per-device later */
-    data->dev_config.mode = mspi_mode_to_esp32(config->cpp_mode);
-    data->dev_config.cs_setup = 0;
-    data->dev_config.cs_hold = 0;
-    data->dev_config.cs_pin_id = 0; // Use manual CS control
-    // data->dev_config.cs_pin_id = config->mspicfg.ce_group->pin;
-    data->dev_config.sio = false;
-    data->dev_config.half_duplex = (config->mspicfg.duplex == MSPI_HALF_DUPLEX);
-    data->dev_config.tx_lsbfirst = false;
-    data->dev_config.rx_lsbfirst = false;
-    data->dev_config.no_compensate = false;
-    data->dev_config.positive_cs = false;
+    data->hal_dev_config.cs_setup = 0;
+    data->hal_dev_config.cs_hold = 0;
+    data->hal_dev_config.half_duplex = (config->mspi_config.duplex == MSPI_HALF_DUPLEX);
+    data->hal_dev_config.tx_lsbfirst = false;
+    data->hal_dev_config.rx_lsbfirst = false;
+    data->hal_dev_config.no_compensate = false;
 
-    /* Initialize SPI peripheral at low level */
-    // spi_ll_set_command_bitlen(config->reg, 8);
-    // spi_ll_set_addr_bitlen(config->reg, 24);
-    spi_ll_master_init(config->reg);
+    spi_ll_master_init(config->spi);
 
     if (config->dma_enabled) {
-		ret = spi_esp32_init_dma(dev);
+		ret = mspi_esp32_init_dma(dev);
 		if (ret != 0) {
 			LOG_ERR("Failed to initialize SPI DMA: %d", ret);
 			return ret;
 		}
 	}
 
-    ret = spi_context_cs_configure_all(&config->mspicfg);
+    ret = mspi_esp32_cs_configure(&config->mspi_config);
 	if (ret < 0) {
         LOG_ERR("Failed to configure CS GPIOs: %d", ret);
 		return ret;
 	}
 
     LOG_INF("ESP32 MSPI driver initialized (peripheral %d, freq %d Hz)",
-            config->peripheral_id, data->clock_source_hz);
-
-    /* Auto-configure with default settings */
-    const struct mspi_dt_spec spec = {
-        .bus    = dev,
-        .config = config->mspicfg,
-    };
-
-    ret = mspi_esp32_config(&spec);
-    if (ret != 0) {
-        LOG_ERR("Failed to configure MSPI controller: %d", ret);
-        return ret;
-    }
+        config->peripheral_id, data->clock_source_hz);
 
     return 0;
 }
 
 /* Device driver API */
 static DEVICE_API(mspi, mspi_esp32_api) = {
-    .config = mspi_esp32_config,
+    .config = mspi_esp32_configure,
     .dev_config = mspi_esp32_dev_config,
     .transceive = mspi_esp32_transceive,
 };
@@ -619,11 +599,14 @@ static DEVICE_API(mspi, mspi_esp32_api) = {
 #define MSPI_CONFIG(inst) {                                                   \
     .channel_num           = DT_INST_PROP(inst, peripheral_id),               \
     .op_mode               = MSPI_OP_MODE_CONTROLLER,                         \
-    .duplex                = MSPI_HALF_DUPLEX,                                \
+    .duplex                = DT_ENUM_IDX_OR(DT_DRV_INST(inst), duplex, MSPI_FULL_DUPLEX),\
     .max_freq              = MSPI_MAX_FREQ,                                   \
     .dqs_support           = false,                                           \
     .num_periph            = DT_INST_CHILD_NUM(inst),                         \
     .sw_multi_periph       = DT_INST_PROP(inst, software_multiperipheral),    \
+    .re_init               = false,                                           \
+    .ce_group = (struct gpio_dt_spec *)ce_gpios##inst,                        \
+    .num_ce_gpios = ARRAY_SIZE(ce_gpios##inst),                               \
 }
 
 /* Device instantiation macro */
@@ -638,15 +621,10 @@ static DEVICE_API(mspi, mspi_esp32_api) = {
                                                                               \
     static struct gpio_dt_spec ce_gpios##inst[] = MSPI_CE_GPIOS_DT_SPEC_INST_GET(inst);\
     static const struct mspi_esp32_config mspi_esp32_cfg_##inst = {           \
-        .reg = (spi_dev_t *)DT_INST_REG_ADDR(inst),                           \
+        .spi = (spi_dev_t *)DT_INST_REG_ADDR(inst),                           \
         .peripheral_id = DT_INST_PROP(inst, peripheral_id),                   \
-        .cpp_mode = DT_ENUM_IDX_OR(DT_DRV_INST(inst), mspi_cpp_mode, MSPI_CPP_MODE_0),\
         .pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(inst),                         \
-        .mspicfg = MSPI_CONFIG(inst),                                         \
-        .mspicfg.ce_group = (struct gpio_dt_spec *)ce_gpios##inst,            \
-        .mspicfg.num_ce_gpios = ARRAY_SIZE(ce_gpios##inst),                   \
-        .mspicfg.re_init = false,                                             \
-        .mspicfg.duplex = DT_ENUM_IDX_OR(DT_DRV_INST(inst), duplex, MSPI_FULL_DUPLEX),\
+        .mspi_config = MSPI_CONFIG(inst),                                     \
         .clock_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(inst)),                \
         .clock_subsys = (clock_control_subsys_t)DT_INST_CLOCKS_CELL(inst, offset),\
         .clock_frequency = DT_INST_PROP_OR(inst, clock_frequency, 80000000),  \
@@ -656,16 +634,19 @@ static DEVICE_API(mspi, mspi_esp32_api) = {
         .dma_host = DT_INST_PROP(inst, dma_host),	                          \
         .max_dma_buf_size = DT_INST_PROP(inst, max_dma_buf_size),	          \
         .line_idle_low = DT_INST_PROP(inst, line_idle_low),                   \
+        .use_iomux = DT_INST_PROP(inst, use_iomux),	                          \
+        .duty_cycle = SPI_DUTY_CYCLE_50_PERCENT,                              \
+        .input_delay_ns = 0,                                                  \
     };                                                                        \
                                                                               \
     DEVICE_DT_INST_DEFINE(inst,                                               \
-                         mspi_esp32_init,                                     \
-                         NULL,                                                \
-                         &mspi_esp32_data_##inst,                             \
-                         &mspi_esp32_cfg_##inst,                              \
-                         POST_KERNEL,                                         \
-                         CONFIG_MSPI_INIT_PRIORITY,                           \
-                         &mspi_esp32_api);
+                          mspi_esp32_init,                                    \
+                          NULL,                                               \
+                          &mspi_esp32_data_##inst,                            \
+                          &mspi_esp32_cfg_##inst,                             \
+                          POST_KERNEL,                                        \
+                          CONFIG_MSPI_INIT_PRIORITY,                          \
+                          &mspi_esp32_api);
 
 /* Instantiate all MSPI devices */
 DT_INST_FOREACH_STATUS_OKAY(ESP32_MSPI_INIT)

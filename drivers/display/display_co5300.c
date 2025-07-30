@@ -15,7 +15,7 @@ LOG_MODULE_REGISTER(display_co5300, CONFIG_DISPLAY_LOG_LEVEL);
 struct co5300_config {
 	const struct device* mspi_bus;
 	struct mspi_dev_id dev_id;
-	struct mspi_dev_cfg mspi_dev_cfg;
+	struct mspi_dev_cfg mspi_dev_config;
 	const struct gpio_dt_spec dc_gpios;
 	const struct gpio_dt_spec reset_gpios;
 	uint16_t height;
@@ -331,7 +331,6 @@ static void co5300_get_capabilities(const struct device *dev, struct display_cap
 }
 
 static int co5300_configure_display(const struct device *dev) {
-	const struct co5300_config* config = dev->config;
 	int ret;
 
 // Try 10 times for now to make sure it works
@@ -394,7 +393,11 @@ static int co5300_init(const struct device *dev) {
 	}
 
 	ret = mspi_dev_config(config->mspi_bus, &config->dev_id,
-		MSPI_DEVICE_CONFIG_IO_MODE, &config->mspi_dev_cfg);
+		MSPI_DEVICE_CONFIG_IO_MODE |
+		MSPI_DEVICE_CONFIG_CPP |
+		MSPI_DEVICE_CONFIG_CE_NUM |
+		MSPI_DEVICE_CONFIG_CE_POL,
+		&config->mspi_dev_config);
 	if (ret < 0) {
 		LOG_ERR("Failed to configure device: %d", ret);
 		return ret;
@@ -464,7 +467,8 @@ static DEVICE_API(display, co5300_api) = {
 		.color_invert = DT_INST_PROP(inst, color_invert),               \
 		.sram_size = DT_INST_PROP(inst, sram_size),          			\
 		.max_buf_size = DT_INST_PROP(inst, max_buf_size),				\
-		.mspi_dev_cfg = MSPI_DEVICE_CONFIG_DT_INST(inst),				\
+		.mspi_dev_config = MSPI_DEVICE_CONFIG_DT_INST(inst),			\
+		.mspi_dev_config.ce_num = DT_REG_ADDR(DT_DRV_INST(inst)),		\
 	};                                                                  \
 	static struct co5300_data co5300_data_##inst;                       \
                                                                         \

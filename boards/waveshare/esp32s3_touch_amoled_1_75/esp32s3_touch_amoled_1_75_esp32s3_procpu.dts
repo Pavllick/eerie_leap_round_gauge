@@ -53,7 +53,6 @@
 		dma-clk = <ESP32_GDMA_MODULE>;
 		dma-host = <0>;
 		max-dma-buf-size = <(1024 * 16 + 8)>;
-		mspi-cpp-mode = "MSPI_CPP_MODE_0";
 		duplex = "MSPI_HALF_DUPLEX";
 		clock-frequency = <40000000>;
 
