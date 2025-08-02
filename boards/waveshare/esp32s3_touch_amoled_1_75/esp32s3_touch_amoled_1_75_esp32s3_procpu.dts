@@ -52,7 +52,7 @@
 		dma-enabled;
 		dma-clk = <ESP32_GDMA_MODULE>;
 		dma-host = <0>;
-		max-dma-buf-size = <(1024 * 16 + 8)>;
+		max-dma-buf-size = <12276>;
 		duplex = "MSPI_HALF_DUPLEX";
 		clock-frequency = <40000000>;
 
@@ -65,6 +65,8 @@
 			compatible = "chipone,co5300";
 			reg = <0>;
 			status = "okay";
+			/* Should be less than or equal to max-dma-buf-size */
+			max-buf-size = <10240>;
 
 			// MSPI device properties
 			mspi-max-frequency = <40000000>;
@@ -87,6 +89,10 @@
 
 &flash0 {
 	reg = <0x0 DT_SIZE_M(16)>;
+};
+
+&psram0 {
+	size = <DT_SIZE_M(8)>;
 };
 
 &gpio0 {

@@ -57,6 +57,7 @@ properties:
 
   max-buf-size:
     type: int
-    default: 1024
+    default: 4092
     description: |
       Maximum number of pixels that are sent in one transfer.
+      Valid range is [8, 12276].

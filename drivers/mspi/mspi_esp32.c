@@ -146,8 +146,8 @@ static int IRAM_ATTR mspi_esp32_transfer(const struct device *dev, const struct 
 	spi_hal_dev_config_t *hal_dev = &data->hal_dev_config;
 	spi_hal_trans_config_t *trans_config = &data->trans_config;
 
+    uint8_t *tx_temp = NULL;
     uint8_t *rx_temp = NULL;
-	uint8_t *tx_temp = NULL;
     size_t dma_len = 0;
 
     if (xfer->num_packet == 0 || !xfer->packets || xfer->num_packet <= packet_index) {
@@ -171,18 +171,18 @@ static int IRAM_ATTR mspi_esp32_transfer(const struct device *dev, const struct 
         dma_len = MIN(packet->num_bytes, config->max_dma_buf_size);
 
         if (packet->dir == MSPI_TX && packet->data_buf) {
-            /* Check if TX buffer is DMA capable */
             if (!esp_ptr_dma_capable((uint32_t *)packet->data_buf)) {
-                LOG_DBG("Tx buffer not DMA capable");
-                tx_temp = k_malloc(dma_len);
+                // LOG_DBG("Tx buffer not DMA capable");
+
+                tx_temp = k_aligned_alloc(4, ROUND_UP(dma_len, 4));
                 if (!tx_temp) {
                     LOG_ERR("Error allocating temp buffer Tx");
                     return -ENOMEM;
                 }
+
                 memcpy(tx_temp, packet->data_buf, dma_len);
             }
         } else if (packet->dir == MSPI_RX && packet->data_buf) {
-            /* Check if RX buffer is DMA capable, properly aligned, and size is multiple of 4 */
             if (!esp_ptr_dma_capable((uint32_t *)packet->data_buf) ||
                 ((int)packet->data_buf % 4 != 0) || (dma_len % 4 != 0)) {
                 LOG_DBG("Rx buffer not DMA capable");
@@ -191,10 +191,8 @@ static int IRAM_ATTR mspi_esp32_transfer(const struct device *dev, const struct 
                 * corruption.
                 */
 
-                size_t aligned_len = ROUND_UP(dma_len, 4);
-                rx_temp = k_aligned_alloc(4, aligned_len);
+                rx_temp = k_aligned_alloc(4, ROUND_UP(dma_len, 4));
                 if (!rx_temp) {
-                    k_free(tx_temp);
                     LOG_ERR("Error allocating temp buffer Rx");
                     return -ENOMEM;
                 }
@@ -268,8 +266,8 @@ static int IRAM_ATTR mspi_esp32_transfer(const struct device *dev, const struct 
 
 cleanup:
 
-    k_free(tx_temp);
     k_free(rx_temp);
+    k_free(tx_temp);
 
 	return res;
 }
@@ -378,13 +376,12 @@ static int mspi_esp32_dev_config(const struct device *dev, const struct mspi_dev
 }
 
 /* MSPI API: Perform transceive operation */
-static int mspi_esp32_transceive(const struct device *dev,
+static int IRAM_ATTR mspi_esp32_transceive(const struct device *dev,
                                 const struct mspi_dev_id *dev_id,
                                 const struct mspi_xfer *xfer)
 {
     struct mspi_esp32_data *data = dev->data;
     const struct mspi_esp32_config *config = dev->config;
-    spi_hal_trans_config_t trans_config = {0};
     int ret = 0;
 
     if (xfer->num_packet == 0 || !xfer->packets) {
@@ -426,7 +423,7 @@ static int mspi_esp32_transceive(const struct device *dev,
     }
 
     /* Deassert CS at the end of transaction (unless hold_ce is set) */
-    if (xfer->hold_ce == 0) {
+    if (xfer->hold_ce == false) {
         int cs_ret = cs_gpio_set(data, config, false);
         if (cs_ret != 0) {
             LOG_ERR("Failed to deassert CS: %d", cs_ret);

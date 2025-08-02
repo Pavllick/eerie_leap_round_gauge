@@ -1,8 +1,19 @@
 #pragma once
 
+#include <zephyr/drivers/mspi.h>
+#include <zephyr/drivers/display.h>
+
+#define SPI_WRITE_TIMEOUT 100
+
 #define CO5300_RST_DELAY 200    ///< delay ms wait for reset finish
 #define CO5300_SLPIN_DELAY 120  ///< delay ms wait for sleep in finish
 #define CO5300_SLPOUT_DELAY 120 ///< delay ms wait for sleep out finish
+
+// SPI Mode
+#define CO5300_SPI_MODE_SINGLE 0x02
+#define CO5300_SPI_MODE_QUAD_1_1_4 0x32
+
+#define CO5300_ADDR_QUAD_1_1_4 0x002C00
 
 // User Command
 #define CO5300_C_NOP 0x00          // nop
@@ -108,3 +119,31 @@
 #define CO5300_PIXFMT_16BIT_RGB565 0x55 // 16-bit pixel format
 #define CO5300_PIXFMT_18BIT_RGB666 0x66 // 18-bit pixel format
 #define CO5300_PIXFMT_24BIT_RGB888 0x77 // 24-bit pixel format
+
+/* Driver configuration structure */
+struct co5300_config {
+	const struct device* mspi_bus;
+	struct mspi_dev_id dev_id;
+	struct mspi_dev_cfg mspi_dev_config;
+	const struct gpio_dt_spec dc_gpios;
+	const struct gpio_dt_spec reset_gpios;
+	uint16_t height;
+	uint16_t width;
+	uint8_t pixel_format;
+	bool write_only;
+	uint8_t orientation;
+	bool display_invert;
+	bool color_invert;
+	uint32_t sram_size;
+	int max_buf_size;
+};
+
+/* Display data struct */
+struct co5300_data {
+	struct k_mutex lock;
+	uint8_t bytes_per_pixel;
+	enum display_pixel_format pixel_format;
+	enum display_orientation orientation;
+	struct mspi_dev_cfg dev_cfg;
+	bool configured;
+};

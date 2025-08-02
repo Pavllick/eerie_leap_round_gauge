@@ -3,44 +3,15 @@
 #include "display_co5300.h"
 
 #include <zephyr/dt-bindings/display/panel.h>
-#include <zephyr/drivers/mspi.h>
 #include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/display.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/devicetree.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(display_co5300, CONFIG_DISPLAY_LOG_LEVEL);
 
-struct co5300_config {
-	const struct device* mspi_bus;
-	struct mspi_dev_id dev_id;
-	struct mspi_dev_cfg mspi_dev_config;
-	const struct gpio_dt_spec dc_gpios;
-	const struct gpio_dt_spec reset_gpios;
-	uint16_t height;
-	uint16_t width;
-	uint8_t pixel_format;
-	bool write_only;
-	uint8_t orientation;
-	bool display_invert;
-	bool color_invert;
-	uint32_t sram_size;
-	int max_buf_size;
-};
-
-/* Display data struct */
-struct co5300_data {
-	struct k_mutex lock;
-	uint8_t bytes_per_pixel;
-	enum display_pixel_format pixel_format;
-	enum display_orientation orientation;
-	struct mspi_dev_cfg dev_cfg;
-	bool configured;
-};
-
-static int co5300_transmit(const struct device *dev, uint8_t cmd, const void *tx_data, size_t tx_len, bool quad_mode) {
-	const struct co5300_config* config = dev->config;
+static int co5300_transmit(const struct device *dev, uint8_t cmd, const void *tx_data, size_t tx_len) {
+	struct co5300_config* config = dev->config;
 	struct co5300_data *data = dev->data;
 	int ret = 0;
 
@@ -48,14 +19,13 @@ static int co5300_transmit(const struct device *dev, uint8_t cmd, const void *tx
 	if (ret < 0)
 		return ret;
 
-	struct mspi_dev_cfg mspi_dev_cfg;
-	mspi_dev_cfg.io_mode = quad_mode ? MSPI_IO_MODE_QUAD_1_1_4 : MSPI_IO_MODE_SINGLE;
+	config->mspi_dev_config.io_mode = MSPI_IO_MODE_SINGLE;
 	mspi_dev_config(config->mspi_bus, &config->dev_id,
-		MSPI_DEVICE_CONFIG_IO_MODE, &mspi_dev_cfg);
+		MSPI_DEVICE_CONFIG_IO_MODE, &config->mspi_dev_config);
 
 	struct mspi_xfer_packet cmd_packet = {
 		.dir = MSPI_TX,
-		.cmd = 0x02,
+		.cmd = CO5300_SPI_MODE_SINGLE,
 		.address = (uint32_t)cmd << 8,
 		.data_buf = (void *)tx_data,
 		.num_bytes = tx_len,
@@ -65,14 +35,13 @@ static int co5300_transmit(const struct device *dev, uint8_t cmd, const void *tx
 		.packets = &cmd_packet,
 		.num_packet = 1,
 		.async = false,
-		.timeout = 100,
+		.timeout = SPI_WRITE_TIMEOUT,
 		.priority = 0,
 		.hold_ce = false,
-		.cmd_length = 1,   // 8-bit command
+		.cmd_length = 1,  // 8-bit command
 		.addr_length = 3, // 24-bit address
 	};
 
-	/* Send command with data */
 	ret = mspi_transceive(config->mspi_bus, &config->dev_id, &cmd_xfer);
 	if (ret < 0) {
 		LOG_ERR("Failed to send command 0x%02x: %d", cmd, ret);
@@ -96,12 +65,12 @@ static int co5300_reset(const struct device *dev) {
 static int co5300_blanking_off(const struct device *dev) {
 	LOG_DBG("Turning display blanking off");
 
-	int ret = co5300_transmit(dev, CO5300_C_SLPOUT, NULL, 0, false);
+	int ret = co5300_transmit(dev, CO5300_C_SLPOUT, NULL, 0);
 	if (ret < 0)
 		return ret;
 	k_sleep(K_MSEC(CO5300_SLPOUT_DELAY));
 
-	ret = co5300_transmit(dev, CO5300_C_DISPON, NULL, 0, false);
+	ret = co5300_transmit(dev, CO5300_C_DISPON, NULL, 0);
 	if (ret < 0)
 		return ret;
 	k_sleep(K_MSEC(10));
@@ -112,12 +81,12 @@ static int co5300_blanking_off(const struct device *dev) {
 static int co5300_blanking_on(const struct device *dev) {
 	LOG_DBG("Turning display blanking on");
 
-	int ret = co5300_transmit(dev, CO5300_C_DISPOFF, NULL, 0, false);
+	int ret = co5300_transmit(dev, CO5300_C_DISPOFF, NULL, 0);
 	if (ret < 0)
 		return ret;
 	k_sleep(K_MSEC(CO5300_SLPIN_DELAY));
 
-	ret = co5300_transmit(dev, CO5300_C_SLPIN, NULL, 0, false);
+	ret = co5300_transmit(dev, CO5300_C_SLPIN, NULL, 0);
 	if (ret < 0)
 		return ret;
 	k_sleep(K_MSEC(CO5300_SLPIN_DELAY));
@@ -141,7 +110,7 @@ static int co5300_set_pixel_format(const struct device *dev, const enum display_
 		return -ENOTSUP;
 	}
 
-	int ret = co5300_transmit(dev, CO5300_W_PIXFMT, &tx_data, 1U, false);
+	int ret = co5300_transmit(dev, CO5300_W_PIXFMT, &tx_data, 1U);
 	if (ret < 0) {
 		return ret;
 	}
@@ -174,12 +143,20 @@ static int co5300_set_orientation(const struct device *dev, const enum display_o
 		return -ENOTSUP;
 	}
 
-	int ret = co5300_transmit(dev, CO5300_W_MADCTL, &tx_data, 1U, false);
+	int ret = co5300_transmit(dev, CO5300_W_MADCTL, &tx_data, 1U);
 	if (ret < 0) {
 		return ret;
 	}
 
 	data->orientation = orientation;
+
+	return 0;
+}
+
+static int co5300_set_brightness(const struct device *dev, const uint8_t brightness) {
+	int ret = co5300_transmit(dev, CO5300_W_WDBRIGHTNESSVALNOR, &brightness, 1);
+	if (ret < 0)
+		return ret;
 
 	return 0;
 }
@@ -193,18 +170,17 @@ static int co5300_set_window(const struct device *dev, uint16_t x_start, uint16_
 	tx_data[2] = x_end >> 8;
 	tx_data[3] = x_end;
 
-	ret = co5300_transmit(dev, CO5300_W_CASET, tx_data, 4, false);
+	ret = co5300_transmit(dev, CO5300_W_CASET, tx_data, 4);
 	if (ret < 0) {
 		return ret;
 	}
 
-	/* Set page address */
 	tx_data[0] = y_start >> 8;
 	tx_data[1] = y_start;
 	tx_data[2] = y_end >> 8;
 	tx_data[3] = y_end;
 
-	ret = co5300_transmit(dev, CO5300_W_PASET, tx_data, 4, false);
+	ret = co5300_transmit(dev, CO5300_W_PASET, tx_data, 4);
 	if (ret < 0) {
 		return ret;
 	}
@@ -219,32 +195,28 @@ static int co5300_write(const struct device *dev, const uint16_t x, const uint16
 	struct co5300_data *data = dev->data;
 	int ret;
 
-	__ASSERT(desc->width != 0U, "Width is not allowed to be zero");
-	__ASSERT(desc->height != 0U, "Height is not allowed to be zero");
-	__ASSERT(data->bytes_per_pixel * desc->pitch <= desc->buf_size, "Input buffer too small");
-
-	LOG_DBG("Writing %dx%d (w,h) @ %dx%d (x,y)", desc->width, desc->height, x, y);
-	LOG_DBG("Bytes per pixel: %d", data->bytes_per_pixel);
+	if(desc->width == 0U || desc->height == 0U) {
+		return -EINVAL;
+	}
 
 	ret = k_mutex_lock(&data->lock, K_FOREVER);
 	if (ret < 0) {
 		return ret;
 	}
 
-	/* Set drawing window */
-	ret = co5300_set_window(dev, x, y, x + desc->width - 1, y + desc->height - 1);
+	uint16_t x_offset = 6;
+	ret = co5300_set_window(dev, x + x_offset, y, x + x_offset + desc->width - 1, y + desc->height - 1);
 	if (ret < 0) {
 		goto unlock;
 	}
 
-	ret = co5300_transmit(dev, CO5300_W_RAMWR, NULL, 0, false);
+	ret = co5300_transmit(dev, CO5300_W_RAMWR, NULL, 0);
 	if (ret < 0) {
 		goto unlock;
 	}
 
-	const uint8_t *src = (const uint8_t *)buf;
+	uint8_t *tx_data = (uint8_t *)buf;
 	int total_len = desc->height * desc->width * data->bytes_per_pixel;
-	LOG_INF("Write info: %d %d %d", desc->height, desc->width, data->bytes_per_pixel);
 	int remaining = total_len;
 	bool first_send = true;
 	bool is_last_send = false;
@@ -255,19 +227,17 @@ static int co5300_write(const struct device *dev, const uint16_t x, const uint16
 		MSPI_DEVICE_CONFIG_IO_MODE, &mspi_dev_cfg);
 
 	while (remaining > 0) {
-		LOG_DBG("Remaining %d bytes", remaining);
-
 		int chunk_size = 0;
-		if (remaining <= config->max_buf_size * 2) {
+		if (remaining <= config->max_buf_size) {
 			is_last_send = true;
 			chunk_size = remaining;
 		} else {
-			chunk_size = config->max_buf_size * 2;
+			chunk_size = config->max_buf_size;
 		}
 
 		struct mspi_xfer_packet data_packet = {
 			.dir = MSPI_TX,
-			.data_buf = (void *)src,
+			.data_buf = tx_data,
 			.num_bytes = chunk_size,
 		};
 
@@ -281,8 +251,8 @@ static int co5300_write(const struct device *dev, const uint16_t x, const uint16
 		};
 
 		if (first_send) {
-			data_packet.cmd = 0x32;  // QIO write command
-			data_packet.address = 0x002C00;  // Memory write in address field
+			data_packet.cmd = CO5300_SPI_MODE_QUAD_1_1_4;
+			data_packet.address = CO5300_ADDR_QUAD_1_1_4;
 			data_xfer.cmd_length = 1;
 			data_xfer.addr_length = 3;
 			first_send = false;
@@ -300,7 +270,7 @@ static int co5300_write(const struct device *dev, const uint16_t x, const uint16
 			goto unlock;
 		}
 
-		src += chunk_size;
+		tx_data += chunk_size;
 		remaining -= chunk_size;
 	}
 
@@ -331,19 +301,17 @@ static void co5300_get_capabilities(const struct device *dev, struct display_cap
 }
 
 static int co5300_configure_display(const struct device *dev) {
-	int ret;
+	int ret = 0;
 
-// Try 10 times for now to make sure it works
-for(int i = 0; i < 1; i++) {
 	// Exit sleep mode
-	ret = co5300_transmit(dev, CO5300_C_SLPOUT, NULL, 0, false);
+	ret = co5300_transmit(dev, CO5300_C_SLPOUT, NULL, 0);
 	if (ret < 0)
 		return ret;
 	k_sleep(K_MSEC(CO5300_SLPOUT_DELAY));
 
 	// Set SPI mode
 	uint8_t tx_data = 0x80;
-	ret = co5300_transmit(dev, CO5300_W_SPIMODECTL, &tx_data, 1, false);
+	ret = co5300_transmit(dev, CO5300_W_SPIMODECTL, &tx_data, 1);
 	if (ret < 0)
 		return ret;
 
@@ -354,32 +322,31 @@ for(int i = 0; i < 1; i++) {
 
 	// Write CTRL Display1
 	tx_data = 0x20;
-	ret = co5300_transmit(dev, CO5300_W_WCTRLD1, &tx_data, 1, false);
+	ret = co5300_transmit(dev, CO5300_W_WCTRLD1, &tx_data, 1);
 	if (ret < 0)
 		return ret;
 
 	// Write Display Brightness Value in HBM Mode
 	tx_data = 0xFF;
-	ret = co5300_transmit(dev, CO5300_W_WDBRIGHTNESSVALHBM, &tx_data, 1, false);
+	ret = co5300_transmit(dev, CO5300_W_WDBRIGHTNESSVALHBM, &tx_data, 1);
 	if (ret < 0)
 		return ret;
 
 	// Display on
-	ret = co5300_transmit(dev, CO5300_C_DISPON, NULL, 0, false);
+	ret = co5300_transmit(dev, CO5300_C_DISPON, NULL, 0);
 	if (ret < 0)
 		return ret;
 	k_sleep(K_MSEC(10));
 
 	// Write Display Brightness Value in Normal Mode
 	tx_data = 0xFF;
-	ret = co5300_transmit(dev, CO5300_W_WDBRIGHTNESSVALNOR, &tx_data, 1, false);
+	ret = co5300_transmit(dev, CO5300_W_WDBRIGHTNESSVALNOR, &tx_data, 1);
 	if (ret < 0)
 		return ret;
-}
 
 	LOG_DBG("CO5300 display configured successfully");
 
-	return 0;
+	return ret;
 }
 
 static int co5300_init(const struct device *dev) {
@@ -403,21 +370,19 @@ static int co5300_init(const struct device *dev) {
 		return ret;
 	}
 
-	/* Initialize mutex */
 	k_mutex_init(&data->lock);
 
-	/* Configure GPIOs - no DC pin needed for QSPI */
 	if (config->dc_gpios.port) {
 		ret = gpio_pin_configure_dt(&config->dc_gpios, GPIO_OUTPUT);
 		if (ret < 0) {
-			LOG_ERR("Could not configure command/data GPIO (%d)", ret);
+			LOG_ERR("Failed to configure command/data GPIO (%d)", ret);
 			return ret;
 		}
 	}
 
 	ret = gpio_pin_configure_dt(&config->reset_gpios, GPIO_OUTPUT_INACTIVE);
 	if (ret < 0) {
-		LOG_ERR("Could not configure reset GPIO (%d)", ret);
+		LOG_ERR("Failed to configure reset GPIO (%d)", ret);
 		return ret;
 	}
 
@@ -429,7 +394,6 @@ static int co5300_init(const struct device *dev) {
 
 	data->configured = true;
 
-	/* Initialize display */
 	ret = co5300_configure_display(dev);
 	if (ret < 0) {
 		LOG_ERR("Failed to configure display: %d", ret);
@@ -440,7 +404,6 @@ static int co5300_init(const struct device *dev) {
 	return 0;
 }
 
-/* Device driver API*/
 static DEVICE_API(display, co5300_api) = {
 	.blanking_on = co5300_blanking_on,
 	.blanking_off = co5300_blanking_off,
@@ -448,6 +411,7 @@ static DEVICE_API(display, co5300_api) = {
 	.get_capabilities = co5300_get_capabilities,
 	.set_pixel_format = co5300_set_pixel_format,
 	.set_orientation = co5300_set_orientation,
+	.set_brightness = co5300_set_brightness,
 };
 
 #define CO5300_INIT(inst)                                               \

@@ -13,25 +13,6 @@
 #define MSPI_TIMEOUT_MS 100
 #define SPI_DUTY_CYCLE_50_PERCENT 128
 
-/* Driver data structure */
-struct mspi_esp32_data {
-    spi_hal_context_t hal_ctx;
-    spi_hal_config_t hal_config;
-    spi_hal_dev_config_t hal_dev_config;
-    struct mspi_dev_cfg mspi_dev_config;
-    struct k_mutex lock;
-    mspi_callback_handler_t callback;
-    void *callback_ctx;
-    uint32_t callback_mask;
-    uint32_t clock_source_hz;
-    spi_hal_trans_config_t trans_config;
-    lldesc_t dma_desc_tx;
-	lldesc_t dma_desc_rx;
-#ifdef SOC_GDMA_SUPPORTED
-	gdma_hal_context_t hal_gdma;
-#endif
-};
-
 /* Driver configuration structure */
 struct mspi_esp32_config {
     spi_dev_t *spi;
@@ -50,4 +31,23 @@ struct mspi_esp32_config {
     bool use_iomux;
     uint32_t duty_cycle;
     uint32_t input_delay_ns;
+};
+
+/* Driver data structure */
+struct mspi_esp32_data {
+    spi_hal_context_t hal_ctx;
+    spi_hal_config_t hal_config;
+    spi_hal_dev_config_t hal_dev_config;
+    struct mspi_dev_cfg mspi_dev_config;
+    struct k_mutex lock;
+    mspi_callback_handler_t callback;
+    void *callback_ctx;
+    uint32_t callback_mask;
+    uint32_t clock_source_hz;
+    spi_hal_trans_config_t trans_config;
+    lldesc_t dma_desc_tx;
+	lldesc_t dma_desc_rx;
+#ifdef SOC_GDMA_SUPPORTED
+	gdma_hal_context_t hal_gdma;
+#endif
 };

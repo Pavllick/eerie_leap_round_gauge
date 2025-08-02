@@ -5,8 +5,9 @@
 #include <utility>
 #include <vector>
 
-#ifdef CONFIG_SHARED_MULTI_HEAP
 #include <zephyr/kernel.h>
+
+#ifdef CONFIG_SHARED_MULTI_HEAP
 #include <zephyr/sys/printk.h>
 #include <soc/soc_memory_layout.h>
 #include <zephyr/multi_heap/shared_multi_heap.h>
@@ -38,7 +39,7 @@ public:
     #ifdef CONFIG_SHARED_MULTI_HEAP
         return static_cast<T*>(shared_multi_heap_aligned_alloc(SMH_REG_ATTR_EXTERNAL, kAlignment, n * sizeof(T)));
     #else
-        return static_cast<T*>(::operator new(n * sizeof(T)));
+        return static_cast<T*>(k_malloc(n * sizeof(T)));
     #endif
     }
 
@@ -46,7 +47,7 @@ public:
     #ifdef CONFIG_SHARED_MULTI_HEAP
         shared_multi_heap_free(p);
     #else
-        ::operator delete(p);
+        k_free(p);
     #endif
     }
 };
