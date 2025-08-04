@@ -521,8 +521,6 @@ static int mspi_esp32_init(const struct device *dev)
 
     ret = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
 
-    LOG_INF("config->pcfg->state_cnt: %d", config->pcfg->state_cnt);
-
 	if (ret) {
 		LOG_ERR("Failed to configure SPI pins");
 		return ret;
@@ -580,8 +578,7 @@ static int mspi_esp32_init(const struct device *dev)
 		return ret;
 	}
 
-    LOG_INF("ESP32 MSPI driver initialized (peripheral %d, freq %d Hz)",
-        config->peripheral_id, data->clock_source_hz);
+    LOG_INF("ESP32 MSPI driver initialized (peripheral %d)", config->peripheral_id);
 
     return 0;
 }

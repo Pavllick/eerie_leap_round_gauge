@@ -5,7 +5,7 @@
 
 #define SPI_WRITE_TIMEOUT 100
 
-#define CO5300_RST_DELAY 200    ///< delay ms wait for reset finish
+#define CO5300_RST_DELAY 150    ///< delay ms wait for reset finish
 #define CO5300_SLPIN_DELAY 120  ///< delay ms wait for sleep in finish
 #define CO5300_SLPOUT_DELAY 120 ///< delay ms wait for sleep out finish
 
@@ -13,7 +13,7 @@
 #define CO5300_SPI_MODE_SINGLE 0x02
 #define CO5300_SPI_MODE_QUAD_1_1_4 0x32
 
-#define CO5300_ADDR_QUAD_1_1_4 0x002C00
+#define CO5300_C_QUAD_1_1_4 0x2C
 
 // User Command
 #define CO5300_C_NOP 0x00          // nop
@@ -125,8 +125,8 @@ struct co5300_config {
 	const struct device* mspi_bus;
 	struct mspi_dev_id dev_id;
 	struct mspi_dev_cfg mspi_dev_config;
-	const struct gpio_dt_spec dc_gpios;
-	const struct gpio_dt_spec reset_gpios;
+	const struct gpio_dt_spec te_gpio;
+	const struct gpio_dt_spec reset_gpio;
 	uint16_t height;
 	uint16_t width;
 	uint8_t pixel_format;
@@ -146,4 +146,5 @@ struct co5300_data {
 	enum display_orientation orientation;
 	struct mspi_dev_cfg dev_cfg;
 	bool configured;
+	struct gpio_callback te_gpio_cb_data;
 };

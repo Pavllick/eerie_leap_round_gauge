@@ -8,16 +8,15 @@ compatible: "chipone,co5300"
 include: [mspi-device.yaml, display-controller.yaml, lcd-controller.yaml, pinctrl-device.yaml]
 
 properties:
-  dc-gpios:
+  te-gpios:
     type: phandle-array
     description: |
-      Data/command GPIO pins. Required when using 4 wire SPI mode (Mode C1).
-      Set to low when sending a command, or high when sending data.
+      Tearing effect GPIO pin.
 
   reset-gpios:
     type: phandle-array
     description: |
-      Reset GPIO pins. Set high to reset the display
+      Reset GPIO pin. Set high to reset the display
 
   write-only:
     type: boolean

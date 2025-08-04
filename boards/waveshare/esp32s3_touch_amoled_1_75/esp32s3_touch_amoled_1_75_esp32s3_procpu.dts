@@ -75,7 +75,7 @@
 			mspi-data-rate = "MSPI_DATA_RATE_SINGLE";
 
 			// Display-specific GPIOs
-			dc-gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;  // D/C pin
+			te-gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;  // TE pin
 			reset-gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>; // Reset pin
 
 			// Display properties
