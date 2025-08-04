@@ -116,9 +116,10 @@
 #define CO5300_MADCTL_BGR 0x08                      // Blue-Green-Red pixel order
 
 // Pixel Format
-#define CO5300_PIXFMT_16BIT_RGB565 0x55 // 16-bit pixel format
-#define CO5300_PIXFMT_18BIT_RGB666 0x66 // 18-bit pixel format
-#define CO5300_PIXFMT_24BIT_RGB888 0x77 // 24-bit pixel format
+#define CO5300_PIXFMT_8BIT_GRAY256 0x11 // 8-bit GRAY256 pixel format
+#define CO5300_PIXFMT_16BIT_RGB565 0x55 // 16-bit RGB565 pixel format
+#define CO5300_PIXFMT_18BIT_RGB666 0x66 // 18-bit RGB666 pixel format
+#define CO5300_PIXFMT_24BIT_RGB888 0x77 // 24-bit RGB888 pixel format
 
 /* Driver configuration structure */
 struct co5300_config {

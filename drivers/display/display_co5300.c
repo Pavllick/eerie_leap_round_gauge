@@ -151,7 +151,10 @@ static int co5300_set_pixel_format(const struct device *dev, const enum display_
 	uint8_t tx_data;
 	uint8_t bytes_per_pixel;
 
-	if (pixel_format == PIXEL_FORMAT_RGB_565) {
+	if (pixel_format == PIXEL_FORMAT_L_8) {
+		bytes_per_pixel = 1U;
+		tx_data = CO5300_PIXFMT_8BIT_GRAY256;
+	} else if (pixel_format == PIXEL_FORMAT_RGB_565) {
 		bytes_per_pixel = 2U;
 		tx_data = CO5300_PIXFMT_16BIT_RGB565;
 	} else if (pixel_format == PIXEL_FORMAT_RGB_888) {
@@ -263,8 +266,7 @@ static int co5300_write(const struct device *dev, const uint16_t x, const uint16
 		return ret;
 	}
 
-	uint16_t x_offset = 6;
-	ret = co5300_set_window(dev, x + x_offset, y, x + x_offset + desc->width - 1, y + desc->height - 1);
+	ret = co5300_set_window(dev, x, y, x + desc->width - 1, y + desc->height - 1);
 	if (ret < 0) {
 		goto unlock;
 	}
