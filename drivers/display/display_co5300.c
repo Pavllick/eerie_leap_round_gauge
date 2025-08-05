@@ -209,7 +209,9 @@ static int co5300_set_orientation(const struct device *dev, const enum display_o
 
 	data->orientation = orientation;
 
-	return 0;
+	LOG_DBG("Orientation set to %d", orientation);
+
+	return ret;
 }
 
 static int co5300_set_brightness(const struct device *dev, const uint8_t brightness) {
@@ -218,36 +220,32 @@ static int co5300_set_brightness(const struct device *dev, const uint8_t brightn
 	if (ret < 0)
 		return ret;
 
-	return 0;
+	return ret;
 }
 
-static int co5300_set_window(const struct device *dev, uint16_t x_start, uint16_t y_start, uint16_t x_end, uint16_t y_end) {
-	uint8_t tx_data[4];
-	int ret;
+static int co5300_set_window(const struct device *dev, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
+	uint16_t tx_data[2];
+	int ret = 0;
 
-	tx_data[0] = x_start >> 8;
-	tx_data[1] = x_start;
-	tx_data[2] = x_end >> 8;
-	tx_data[3] = x_end;
+	tx_data[0] = sys_cpu_to_be16(x);
+	tx_data[1] = sys_cpu_to_be16(x + width - 1U);
 
 	uint8_t cmd = CO5300_W_CASET;
-	ret = co5300_transmit(dev, MSPI_IO_MODE_SINGLE, &cmd, tx_data, 4, false);
+	ret = co5300_transmit(dev, MSPI_IO_MODE_SINGLE, &cmd, tx_data, 4U, false);
 	if (ret < 0) {
 		return ret;
 	}
 
-	tx_data[0] = y_start >> 8;
-	tx_data[1] = y_start;
-	tx_data[2] = y_end >> 8;
-	tx_data[3] = y_end;
+	tx_data[0] = sys_cpu_to_be16(y);
+	tx_data[1] = sys_cpu_to_be16(y + height - 1U);
 
 	cmd = CO5300_W_PASET;
-	ret = co5300_transmit(dev, MSPI_IO_MODE_SINGLE, &cmd, tx_data, 4, false);
+	ret = co5300_transmit(dev, MSPI_IO_MODE_SINGLE, &cmd, tx_data, 4U, false);
 	if (ret < 0) {
 		return ret;
 	}
 
-	return 0;
+	return ret;
 }
 
 static int co5300_write(const struct device *dev, const uint16_t x, const uint16_t y,
@@ -255,7 +253,7 @@ static int co5300_write(const struct device *dev, const uint16_t x, const uint16
 
 	const struct co5300_config *config = dev->config;
 	struct co5300_data *data = dev->data;
-	int ret;
+	int ret = 0;
 
 	if(desc->width == 0U || desc->height == 0U) {
 		return -EINVAL;
@@ -266,7 +264,7 @@ static int co5300_write(const struct device *dev, const uint16_t x, const uint16
 		return ret;
 	}
 
-	ret = co5300_set_window(dev, x, y, x + desc->width - 1, y + desc->height - 1);
+	ret = co5300_set_window(dev, x, y, desc->width, desc->height);
 	if (ret < 0) {
 		goto unlock;
 	}
@@ -354,7 +352,6 @@ static int co5300_configure_display(const struct device *dev) {
 	if (ret < 0)
 		return ret;
 
-	// Set pixel format
 	ret = co5300_set_pixel_format(dev, config->pixel_format);
 	if (ret < 0)
 		return ret;
@@ -384,6 +381,10 @@ static int co5300_configure_display(const struct device *dev) {
 	cmd = CO5300_W_WDBRIGHTNESSVALNOR;
 	tx_data = 0xFF;
 	ret = co5300_transmit(dev, MSPI_IO_MODE_SINGLE, &cmd, &tx_data, 1, false);
+	if (ret < 0)
+		return ret;
+
+	ret = co5300_set_orientation(dev, config->orientation);
 	if (ret < 0)
 		return ret;
 

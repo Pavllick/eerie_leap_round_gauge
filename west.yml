@@ -25,3 +25,4 @@ manifest:
           - littlefs        # littleFS lightweight filesystem
           - mbedtls         # esp32 WiFi
           - picolibc        # picolibc
+          - lvgl            # LVGL
