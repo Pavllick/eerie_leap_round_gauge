@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2025 Pavel Maloletkov.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #define DT_DRV_COMPAT chipone_co5300
 
 #include "display_co5300.h"

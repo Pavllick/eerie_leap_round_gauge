@@ -34,31 +34,26 @@ const size_t DISPLAY_HEIGHT = 466;
 static const device* const display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
 
 // NOTE: Fixes incorrect invalidation of redrawn area
-void display_invalidate_cb(lv_event_t *e) {
-    auto *area = (lv_area_t *)lv_event_get_param(e);
+// https://forum.lvgl.io/t/lvgl-9-2-esp32-s3-display-axs15321b/19735/5
+void display_invalidate_cb(lv_event_t* e) {
+    auto* area = (lv_area_t*)lv_event_get_param(e);
 
-    uint16_t x1 = area->x1;
-    uint16_t x2 = area->x2;
+    // Round down to even
+    area->x1 &= ~1;
+    area->y1 &= ~1;
 
-    uint16_t y1 = area->y1;
-    uint16_t y2 = area->y2;
-
-    // round the start of coordinate down to the nearest 2M number
-    area->x1 = (x1 >> 1) << 1;
-    area->y1 = (y1 >> 1) << 1;
-
-    // round the end of coordinate up to the nearest 2N+1 number
-    area->x2 = ((x2 >> 1) << 1) + 1;
-    area->y2 = ((y2 >> 1) << 1) + 1;
+    // Round up to odd
+    area->x2 |= 1;
+    area->y2 |= 1;
 }
 
-static void set_angle(void * obj, int32_t v) {
-    lv_arc_set_value((lv_obj_t *)obj, v);
+void set_angle(void* obj, int32_t v) {
+    lv_arc_set_value((lv_obj_t*)obj, v);
 }
 
 void lv_example_arc_2() {
     /*Create an Arc*/
-    lv_obj_t * arc = lv_arc_create(lv_screen_active());
+    lv_obj_t* arc = lv_arc_create(lv_screen_active());
     lv_arc_set_rotation(arc, 270);
     lv_arc_set_bg_angles(arc, 0, 360);
     lv_obj_remove_style(arc, NULL, LV_PART_KNOB);

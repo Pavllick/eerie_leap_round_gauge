@@ -1,5 +1,5 @@
-# ESP32 MSPI Kconfig
-# File: drivers/mspi/Kconfig.esp32
+# Copyright 2025 Pavel Maloletkov
+# SPDX-License-Identifier: Apache-2.0
 
 config MSPI_ESP32
 	bool "ESP32 MSPI driver"

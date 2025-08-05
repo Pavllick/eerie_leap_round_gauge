@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2025 Pavel Maloletkov.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #pragma once
 
 #include <zephyr/drivers/mspi.h>

@@ -1,7 +1,12 @@
+/*
+ * Copyright (c) 2025 Pavel Maloletkov.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <zephyr/drivers/mspi.h>
 #include <zephyr/drivers/clock_control.h>
 
-/* ESP-IDF HAL includes */
 #include <hal/spi_hal.h>
 
 #ifdef SOC_GDMA_SUPPORTED

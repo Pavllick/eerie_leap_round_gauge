@@ -1,13 +1,8 @@
 /*
-* ESP32 MSPI Driver - Fixed Version
-*
-* Key fixes:
-* 1. Proper CS GPIO handling during transactions
-* 2. Fixed HAL context initialization
-* 3. Improved transaction setup with CS control
-* 4. Better error handling and debugging
-* 5. Proper device configuration management
-*/
+ * Copyright (c) 2025 Pavel Maloletkov.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #define DT_DRV_COMPAT espressif_esp32_mspi
 
@@ -19,7 +14,6 @@
 #include <zephyr/logging/log.h>
 #include <soc.h>
 
-/* ESP-IDF HAL includes */
 #include <hal/spi_types.h>
 #include <hal/spi_ll.h>
 #include <soc/spi_struct.h>
@@ -114,7 +108,6 @@ static int cs_gpio_set(const struct mspi_esp32_data *data, const struct mspi_esp
     return gpio_pin_set_dt(config->mspi_config.ce_group + data->mspi_dev_config.ce_num, active ? 1 : 0);
 }
 
-/* Enhanced timing configuration */
 static esp_err_t calculate_timing_config(const struct mspi_esp32_config *config, struct mspi_esp32_data *data, spi_hal_timing_conf_t *timing_conf)
 {
     if (config->clock_frequency > MSPI_MAX_FREQ) {
@@ -172,7 +165,7 @@ static int IRAM_ATTR mspi_esp32_transfer(const struct device *dev, const struct 
 
         if (packet->dir == MSPI_TX && packet->data_buf) {
             if (!esp_ptr_dma_capable((uint32_t *)packet->data_buf)) {
-                // LOG_DBG("Tx buffer not DMA capable");
+                LOG_DBG("Tx buffer not DMA capable");
 
                 tx_temp = k_aligned_alloc(4, ROUND_UP(dma_len, 4));
                 if (!tx_temp) {
