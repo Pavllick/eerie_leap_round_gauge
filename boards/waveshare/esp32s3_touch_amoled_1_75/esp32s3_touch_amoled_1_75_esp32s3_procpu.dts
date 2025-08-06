@@ -27,6 +27,7 @@
 		zephyr,flash = &flash0;
 		zephyr,code-partition = &slot0_partition;
 		zephyr,display = &co5300_display;
+		zephyr,touch = &cst92xx;
 		zephyr,bt-hci = &esp32_bt_hci;
 	};
 
@@ -105,6 +106,22 @@
 
 &trng0 {
 	status = "okay";
+};
+
+&i2c1 {
+	status ="okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c1_default>;
+	pinctrl-names = "default";
+
+	/* Hynitron CST92XX Capacitive Touch Controller */
+	cst92xx: cst92xx@15 {
+		status = "okay";
+		compatible = "hynitron,cst92xx";
+		reg = <0x15>;
+		irq-gpios = <&gpio0 11 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		rst-gpios = <&gpio1 8 GPIO_ACTIVE_LOW>;
+	};
 };
 
 &uart0 {

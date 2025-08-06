@@ -1,0 +1,14 @@
+# Copyright (c) 2025 Pavel Maloletkov.
+# SPDX-License-Identifier: Apache-2.0
+
+if INPUT
+
+menu "Input drivers"
+
+# zephyr-keep-sorted-start
+source "drivers/input/Kconfig.cst92xx"
+# zephyr-keep-sorted-stop
+
+endmenu # Input Drivers
+
+endif # INPUT
