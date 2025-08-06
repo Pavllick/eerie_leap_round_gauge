@@ -1,5 +1,5 @@
-# ESP32 MSPI Device Tree Binding
-# File: dts/bindings/mspi/espressif,esp32-mspi.yaml
+# Copyright (c) 2025, Pavel Maloletkov
+# SPDX-License-Identifier: Apache-2.0
 
 description: Espressif ESP32 MSPI controller
 
@@ -33,7 +33,6 @@ properties:
       This should not exceed the capabilities of the selected clock source.
 
   interrupts:
-    required: false
     description: Interrupt specifier for the SPI peripheral
 
   dma-enabled:
