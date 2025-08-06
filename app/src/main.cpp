@@ -1,5 +1,7 @@
 #include <memory>
 #include <ctime>
+#include <string>
+
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/device.h>
@@ -71,6 +73,51 @@ void lv_example_arc_2() {
     lv_anim_start(&anim);
 }
 
+lv_obj_t* ui_label = nullptr;
+
+void update_label(void* obj, int32_t v) {
+    lv_arc_set_value((lv_obj_t*)obj, v);
+    lv_label_set_text(ui_label, std::to_string(v).c_str());
+}
+
+void lv_example_arc_3() {
+    lv_obj_t* ui_arc = lv_arc_create(lv_screen_active());
+    lv_arc_set_range(ui_arc, 0, 99);
+    lv_obj_set_width(ui_arc, lv_pct(100));
+    lv_obj_set_height(ui_arc, lv_pct(100));
+    lv_obj_set_align(ui_arc, LV_ALIGN_CENTER);
+    lv_obj_remove_flag(ui_arc, LV_OBJ_FLAG_CLICKABLE);      /// Flags
+    lv_arc_set_value(ui_arc, 0);
+    lv_obj_set_style_arc_opa(ui_arc, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_set_style_arc_color(ui_arc, lv_color_hex(0x1BBE5F), LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_opa(ui_arc, 255, LV_PART_INDICATOR | LV_STATE_DEFAULT);
+
+    lv_obj_set_style_bg_color(ui_arc, lv_color_hex(0xFFFFFF), LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_arc, 0, LV_PART_KNOB | LV_STATE_DEFAULT);
+
+    ui_label = lv_label_create(lv_screen_active());
+    lv_obj_set_width(ui_label, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_label, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_align(ui_label, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_label, "0");
+    lv_obj_set_style_text_font(ui_label, &lv_font_unscii_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_transform_scale(ui_label, 1500, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_x(ui_label, -65);
+    lv_obj_set_y(ui_label, -55);
+
+
+    lv_anim_t anim;
+    lv_anim_init(&anim);
+    lv_anim_set_var(&anim, ui_arc);
+    lv_anim_set_exec_cb(&anim, update_label);
+    lv_anim_set_duration(&anim, 2000);
+    lv_anim_set_repeat_count(&anim, LV_ANIM_REPEAT_INFINITE);
+    lv_anim_set_repeat_delay(&anim, 500);
+    lv_anim_set_values(&anim, 0, 99);
+    lv_anim_start(&anim);
+}
+
 int main()
 {
 	if (!device_is_ready(display_dev)) {
@@ -83,7 +130,7 @@ int main()
     auto* act_scr = lv_display_get_default();
     lv_display_add_event_cb(act_scr, display_invalidate_cb, LV_EVENT_INVALIDATE_AREA, nullptr);
 
-    lv_example_arc_2();
+    lv_example_arc_3();
 
 	display_blanking_off(display_dev);
 
