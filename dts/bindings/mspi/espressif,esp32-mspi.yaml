@@ -67,3 +67,15 @@ properties:
 
       Refer to SoC's Technical Reference Manual to check which pins are
       allowed to use this routing path.
+
+  transfer-timeout:
+    type: int
+    default: 100
+    description: |
+      Transfer timeout in milliseconds.
+
+  duty-cycle:
+    type: int
+    default: 128
+    description: |
+      Duty cycle of the SPI clock in percentage. Range is 0-255.

@@ -55,7 +55,7 @@
 		dma-host = <0>;
 		max-dma-buf-size = <12276>;
 		duplex = "MSPI_HALF_DUPLEX";
-		clock-frequency = <40000000>;
+		clock-frequency = <80000000>;
 
 		pinctrl-0 = <&mspi2_default>;
 		pinctrl-names = "default";

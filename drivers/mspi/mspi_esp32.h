@@ -14,11 +14,6 @@
 #include <hal/gdma_ll.h>
 #endif
 
-#define MSPI_MAX_FREQ             80000000
-#define MSPI_TIMEOUT_MS           100
-#define SPI_DUTY_CYCLE_50_PERCENT 128
-
-/* Driver configuration structure */
 struct mspi_esp32_config {
 	spi_dev_t *spi;
 	const struct pinctrl_dev_config *pcfg;
@@ -26,7 +21,6 @@ struct mspi_esp32_config {
 	clock_control_subsys_t clock_subsys;
 	struct mspi_cfg mspi_config;
 	uint32_t peripheral_id;
-	uint32_t clock_frequency;
 	soc_module_clk_t clock_source;
 	bool dma_enabled;
 	int dma_clk_src;
@@ -36,9 +30,9 @@ struct mspi_esp32_config {
 	bool use_iomux;
 	uint32_t duty_cycle;
 	uint32_t input_delay_ns;
+	uint32_t transfer_timeout;
 };
 
-/* Driver data structure */
 struct mspi_esp32_data {
 	spi_hal_context_t hal_ctx;
 	spi_hal_config_t hal_config;
