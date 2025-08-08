@@ -37,6 +37,7 @@ properties:
 
   dma-enabled:
     type: boolean
+    default: true
     description: Enable SPI DMA support
 
   dma-clk:
@@ -45,21 +46,18 @@ properties:
 
   dma-host:
     type: int
+    required: true
     description: DMA Host - 0 -> SPI2, 1 -> SPI3
 
   line-idle-low:
     type: boolean
+    default: false
     description: |
       Default data lines GPIO level when idle. Defaults to high by default.
 
-  max-dma-buf-size:
-    type: int
-    default: 4092
-    description: |
-      Maximum size of the DMA buffer in bytes.
-
   use-iomux:
     type: boolean
+    default: false
     description: |
       Some pins are allowed to bypass the GPIO Matrix and use the IO_MUX
       routing mechanism instead, this avoids extra routing latency and makes

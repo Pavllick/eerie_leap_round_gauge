@@ -31,7 +31,6 @@ struct mspi_esp32_config {
 #else
 	int dma_clk_src;
 #endif
-	int max_dma_buf_size;
 	bool line_idle_low;
 	bool use_iomux;
 	uint32_t duty_cycle;

@@ -54,7 +54,6 @@
 		dmas = <&dma 0>, <&dma 1>;
 		dma-names = "rx", "tx";
 		dma-host = <0>;
-		max-dma-buf-size = <12276>;
 		duplex = "MSPI_HALF_DUPLEX";
 		clock-frequency = <80000000>;
 

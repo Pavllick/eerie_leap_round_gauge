@@ -413,7 +413,8 @@ static int co5300_init(const struct device *dev) {
 		MSPI_DEVICE_CONFIG_IO_MODE |
 		MSPI_DEVICE_CONFIG_CPP |
 		MSPI_DEVICE_CONFIG_CE_NUM |
-		MSPI_DEVICE_CONFIG_CE_POL,
+		MSPI_DEVICE_CONFIG_CE_POL |
+		MSPI_DEVICE_CONFIG_FREQUENCY,
 		&config->mspi_dev_config);
 	if (ret < 0) {
 		LOG_ERR("Failed to configure device: %d", ret);

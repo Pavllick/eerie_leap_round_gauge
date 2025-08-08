@@ -48,58 +48,53 @@ static int mspi_mode_to_esp32(enum mspi_cpp_mode mode)
 	}
 }
 
-static spi_line_mode_t get_spi_line_mode(enum mspi_io_mode io_mode)
+static int update_spi_line_mode(spi_line_mode_t *line_mode, enum mspi_io_mode io_mode)
 {
-	spi_line_mode_t line_mode = {0};
-
 	switch (io_mode) {
 	case MSPI_IO_MODE_SINGLE:
-		line_mode.cmd_lines = 1;
-		line_mode.addr_lines = 1;
-		line_mode.data_lines = 1;
+		line_mode->cmd_lines = 1;
+		line_mode->addr_lines = 1;
+		line_mode->data_lines = 1;
 		break;
 	case MSPI_IO_MODE_DUAL:
 	case MSPI_IO_MODE_DUAL_1_1_2:
-		line_mode.cmd_lines = 1;
-		line_mode.addr_lines = 1;
-		line_mode.data_lines = 2;
+		line_mode->cmd_lines = 1;
+		line_mode->addr_lines = 1;
+		line_mode->data_lines = 2;
 		break;
 	case MSPI_IO_MODE_DUAL_1_2_2:
-		line_mode.cmd_lines = 1;
-		line_mode.addr_lines = 2;
-		line_mode.data_lines = 2;
+		line_mode->cmd_lines = 1;
+		line_mode->addr_lines = 2;
+		line_mode->data_lines = 2;
 		break;
 	case MSPI_IO_MODE_QUAD:
 	case MSPI_IO_MODE_QUAD_1_1_4:
-		line_mode.cmd_lines = 1;
-		line_mode.addr_lines = 1;
-		line_mode.data_lines = 4;
+		line_mode->cmd_lines = 1;
+		line_mode->addr_lines = 1;
+		line_mode->data_lines = 4;
 		break;
 	case MSPI_IO_MODE_QUAD_1_4_4:
-		line_mode.cmd_lines = 1;
-		line_mode.addr_lines = 4;
-		line_mode.data_lines = 4;
+		line_mode->cmd_lines = 1;
+		line_mode->addr_lines = 4;
+		line_mode->data_lines = 4;
 		break;
 	case MSPI_IO_MODE_OCTAL:
 	case MSPI_IO_MODE_OCTAL_1_1_8:
-		line_mode.cmd_lines = 1;
-		line_mode.addr_lines = 1;
-		line_mode.data_lines = 8;
+		line_mode->cmd_lines = 1;
+		line_mode->addr_lines = 1;
+		line_mode->data_lines = 8;
 		break;
 	case MSPI_IO_MODE_OCTAL_1_8_8:
-		line_mode.cmd_lines = 1;
-		line_mode.addr_lines = 8;
-		line_mode.data_lines = 8;
+		line_mode->cmd_lines = 1;
+		line_mode->addr_lines = 8;
+		line_mode->data_lines = 8;
 		break;
 	default:
-		LOG_ERR("Unsupported mode %d, defaulting to single", io_mode);
-		line_mode.cmd_lines = 1;
-		line_mode.addr_lines = 1;
-		line_mode.data_lines = 1;
-		break;
+		LOG_ERR("Unsupported IO mode %d", io_mode);
+		return -ENOTSUP;
 	}
 
-	return line_mode;
+	return 0;
 }
 
 static int cs_gpio_set(const struct mspi_esp32_data *data, const struct mspi_esp32_config *config,
@@ -211,8 +206,7 @@ static int IRAM_ATTR transfer(const struct device *dev, const struct mspi_xfer *
 	spi_hal_dev_config_t *hal_dev = &data->hal_dev_config;
 	spi_hal_trans_config_t *trans_config = &data->trans_config;
 
-	uint8_t *tx_temp = NULL;
-	uint8_t *rx_temp = NULL;
+	uint8_t *data_buffer = NULL;
 	size_t dma_len = 0;
 	int res = 0;
 
@@ -234,31 +228,31 @@ static int IRAM_ATTR transfer(const struct device *dev, const struct mspi_xfer *
 
 	/* Handle DMA buffer allocation if DMA is enabled and we have data to transfer */
 	if (config->dma_enabled && packet->num_bytes > 0) {
-		dma_len = MIN(packet->num_bytes, config->max_dma_buf_size);
+		dma_len = MIN(packet->num_bytes, CONFIG_MSPI_DMA_MAX_BUFFER_SIZE);
 
 		if (packet->dir == MSPI_TX && packet->data_buf) {
 			if (!esp_ptr_dma_capable((uint32_t *)packet->data_buf)) {
 				LOG_DBG("Tx buffer not DMA capable");
 
-				tx_temp = k_aligned_alloc(4, ROUND_UP(dma_len, 4));
-				if (!tx_temp) {
+				data_buffer = k_aligned_alloc(4, ROUND_UP(dma_len, 4));
+				if (!data_buffer) {
 					LOG_ERR("Error allocating temp buffer Tx");
 					return -ENOMEM;
 				}
 
-				memcpy(tx_temp, packet->data_buf, dma_len);
+				memcpy(data_buffer, packet->data_buf, dma_len);
 			}
 		} else if (packet->dir == MSPI_RX && packet->data_buf) {
 			if (!esp_ptr_dma_capable((uint32_t *)packet->data_buf) ||
 			    ((int)packet->data_buf % 4 != 0) || (dma_len % 4 != 0)) {
 				LOG_DBG("Rx buffer not DMA capable");
+
 				/* The rx buffer need to be length of
 				 * multiples of 32 bits to avoid heap
 				 * corruption.
 				 */
-
-				rx_temp = k_aligned_alloc(4, ROUND_UP(dma_len, 4));
-				if (!rx_temp) {
+				data_buffer = k_calloc(((dma_len << 3) + 31) / 8, sizeof(uint8_t));
+				if (!data_buffer) {
 					res = -ENOMEM;
 					goto cleanup;
 				}
@@ -291,10 +285,10 @@ static int IRAM_ATTR transfer(const struct device *dev, const struct mspi_xfer *
 		}
 
 		if (packet->dir == MSPI_TX) {
-			trans_config->send_buffer = tx_temp ? tx_temp : (uint8_t *)packet->data_buf;
+			trans_config->send_buffer = data_buffer ? data_buffer : (uint8_t *)packet->data_buf;
 			trans_config->tx_bitlen = bit_len;
 		} else {
-			trans_config->rcv_buffer = rx_temp ? rx_temp : packet->data_buf;
+			trans_config->rcv_buffer = data_buffer ? data_buffer : packet->data_buf;
 			trans_config->rx_bitlen = bit_len;
 		}
 	} else if (config->dma_enabled) {
@@ -317,9 +311,7 @@ static int IRAM_ATTR transfer(const struct device *dev, const struct mspi_xfer *
 			if (res) {
 				goto cleanup;
 			}
-		}
-
-		if (trans_config->rcv_buffer) {
+		} else if (trans_config->rcv_buffer) {
 			/* setup DMA channels via DMA driver */
 			spi_ll_dma_rx_fifo_reset(hal->hw);
 			spi_ll_infifo_full_clr(hal->hw);
@@ -347,8 +339,6 @@ static int IRAM_ATTR transfer(const struct device *dev, const struct mspi_xfer *
 			res = -ETIMEDOUT;
 			goto cleanup;
 		}
-
-		k_yield();
 	}
 
 	if (!config->dma_enabled) {
@@ -356,14 +346,13 @@ static int IRAM_ATTR transfer(const struct device *dev, const struct mspi_xfer *
 		spi_hal_fetch_result(hal);
 	}
 
-	if (rx_temp && packet->dir == MSPI_RX && packet->data_buf) {
-		memcpy(packet->data_buf, rx_temp, MIN(packet->num_bytes, dma_len));
+	if (data_buffer && packet->dir == MSPI_RX && packet->data_buf) {
+		memcpy(packet->data_buf, data_buffer, MIN(packet->num_bytes, dma_len));
 	}
 
 cleanup:
 
-	k_free(rx_temp);
-	k_free(tx_temp);
+	k_free(data_buffer);
 
 	return res;
 }
@@ -381,7 +370,9 @@ static int IRAM_ATTR update_transfer_config(const struct device *dev)
 	hal_dev->tx_lsbfirst = false;
 	hal_dev->rx_lsbfirst = false;
 
-	data->trans_config.line_mode = get_spi_line_mode(data->mspi_dev_config.io_mode);
+	if (update_spi_line_mode(&data->trans_config.line_mode, data->mspi_dev_config.io_mode)) {
+		return -ENOTSUP;
+	}
 
 	spi_hal_setup_device(hal, hal_dev);
 
@@ -566,13 +557,13 @@ static int init_dma(const struct device *dev)
 		LOG_ERR("Could not enable DMA clock");
 		return -EIO;
 	}
-#endif /* SOC_GDMA_SUPPORTED */
+#endif
 
 #ifdef CONFIG_SOC_SERIES_ESP32
 	/*Connect SPI and DMA*/
 	DPORT_SET_PERI_REG_BITS(DPORT_SPI_DMA_CHAN_SEL_REG, 3, config->dma_host + 1,
 				((config->dma_host + 1) * 2));
-#endif /* CONFIG_SOC_SERIES_ESP32 */
+#endif
 
 	data->hal_config.dma_in = (spi_dma_dev_t *)config->spi;
 	data->hal_config.dma_out = (spi_dma_dev_t *)config->spi;
@@ -681,7 +672,7 @@ static int mspi_esp32_config(const struct mspi_dt_spec *spec)
 		return ret;
 	}
 
-	LOG_INF("ESP32 MSPI driver configured successfully");
+	LOG_INF("Configured successfully");
 
 	return 0;
 }
@@ -729,13 +720,13 @@ static DEVICE_API(mspi, mspi_esp32_api) = {
 };
 
 #if defined(SOC_GDMA_SUPPORTED)
-#define SPI_DMA_CFG(idx)					\
-	.dma_dev = ESP32_DT_INST_DMA_CTLR(idx, tx),		\
-	.dma_tx_ch = ESP32_DT_INST_DMA_CELL(idx, tx, channel),	\
-	.dma_rx_ch = ESP32_DT_INST_DMA_CELL(idx, rx, channel)
+#define SPI_DMA_CFG(inst)					\
+	.dma_dev = ESP32_DT_INST_DMA_CTLR(inst, tx),		\
+	.dma_tx_ch = ESP32_DT_INST_DMA_CELL(inst, tx, channel),	\
+	.dma_rx_ch = ESP32_DT_INST_DMA_CELL(inst, rx, channel)
 #else
-#define SPI_DMA_CFG(idx)					\
-	.dma_clk_src = DT_INST_PROP(idx, dma_clk)
+#define SPI_DMA_CFG(inst)					\
+	.dma_clk_src = DT_INST_PROP(inst, dma_clk)
 #endif /* defined(SOC_GDMA_SUPPORTED) */
 
 #define MSPI_CONFIG(inst)                                                                  \
@@ -775,7 +766,6 @@ static DEVICE_API(mspi, mspi_esp32_api) = {
 		.dma_enabled = DT_INST_PROP(inst, dma_enabled),                                    \
 		.dma_host = DT_INST_PROP(inst, dma_host),                                          \
 		SPI_DMA_CFG(inst),																   \
-		.max_dma_buf_size = DT_INST_PROP(inst, max_dma_buf_size),                          \
 		.line_idle_low = DT_INST_PROP(inst, line_idle_low),                                \
 		.use_iomux = DT_INST_PROP(inst, use_iomux),                                        \
 		.duty_cycle = DT_INST_PROP(inst, duty_cycle),                                      \
