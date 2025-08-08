@@ -23,8 +23,14 @@ struct mspi_esp32_config {
 	uint32_t peripheral_id;
 	soc_module_clk_t clock_source;
 	bool dma_enabled;
-	int dma_clk_src;
 	int dma_host;
+#if defined(SOC_GDMA_SUPPORTED)
+	const struct device *dma_dev;
+	uint8_t dma_tx_ch;
+	uint8_t dma_rx_ch;
+#else
+	int dma_clk_src;
+#endif
 	int max_dma_buf_size;
 	bool line_idle_low;
 	bool use_iomux;

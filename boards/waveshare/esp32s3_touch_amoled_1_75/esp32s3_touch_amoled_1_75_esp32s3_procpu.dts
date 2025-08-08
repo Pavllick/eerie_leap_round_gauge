@@ -51,7 +51,8 @@
 		peripheral-id = <0>;
 		clocks = <&clock ESP32_SPI2_MODULE>;
 		dma-enabled;
-		dma-clk = <ESP32_GDMA_MODULE>;
+		dmas = <&dma 0>, <&dma 1>;
+		dma-names = "rx", "tx";
 		dma-host = <0>;
 		max-dma-buf-size = <12276>;
 		duplex = "MSPI_HALF_DUPLEX";
@@ -105,6 +106,10 @@
 };
 
 &trng0 {
+	status = "okay";
+};
+
+&dma {
 	status = "okay";
 };
 
