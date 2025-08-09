@@ -6,20 +6,16 @@
 
 #define DT_DRV_COMPAT chipone_co5300
 
-#include "display_co5300.h"
-
+#include <zephyr/logging/log.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/sys/byteorder.h>
-#include <lvgl.h>
+#include <zephyr/drivers/display/display_co5300.h>
 
-#include <zephyr/logging/log.h>
+#include "display_co5300.h"
+
 LOG_MODULE_REGISTER(display_co5300, CONFIG_DISPLAY_LOG_LEVEL);
 
-// void co5300_te_gpio_triggered(const struct device *dev, struct gpio_callback *cb, uint32_t pins) {
-// }
-
-// TODO: Add TE callback to display driver
-static int co5300_te_gpio_register_callback(const struct device *dev, gpio_callback_handler_t handler) {
+int co5300_te_gpio_register_callback(const struct device *dev, gpio_callback_handler_t handler) {
 	const struct co5300_config *config = dev->config;
 	struct co5300_data *data = dev->data;
 
@@ -36,6 +32,27 @@ static int co5300_te_gpio_register_callback(const struct device *dev, gpio_callb
 	LOG_INF("Set up Display Tearing Effect Callback at port: %s pin: %d\n", config->te_gpio.port->name, config->te_gpio.pin);
 
 	return 0;
+}
+
+static void co5300_get_capabilities(const struct device *dev, struct display_capabilities *capabilities) {
+	struct co5300_data *data = dev->data;
+	const struct co5300_config *config = dev->config;
+
+	memset(capabilities, 0, sizeof(struct display_capabilities));
+
+	capabilities->supported_pixel_formats = PIXEL_FORMAT_RGB_565 | PIXEL_FORMAT_RGB_888;
+	capabilities->current_pixel_format = data->pixel_format;
+
+	if (data->orientation == DISPLAY_ORIENTATION_NORMAL ||
+		data->orientation == DISPLAY_ORIENTATION_ROTATED_180) {
+		capabilities->x_resolution = config->width;
+		capabilities->y_resolution = config->height;
+	} else {
+		capabilities->x_resolution = config->height;
+		capabilities->y_resolution = config->width;
+	}
+
+	capabilities->current_orientation = data->orientation;
 }
 
 static int co5300_transmit(const struct device *dev, enum mspi_io_mode io_mode, const uint8_t *cmd, const void *tx_data, size_t tx_len, bool hold_ce) {
@@ -230,6 +247,12 @@ static int co5300_set_brightness(const struct device *dev, const uint8_t brightn
 }
 
 static int co5300_set_window(const struct device *dev, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
+	struct display_capabilities capabilities;
+	co5300_get_capabilities(dev, &capabilities);
+	if (x > capabilities.x_resolution || y > capabilities.y_resolution) {
+		return -EINVAL;
+	}
+
 	uint16_t tx_data[2];
 	int ret = 0;
 
@@ -265,20 +288,15 @@ static int co5300_write(const struct device *dev, const uint16_t x, const uint16
 		return -EINVAL;
 	}
 
-	ret = k_mutex_lock(&data->lock, K_FOREVER);
-	if (ret < 0) {
-		return ret;
-	}
-
 	ret = co5300_set_window(dev, x, y, desc->width, desc->height);
 	if (ret < 0) {
-		goto unlock;
+		return ret;
 	}
 
 	uint8_t cmd = CO5300_W_RAMWR;
 	ret = co5300_transmit(dev, MSPI_IO_MODE_SINGLE, &cmd, NULL, 0, false);
 	if (ret < 0) {
-		goto unlock;
+		return ret;
 	}
 
 	uint8_t *tx_data = (uint8_t *)buf;
@@ -300,7 +318,7 @@ static int co5300_write(const struct device *dev, const uint16_t x, const uint16
 		ret = co5300_transmit(dev, MSPI_IO_MODE_QUAD_1_1_4, first_send ? &cmd : NULL, tx_data, chunk_size, !is_last_send);
 		if (ret < 0) {
 			LOG_ERR("Failed to send pixel data chunk: %d", ret);
-			goto unlock;
+			return ret;
 		}
 
 		tx_data += chunk_size;
@@ -308,30 +326,7 @@ static int co5300_write(const struct device *dev, const uint16_t x, const uint16
 		first_send = false;
 	}
 
-unlock:
-	k_mutex_unlock(&data->lock);
 	return ret;
-}
-
-static void co5300_get_capabilities(const struct device *dev, struct display_capabilities *capabilities) {
-	struct co5300_data *data = dev->data;
-	const struct co5300_config *config = dev->config;
-
-	memset(capabilities, 0, sizeof(struct display_capabilities));
-
-	capabilities->supported_pixel_formats = PIXEL_FORMAT_RGB_565 | PIXEL_FORMAT_RGB_888;
-	capabilities->current_pixel_format = data->pixel_format;
-
-	if (data->orientation == DISPLAY_ORIENTATION_NORMAL ||
-		data->orientation == DISPLAY_ORIENTATION_ROTATED_180) {
-		capabilities->x_resolution = config->width;
-		capabilities->y_resolution = config->height;
-	} else {
-		capabilities->x_resolution = config->height;
-		capabilities->y_resolution = config->width;
-	}
-
-	capabilities->current_orientation = data->orientation;
 }
 
 static int co5300_configure_display(const struct device *dev) {
@@ -471,8 +466,8 @@ static DEVICE_API(display, co5300_api) = {
 		.dev_id = {                                                     \
 			.dev_idx = DT_INST_REG_ADDR(inst),                          \
 		},                                                              \
-		.te_gpio = GPIO_DT_SPEC_INST_GET_OR(inst, te_gpios, {}),         \
-		.reset_gpio = GPIO_DT_SPEC_INST_GET_OR(inst, reset_gpios, {}),   \
+		.te_gpio = GPIO_DT_SPEC_INST_GET_OR(inst, te_gpios, {}),        \
+		.reset_gpio = GPIO_DT_SPEC_INST_GET_OR(inst, reset_gpios, {}),  \
 		.height = DT_INST_PROP(inst, height),                           \
 		.width = DT_INST_PROP(inst, width),                             \
 		.pixel_format = DT_INST_PROP(inst, pixel_format),               \

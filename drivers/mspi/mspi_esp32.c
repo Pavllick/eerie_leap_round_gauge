@@ -307,7 +307,7 @@ static int IRAM_ATTR update_transfer_config(const struct device *dev)
 	 * Workaround for ESP32S3 and ESP32Cx SoC's. This dummy transaction is needed
 	 * to sync CLK and software controlled CS when SPI is in mode 3
 	 */
-#if defined(CONFIG_SOC_SERIES_ESP32S3) || defined(CONFIG_SOC_SERIES_ESP32C2) ||                    \
+#if defined(CONFIG_SOC_SERIES_ESP32S3) || defined(CONFIG_SOC_SERIES_ESP32C2) ||		\
 	defined(CONFIG_SOC_SERIES_ESP32C3) || defined(CONFIG_SOC_SERIES_ESP32C6)
 	if (config->mspi_config.num_ce_gpios && (hal_dev->mode & MSPI_CPP_MODE_3)) {
 		uint8_t src[] = {0x00};
@@ -621,60 +621,57 @@ static int mspi_esp32_init(const struct device *dev)
 	return ret;
 }
 
-/* Device driver API */
 static DEVICE_API(mspi, mspi_esp32_api) = {
 	.config = mspi_esp32_config,
 	.dev_config = mspi_esp32_dev_config,
 	.transceive = mspi_esp32_transceive,
 };
 
-#define MSPI_CONFIG(inst)                                                                          \
-	{                                                                                          \
-		.channel_num = DT_INST_PROP(inst, peripheral_id),                                  \
-		.op_mode = MSPI_OP_MODE_CONTROLLER,                                                \
-		.duplex = DT_ENUM_IDX_OR(DT_DRV_INST(inst), duplex, MSPI_FULL_DUPLEX),             \
-		.max_freq = DT_INST_PROP(inst, clock_frequency),                                   \
-		.dqs_support = false,                                                              \
-		.num_periph = DT_INST_CHILD_NUM(inst),                                             \
-		.sw_multi_periph = DT_INST_PROP(inst, software_multiperipheral),                   \
-		.re_init = false,                                                                  \
-		.ce_group = (struct gpio_dt_spec *)ce_gpios##inst,                                 \
-		.num_ce_gpios = ARRAY_SIZE(ce_gpios##inst),                                        \
+#define MSPI_CONFIG(inst)                                                                  	\
+	{                                                                                      	\
+		.channel_num = DT_INST_PROP(inst, peripheral_id),                                  	\
+		.op_mode = MSPI_OP_MODE_CONTROLLER,                                                	\
+		.duplex = DT_ENUM_IDX_OR(DT_DRV_INST(inst), duplex, MSPI_FULL_DUPLEX),             	\
+		.max_freq = DT_INST_PROP(inst, clock_frequency),                                   	\
+		.dqs_support = false,                                                              	\
+		.num_periph = DT_INST_CHILD_NUM(inst),                                             	\
+		.sw_multi_periph = DT_INST_PROP(inst, software_multiperipheral),                   	\
+		.re_init = false,                                                                  	\
+		.ce_group = (struct gpio_dt_spec *)ce_gpios##inst,                                 	\
+		.num_ce_gpios = ARRAY_SIZE(ce_gpios##inst),                                        	\
 	}
 
-/* Device instantiation macro */
-#define ESP32_MSPI_INIT(inst)                                                                      \
-	PINCTRL_DT_INST_DEFINE(inst);                                                              \
-                                                                                                   \
-	static struct mspi_esp32_data mspi_esp32_data_##inst = {                                   \
-		.hal_ctx =                                                                         \
-			{                                                                          \
-				.hw = (spi_dev_t *)DT_INST_REG_ADDR(inst),                         \
-			},                                                                         \
-	};                                                                                         \
-                                                                                                   \
-	static struct gpio_dt_spec ce_gpios##inst[] = MSPI_CE_GPIOS_DT_SPEC_INST_GET(inst);        \
-	static const struct mspi_esp32_config mspi_esp32_cfg_##inst = {                            \
-		.spi = (spi_dev_t *)DT_INST_REG_ADDR(inst),                                        \
-		.peripheral_id = DT_INST_PROP(inst, peripheral_id),                                \
-		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(inst),                                      \
-		.mspi_config = MSPI_CONFIG(inst),                                                  \
-		.clock_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(inst)),                             \
-		.clock_subsys = (clock_control_subsys_t)DT_INST_CLOCKS_CELL(inst, offset),         \
-		.clock_source = DT_ENUM_IDX_OR(DT_DRV_INST(inst), clk_src, SPI_CLK_SRC_DEFAULT),   \
-		.dma_enabled = DT_INST_PROP_OR(inst, dma_enabled, false),                          \
-		.dma_clk_src = DT_INST_PROP(inst, dma_clk),                                        \
-		.dma_host = DT_INST_PROP(inst, dma_host),                                          \
-		.line_idle_low = DT_INST_PROP_OR(inst, line_idle_low, false),                      \
-		.use_iomux = DT_INST_PROP_OR(inst, use_iomux, false),                              \
-		.duty_cycle = DT_INST_PROP(inst, duty_cycle),                                      \
-		.transfer_timeout = DT_INST_PROP(inst, transfer_timeout),                          \
-		.input_delay_ns = 0,                                                               \
-	};                                                                                         \
-                                                                                                   \
-	DEVICE_DT_INST_DEFINE(inst, mspi_esp32_init, NULL, &mspi_esp32_data_##inst,                \
-			      &mspi_esp32_cfg_##inst, POST_KERNEL, CONFIG_MSPI_INIT_PRIORITY,      \
+#define ESP32_MSPI_INIT(inst)                                                               \
+	PINCTRL_DT_INST_DEFINE(inst);                                                           \
+                                                                                            \
+	static struct mspi_esp32_data mspi_esp32_data_##inst = {                                \
+		.hal_ctx =                                                                         	\
+			{                                                                          		\
+				.hw = (spi_dev_t *)DT_INST_REG_ADDR(inst),                         			\
+			},                                                                         		\
+	};                                                                                      \
+                                                                                            \
+	static struct gpio_dt_spec ce_gpios##inst[] = MSPI_CE_GPIOS_DT_SPEC_INST_GET(inst);     \
+	static const struct mspi_esp32_config mspi_esp32_cfg_##inst = {                         \
+		.spi = (spi_dev_t *)DT_INST_REG_ADDR(inst),                                        	\
+		.peripheral_id = DT_INST_PROP(inst, peripheral_id),                                	\
+		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(inst),                                      	\
+		.mspi_config = MSPI_CONFIG(inst),                                                  	\
+		.clock_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(inst)),                             	\
+		.clock_subsys = (clock_control_subsys_t)DT_INST_CLOCKS_CELL(inst, offset),         	\
+		.clock_source = DT_ENUM_IDX_OR(DT_DRV_INST(inst), clk_src, SPI_CLK_SRC_DEFAULT),   	\
+		.dma_enabled = DT_INST_PROP_OR(inst, dma_enabled, false),                          	\
+		.dma_clk_src = DT_INST_PROP(inst, dma_clk),                                        	\
+		.dma_host = DT_INST_PROP(inst, dma_host),                                          	\
+		.line_idle_low = DT_INST_PROP_OR(inst, line_idle_low, false),                      	\
+		.use_iomux = DT_INST_PROP_OR(inst, use_iomux, false),                              	\
+		.duty_cycle = DT_INST_PROP(inst, duty_cycle),                                      	\
+		.transfer_timeout = DT_INST_PROP(inst, transfer_timeout),                          	\
+		.input_delay_ns = 0,                                                               	\
+	};                                                                                      \
+                                                                                            \
+	DEVICE_DT_INST_DEFINE(inst, mspi_esp32_init, NULL, &mspi_esp32_data_##inst,             \
+			      &mspi_esp32_cfg_##inst, POST_KERNEL, CONFIG_MSPI_INIT_PRIORITY,      		\
 			      &mspi_esp32_api);
 
-/* Instantiate all MSPI devices */
 DT_INST_FOREACH_STATUS_OKAY(ESP32_MSPI_INIT)
