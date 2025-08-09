@@ -2,6 +2,7 @@
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
+#include <zephyr/input/input_touch.h>
 
 #define CST9220_CHIP_ID             (0x9220)
 #define CST9217_CHIP_ID             (0x9217)
@@ -22,8 +23,11 @@
 
 #define CST92XX_W_ACK               (0xAB)
 
-#define CST92XX_RESET_DELAY_MS (10)
-#define CST92XX_WAIT_DELAY_MS  (50)
+#define CST92XX_TOUCH_IND_MASK		(0x7F)
+
+#define CST92XX_RESET_DELAY_MS 		(10)
+#define CST92XX_WAIT_DELAY_MS 		(50)
+#define CST92XX_CMD_MODE_DELAY_MS 	(10)
 
 struct cst92xx_config {
 	struct i2c_dt_spec i2c;
@@ -39,9 +43,8 @@ struct cst92xx_data {
 	const struct device *dev;
 	/** Work queue (for deferred read). */
 	struct k_work work;
-	uint16_t resolution_x;
-	uint16_t resolution_y;
-
+	atomic_t work_pending;
+	struct input_touchscreen_common_config touchscreen;
 #ifdef CONFIG_INPUT_CST92XX_INTERRUPT
 	/** Interrupt GPIO callback. */
 	struct gpio_callback int_gpio_cb;
@@ -49,4 +52,11 @@ struct cst92xx_data {
 	/** Timer (polling mode). */
 	struct k_timer timer;
 #endif
+};
+
+struct cst92xx_touch_point {
+	uint16_t x;
+	uint16_t y;
+	uint8_t index;
+	uint8_t status;
 };

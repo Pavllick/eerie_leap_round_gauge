@@ -12,12 +12,56 @@
 #include <zephyr/input/input.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/dt-bindings/input/cst92xx-gesture-codes.h>
+#include <zephyr/drivers/input/input_touchscreen.h>
 
 #include "input_cst92xx.h"
 
 LOG_MODULE_REGISTER(cst92xx, CONFIG_INPUT_LOG_LEVEL);
 
 #define CST92XX_TOUCH_COORD_BUF_SIZE (CST92XX_MAX_TOUCH_POINTS * 5 + 5)
+
+int touchscreen_dev_config(struct device *dev, const enum touchscreen_dev_cfg_mask param_mask, const struct input_touchscreen_common_config * cfg) {
+	struct cst92xx_data *data = dev->data;
+	int ret = 0;
+
+	if ((param_mask &
+		(~(TOUCHSCREEN_DEVICE_CONFIG_SCREEN_WIDTH | TOUCHSCREEN_DEVICE_CONFIG_SCREEN_HEIGHT |
+	   TOUCHSCREEN_DEVICE_CONFIG_INVERTED_X | TOUCHSCREEN_DEVICE_CONFIG_INVERTED_Y |
+	   TOUCHSCREEN_DEVICE_CONFIG_SWAPPED_X_Y | TOUCHSCREEN_DEVICE_CONFIG_ALL)))) {
+	   LOG_ERR("Configuration type not supported.");
+	   return -ENOTSUP;
+	}
+
+	if (param_mask & TOUCHSCREEN_DEVICE_CONFIG_SCREEN_WIDTH) {
+		data->touchscreen.screen_width = cfg->screen_width;
+	}
+
+	if (param_mask & TOUCHSCREEN_DEVICE_CONFIG_SCREEN_HEIGHT) {
+		data->touchscreen.screen_height = cfg->screen_height;
+	}
+
+	if (param_mask & TOUCHSCREEN_DEVICE_CONFIG_INVERTED_X) {
+		data->touchscreen.inverted_x = cfg->inverted_x;
+	}
+
+	if (param_mask & TOUCHSCREEN_DEVICE_CONFIG_INVERTED_Y) {
+		data->touchscreen.inverted_y = cfg->inverted_y;
+	}
+
+	if (param_mask & TOUCHSCREEN_DEVICE_CONFIG_SWAPPED_X_Y) {
+		data->touchscreen.swapped_x_y = cfg->swapped_x_y;
+	}
+
+	if (param_mask & TOUCHSCREEN_DEVICE_CONFIG_ALL) {
+		data->touchscreen.screen_width = cfg->screen_width;
+		data->touchscreen.screen_height = cfg->screen_height;
+		data->touchscreen.inverted_x = cfg->inverted_x;
+		data->touchscreen.inverted_y = cfg->inverted_y;
+		data->touchscreen.swapped_x_y = cfg->swapped_x_y;
+	}
+
+	return ret;
+}
 
 static int cst92xx_write_command(const struct i2c_dt_spec *i2c, uint16_t command)
 {
@@ -61,21 +105,55 @@ static int cst92xx_read_data(const struct i2c_dt_spec *i2c, uint16_t command, ui
 	return ret;
 }
 
+static struct cst92xx_touch_point cst92xx_parse_touch_point(const struct device *dev, uint8_t *points_data, int point_index)
+{
+	const struct cst92xx_config *config = dev->config;
+	const struct cst92xx_data *data = dev->data;
+
+	uint8_t *point_data = &points_data[point_index * 5 + (point_index ? 2 : 0)];
+
+	int16_t x = ((point_data[1] << 4) | (point_data[3] >> 4));
+	int16_t y = ((point_data[2] << 4) | (point_data[3] & 0x0F));
+
+	if (data->touchscreen.inverted_x) {
+		x = data->touchscreen.screen_width - x;
+	}
+
+	if (data->touchscreen.inverted_y) {
+		y = data->touchscreen.screen_height - y;
+	}
+
+	if (data->touchscreen.swapped_x_y) {
+		int16_t temp = x;
+		x = y;
+		y = temp;
+	}
+
+	struct cst92xx_touch_point touch_point = {
+		.index = point_index,
+		.status = point_data[0] & 0x0F,
+		.x = x,
+		.y = y,
+	};
+
+	return touch_point;
+}
+
 static int cst92xx_process(const struct device *dev)
 {
-	const struct cst92xx_config *cfg = dev->config;
-	struct cst92xx_data *data = dev->data;
+	const struct cst92xx_config *config = dev->config;
+	const struct cst92xx_data *data = dev->data;
 	int ret = 0;
 
 	uint8_t read_buffer[CST92XX_TOUCH_COORD_BUF_SIZE] = {0};
 
-	ret = cst92xx_read_data(&cfg->i2c, CST92XX_R_COORDINATES, read_buffer, sizeof(read_buffer));
+	ret = cst92xx_read_data(&config->i2c, CST92XX_R_COORDINATES, read_buffer, sizeof(read_buffer));
 	if (ret < 0) {
 		LOG_ERR("Failed to read coordinates");
 		return ret;
 	}
 
-	ret = cst92xx_write_ack(&cfg->i2c, CST92XX_R_COORDINATES);
+	ret = cst92xx_write_ack(&config->i2c, CST92XX_R_COORDINATES);
 	if (ret < 0) {
 		return ret;
 	}
@@ -85,26 +163,22 @@ static int cst92xx_process(const struct device *dev)
 		return -EINVAL;
 	}
 
-	uint8_t touch_num = (read_buffer[5] & 0x7F);
-    if (touch_num > CST92XX_MAX_TOUCH_POINTS || touch_num == 0) {
-		LOG_ERR("Invalid number of touch points %d", touch_num);
+	uint8_t touch_count = (read_buffer[5] & CST92XX_TOUCH_IND_MASK);
+    if (touch_count > CST92XX_MAX_TOUCH_POINTS || touch_count == 0) {
+		LOG_ERR("Invalid number of touch points %d", touch_count);
         return -EINVAL;
     }
 
-	for (int i = 0; i < touch_num; i++) {
-        uint8_t *point_data = &read_buffer[i * 5 + (i ? 2 : 0)];
-        uint8_t status = point_data[0] & 0x0F;
+	for (int i = 0; i < touch_count; i++) {
+        struct cst92xx_touch_point touch_point = cst92xx_parse_touch_point(dev, read_buffer, i);
 
-		if (touch_num > 1) {
+		if (touch_count > 1) {
 			input_report_abs(dev, INPUT_ABS_MT_SLOT, i, true, K_FOREVER);
 		}
 
-        if (status == CST92XX_STATUS_PRESSED) {
-            int16_t x = data->resolution_x - ((point_data[1] << 4) | (point_data[3] >> 4));
-            int16_t y = data->resolution_y - ((point_data[2] << 4) | (point_data[3] & 0x0F));
-
-			input_report_abs(dev, INPUT_ABS_X, x, false, K_FOREVER);
-			input_report_abs(dev, INPUT_ABS_Y, y, false, K_FOREVER);
+        if (touch_point.status == CST92XX_STATUS_PRESSED) {
+			input_report_abs(dev, INPUT_ABS_X, touch_point.x, false, K_FOREVER);
+			input_report_abs(dev, INPUT_ABS_Y, touch_point.y, false, K_FOREVER);
 			input_report_key(dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
 		} else {
 			input_report_key(dev, INPUT_BTN_TOUCH, 0, true, K_FOREVER);
@@ -132,6 +206,8 @@ static void cst92xx_work_handler(struct k_work *work)
 	struct cst92xx_data *data = CONTAINER_OF(work, struct cst92xx_data, work);
 
 	cst92xx_process(data->dev);
+
+	atomic_set(&data->work_pending, 0);
 }
 
 #ifdef CONFIG_INPUT_CST92XX_INTERRUPT
@@ -139,7 +215,9 @@ static void cst92xx_isr_handler(const struct device *dev, struct gpio_callback *
 {
 	struct cst92xx_data *data = CONTAINER_OF(cb, struct cst92xx_data, int_gpio_cb);
 
-	k_work_submit(&data->work);
+	if (atomic_cas(&data->work_pending, 0, 1)) {
+        k_work_submit(&data->work);
+    }
 }
 #else
 static void cst92xx_timer_handler(struct k_timer *timer)
@@ -173,33 +251,33 @@ static int cst92xx_chip_reset(const struct device *dev)
 
 static int cst92xx_chip_init(const struct device *dev)
 {
-	const struct cst92xx_config *cfg = dev->config;
+	const struct cst92xx_config *config = dev->config;
 	struct cst92xx_data *data = dev->data;
 
 	int ret = 0;
 
-	LOG_INF("I2C Address: %d", cfg->i2c.addr);
+	LOG_INF("I2C Address: %d", config->i2c.addr);
 
 	ret = cst92xx_chip_reset(dev);
 	if (ret < 0) {
 		return ret;
 	}
 
-	if (!device_is_ready(cfg->i2c.bus)) {
-		LOG_ERR("I2C bus %s not ready", cfg->i2c.bus->name);
+	if (!device_is_ready(config->i2c.bus)) {
+		LOG_ERR("I2C bus %s not ready", config->i2c.bus->name);
 		return -ENODEV;
 	}
 
 	uint8_t read_buffer[8];
 
-	ret = cst92xx_write_command(&cfg->i2c, CST92XX_C_CMD_MODE);
+	ret = cst92xx_write_command(&config->i2c, CST92XX_C_CMD_MODE);
 	if (ret < 0) {
 		LOG_ERR("Failed enter command mode");
 		return ret;
 	}
-	k_msleep(10);
+	k_msleep(CST92XX_CMD_MODE_DELAY_MS);
 
-	ret = cst92xx_read_data(&cfg->i2c, CST92XX_R_CHECKCODE, read_buffer, 4);
+	ret = cst92xx_read_data(&config->i2c, CST92XX_R_CHECKCODE, read_buffer, 4);
 	if (ret < 0) {
 		LOG_ERR("Failed to read chip check code");
 		return ret;
@@ -220,18 +298,18 @@ static int cst92xx_chip_init(const struct device *dev)
 
 	LOG_DBG("Chip check code: 0x%x", checkcode);
 
-	ret = cst92xx_read_data(&cfg->i2c, CST92XX_R_RESOLUTION, read_buffer, 4);
+	ret = cst92xx_read_data(&config->i2c, CST92XX_R_RESOLUTION, read_buffer, 4);
 	if (ret < 0) {
 		LOG_ERR("Failed to read chip resolution");
 		return ret;
 	}
 
-	data->resolution_x = (read_buffer[1] << 8) | read_buffer[0];
-    data->resolution_y = (read_buffer[3] << 8) | read_buffer[2];
+	data->touchscreen.screen_width = (read_buffer[1] << 8) | read_buffer[0];
+    data->touchscreen.screen_height = (read_buffer[3] << 8) | read_buffer[2];
 
-	LOG_DBG("Chip resolution X: %d, Y: %d", data->resolution_x, data->resolution_y);
+	LOG_DBG("Chip resolution X: %d, Y: %d", data->touchscreen.screen_width, data->touchscreen.screen_height);
 
-	ret = cst92xx_read_data(&cfg->i2c, CST92XX_R_CHIP_TYPE, read_buffer, 4);
+	ret = cst92xx_read_data(&config->i2c, CST92XX_R_CHIP_TYPE, read_buffer, 4);
 	if (ret < 0) {
 		LOG_ERR("Failed to read chip type");
 		return ret;
@@ -250,7 +328,7 @@ static int cst92xx_chip_init(const struct device *dev)
 
 	LOG_DBG("Chip type: 0x%x, Project ID: 0x%x", chip_type, project_id);
 
-	ret = cst92xx_read_data(&cfg->i2c, CST92XX_R_FIRMWARE_VERSION, read_buffer, 8);
+	ret = cst92xx_read_data(&config->i2c, CST92XX_R_FIRMWARE_VERSION, read_buffer, 8);
 	if (ret < 0) {
 		LOG_ERR("Failed to read chip firmware version");
 		return ret;
@@ -340,7 +418,9 @@ static int cst92xx_init(const struct device *dev)
 			(.int_gpio = GPIO_DT_SPEC_INST_GET(index, irq_gpios),), ())     \
 		.rst_gpio = GPIO_DT_SPEC_INST_GET_OR(index, rst_gpios, {}),         \
 	};                                                                      \
-	static struct cst92xx_data cst92xx_data_##index;                       	\
+	static struct cst92xx_data cst92xx_data_##index = {						\
+		.touchscreen = INPUT_TOUCH_DT_INST_COMMON_CONFIG_INIT(index),		\
+	};																		\
 	DEVICE_DT_INST_DEFINE(index, cst92xx_init, NULL, &cst92xx_data_##index, \
 		&cst92xx_config_##index, POST_KERNEL, CONFIG_INPUT_INIT_PRIORITY,   \
 		NULL);
