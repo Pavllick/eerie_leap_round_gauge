@@ -51,8 +51,7 @@
 		peripheral-id = <0>;
 		clocks = <&clock ESP32_SPI2_MODULE>;
 		dma-enabled;
-		dmas = <&dma 0>, <&dma 1>;
-		dma-names = "rx", "tx";
+		dma-clk = <ESP32_GDMA_MODULE>;
 		dma-host = <0>;
 		duplex = "MSPI_HALF_DUPLEX";
 		clock-frequency = <80000000>;
@@ -105,10 +104,6 @@
 };
 
 &trng0 {
-	status = "okay";
-};
-
-&dma {
 	status = "okay";
 };
 

@@ -37,7 +37,6 @@ properties:
 
   dma-enabled:
     type: boolean
-    default: true
     description: Enable SPI DMA support
 
   dma-clk:
@@ -51,13 +50,11 @@ properties:
 
   line-idle-low:
     type: boolean
-    default: false
     description: |
       Default data lines GPIO level when idle. Defaults to high by default.
 
   use-iomux:
     type: boolean
-    default: false
     description: |
       Some pins are allowed to bypass the GPIO Matrix and use the IO_MUX
       routing mechanism instead, this avoids extra routing latency and makes
