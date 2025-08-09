@@ -4,169 +4,127 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT hynitron_cst816s
+#define DT_DRV_COMPAT hynitron_cst92xx
+
+#include <stdint.h>
 
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/input/input.h>
-#include <zephyr/drivers/i2c.h>
-#include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/dt-bindings/input/cst92xx-gesture-codes.h>
 
+#include "input_cst92xx.h"
+
 LOG_MODULE_REGISTER(cst92xx, CONFIG_INPUT_LOG_LEVEL);
 
-#define CST816S_CHIP_ID1 0xB4
-#define CST816S_CHIP_ID2 0xB5
-#define CST816S_CHIP_ID3 0xB6
+#define CST92XX_TOUCH_COORD_BUF_SIZE (CST92XX_MAX_TOUCH_POINTS * 5 + 5)
 
-#define CST816S_REG_DATA                0x00
-#define CST816S_REG_GESTURE_ID          0x01
-#define CST816S_REG_FINGER_NUM          0x02
-#define CST816S_REG_XPOS_H              0x03
-#define CST816S_REG_XPOS_L              0x04
-#define CST816S_REG_YPOS_H              0x05
-#define CST816S_REG_YPOS_L              0x06
-#define CST816S_REG_BPC0H               0xB0
-#define CST816S_REG_BPC0L               0xB1
-#define CST816S_REG_BPC1H               0xB2
-#define CST816S_REG_BPC1L               0xB3
-#define CST816S_REG_POWER_MODE          0xA5
-#define CST816S_REG_CHIP_ID             0xA7
-#define CST816S_REG_PROJ_ID             0xA8
-#define CST816S_REG_FW_VERSION          0xA9
-#define CST816S_REG_MOTION_MASK         0xEC
-#define CST816S_REG_IRQ_PULSE_WIDTH     0xED
-#define CST816S_REG_NOR_SCAN_PER        0xEE
-#define CST816S_REG_MOTION_S1_ANGLE     0xEF
-#define CST816S_REG_LP_SCAN_RAW1H       0xF0
-#define CST816S_REG_LP_SCAN_RAW1L       0xF1
-#define CST816S_REG_LP_SCAN_RAW2H       0xF2
-#define CST816S_REG_LP_SCAN_RAW2L       0xF3
-#define CST816S_REG_LP_AUTO_WAKEUP_TIME 0xF4
-#define CST816S_REG_LP_SCAN_TH          0xF5
-#define CST816S_REG_LP_SCAN_WIN         0xF6
-#define CST816S_REG_LP_SCAN_FREQ        0xF7
-#define CST816S_REG_LP_SCAN_I_DAC       0xF8
-#define CST816S_REG_AUTOSLEEP_TIME      0xF9
-#define CST816S_REG_IRQ_CTL             0xFA
-#define CST816S_REG_DEBOUNCE_TIME       0xFB
-#define CST816S_REG_LONG_PRESS_TIME     0xFC
-#define CST816S_REG_IOCTL               0xFD
-#define CST816S_REG_DIS_AUTO_SLEEP      0xFE
+static int cst92xx_write_command(const struct i2c_dt_spec *i2c, uint16_t command)
+{
+	int ret = 0;
+	uint16_t cmd = sys_cpu_to_be16(command);
 
-#define CST816S_MOTION_EN_CON_LR BIT(2)
-#define CST816S_MOTION_EN_CON_UR BIT(1)
-#define CST816S_MOTION_EN_DCLICK BIT(0)
+	ret = i2c_write_dt(i2c, (uint8_t *)&cmd, 2);
+	if (ret < 0) {
+		LOG_ERR("Failed to write command 0x%x", command);
+		return ret;
+	}
 
-#define CST816S_IRQ_EN_TEST   BIT(7)
-#define CST816S_IRQ_EN_TOUCH  BIT(6)
-#define CST816S_IRQ_EN_CHANGE BIT(5)
-#define CST816S_IRQ_EN_MOTION BIT(4)
-#define CST816S_IRQ_ONCE_WLP  BIT(0)
+	return ret;
+}
 
-#define CST816S_IOCTL_SOFT_RTS BIT(2)
-#define CST816S_IOCTL_IIC_OD   BIT(1)
-#define CST816S_IOCTL_EN_1V8   BIT(0)
+static int cst92xx_write_ack(const struct i2c_dt_spec *i2c, uint16_t command)
+{
+	int ret = 0;
+	uint8_t ack_buffer[3] = { (uint8_t)((command >> 8) & 0xFF), (uint8_t)(command & 0xFF), CST92XX_W_ACK };
 
-#define CST816S_POWER_MODE_SLEEP        (0x03)
-#define CST816S_POWER_MODE_EXPERIMENTAL (0x05)
+	ret = i2c_write_dt(i2c, ack_buffer, 3);
+	if (ret < 0) {
+		LOG_ERR("Failed to write ack for command 0x%x", command);
+		return ret;
+	}
 
-#define CST816S_EVENT_BITS_POS (0x06)
+	return ret;
+}
 
-#define CST816S_RESET_DELAY (5)  /* in ms */
-#define CST816S_WAIT_DELAY  (50) /* in ms */
+static int cst92xx_read_data(const struct i2c_dt_spec *i2c, uint16_t command, uint8_t *read_buffer, size_t num_read)
+{
+	int ret = 0;
+	uint16_t cmd = sys_cpu_to_be16(command);
 
-#define EVENT_PRESS_DOWN 0x00U
-#define EVENT_LIFT_UP    0x01U
-#define EVENT_CONTACT    0x02U
-#define EVENT_NONE       0x03U
+	ret = i2c_write_read_dt(i2c, &cmd, 2, read_buffer, num_read);
+	if (ret < 0) {
+		LOG_ERR("Failed to read data for command 0x%x", command);
+		return ret;
+	}
 
-/** cst92xx configuration (DT). */
-struct cst92xx_config {
-	struct i2c_dt_spec i2c;
-	const struct gpio_dt_spec rst_gpio;
-#ifdef CONFIG_INPUT_CST92XX_INTERRUPT
-	const struct gpio_dt_spec int_gpio;
-#endif
-};
-
-/** cst92xx data. */
-struct cst92xx_data {
-	/** Device pointer. */
-	const struct device *dev;
-	/** Work queue (for deferred read). */
-	struct k_work work;
-
-#ifdef CONFIG_INPUT_CST92xx_INTERRUPT
-	/** Interrupt GPIO callback. */
-	struct gpio_callback int_gpio_cb;
-#else
-	/** Timer (polling mode). */
-	struct k_timer timer;
-#endif
-};
+	return ret;
+}
 
 static int cst92xx_process(const struct device *dev)
 {
 	const struct cst92xx_config *cfg = dev->config;
+	struct cst92xx_data *data = dev->data;
+	int ret = 0;
 
-	int r;
-	uint8_t event;
-	uint16_t row, col;
-	bool pressed;
-	uint16_t x;
-	uint16_t y;
+	uint8_t read_buffer[CST92XX_TOUCH_COORD_BUF_SIZE] = {0};
 
-#ifdef CONFIG_INPUT_CST92xx_EV_DEVICE
-	uint8_t gesture;
-
-	r = i2c_burst_read_dt(&cfg->i2c, CST816S_REG_GESTURE_ID, &gesture, sizeof(gesture));
-	if (r < 0) {
-		LOG_ERR("Could not read gesture-ID data");
-		return r;
-	}
-#endif
-
-	r = i2c_burst_read_dt(&cfg->i2c, CST816S_REG_XPOS_H, (uint8_t *)&x, sizeof(x));
-	if (r < 0) {
-		LOG_ERR("Could not read x data");
-		return r;
+	ret = cst92xx_read_data(&cfg->i2c, CST92XX_R_COORDINATES, read_buffer, sizeof(read_buffer));
+	if (ret < 0) {
+		LOG_ERR("Failed to read coordinates");
+		return ret;
 	}
 
-	r = i2c_burst_read_dt(&cfg->i2c, CST816S_REG_YPOS_H, (uint8_t *)&y, sizeof(y));
-	if (r < 0) {
-		LOG_ERR("Could not read y data");
-		return r;
-	}
-	col = sys_be16_to_cpu(x) & 0x0fff;
-	row = sys_be16_to_cpu(y) & 0x0fff;
-
-	event = (x & 0xff) >> CST816S_EVENT_BITS_POS;
-	pressed = (event == EVENT_PRESS_DOWN) || (event == EVENT_CONTACT);
-
-	LOG_DBG("event: %d, row: %d, col: %d", event, row, col);
-
-	if (pressed) {
-		input_report_abs(dev, INPUT_ABS_X, col, false, K_FOREVER);
-		input_report_abs(dev, INPUT_ABS_Y, row, false, K_FOREVER);
-		input_report_key(dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
-	} else {
-		input_report_key(dev, INPUT_BTN_TOUCH, 0, true, K_FOREVER);
+	ret = cst92xx_write_ack(&cfg->i2c, CST92XX_R_COORDINATES);
+	if (ret < 0) {
+		return ret;
 	}
 
-#ifdef CONFIG_INPUT_CST816S_EV_DEVICE
-	/* Also put the custom touch gestures into the input queue,
-	 * some applications may want to process it
-	 */
+	if (read_buffer[6] != CST92XX_W_ACK) {
+		LOG_ERR("Check device ack error , response code is  0x%x", read_buffer[6]);
+		return -EINVAL;
+	}
 
-	LOG_DBG("gesture: %d", gesture);
+	uint8_t touch_num = (read_buffer[5] & 0x7F);
+    if (touch_num > CST92XX_MAX_TOUCH_POINTS || touch_num == 0) {
+		LOG_ERR("Invalid number of touch points %d", touch_num);
+        return -EINVAL;
+    }
 
-	if (gesture != CST816S_GESTURE_CODE_NONE) {
+	for (int i = 0; i < touch_num; i++) {
+        uint8_t *point_data = &read_buffer[i * 5 + (i ? 2 : 0)];
+        uint8_t status = point_data[0] & 0x0F;
+
+		if (touch_num > 1) {
+			input_report_abs(dev, INPUT_ABS_MT_SLOT, i, true, K_FOREVER);
+		}
+
+        if (status == CST92XX_STATUS_PRESSED) {
+            int16_t x = data->resolution_x - ((point_data[1] << 4) | (point_data[3] >> 4));
+            int16_t y = data->resolution_y - ((point_data[2] << 4) | (point_data[3] & 0x0F));
+
+			input_report_abs(dev, INPUT_ABS_X, x, false, K_FOREVER);
+			input_report_abs(dev, INPUT_ABS_Y, y, false, K_FOREVER);
+			input_report_key(dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
+		} else {
+			input_report_key(dev, INPUT_BTN_TOUCH, 0, true, K_FOREVER);
+		}
+    }
+
+#ifdef CONFIG_INPUT_CST92XX_EV_DEVICE
+	uint8_t gesture = CST92XX_GESTURE_CODE_NONE;
+
+	if (read_buffer[4] & 0xF0) {
+		gesture = read_buffer[4] >> 4;
+	}
+
+	if (gesture != CST92XX_GESTURE_CODE_NONE) {
 		input_report(dev, INPUT_EV_DEVICE, (uint16_t)gesture, 0, true, K_FOREVER);
+		LOG_DBG("Gesture detected: %d", gesture);
 	}
 #endif
 
-	return r;
+	return 0;
 }
 
 static void cst92xx_work_handler(struct k_work *work)
@@ -192,59 +150,142 @@ static void cst92xx_timer_handler(struct k_timer *timer)
 }
 #endif
 
-static void cst92xx_chip_reset(const struct device *dev)
+static int cst92xx_chip_reset(const struct device *dev)
 {
 	const struct cst92xx_config *config = dev->config;
-	int ret;
+	int ret = 0;
 
 	if (gpio_is_ready_dt(&config->rst_gpio)) {
 		ret = gpio_pin_configure_dt(&config->rst_gpio, GPIO_OUTPUT_ACTIVE);
 		if (ret < 0) {
 			LOG_ERR("Could not configure reset GPIO pin");
-			return;
+			return ret;
 		}
-		k_msleep(CST816S_RESET_DELAY);
+
+		k_msleep(CST92XX_RESET_DELAY_MS);
+
 		gpio_pin_set_dt(&config->rst_gpio, 0);
-		k_msleep(CST816S_WAIT_DELAY);
+		k_msleep(CST92XX_WAIT_DELAY_MS);
 	}
+
+	return ret;
 }
 
 static int cst92xx_chip_init(const struct device *dev)
 {
 	const struct cst92xx_config *cfg = dev->config;
-	int ret = 0;
-	uint8_t chip_id = 0;
+	struct cst92xx_data *data = dev->data;
 
-	cst92xx_chip_reset(dev);
+	int ret = 0;
+
+	LOG_INF("I2C Address: %d", cfg->i2c.addr);
+
+	ret = cst92xx_chip_reset(dev);
+	if (ret < 0) {
+		return ret;
+	}
 
 	if (!device_is_ready(cfg->i2c.bus)) {
 		LOG_ERR("I2C bus %s not ready", cfg->i2c.bus->name);
 		return -ENODEV;
 	}
-	ret = i2c_reg_read_byte_dt(&cfg->i2c, CST816S_REG_CHIP_ID, &chip_id);
+
+	uint8_t read_buffer[8];
+
+	ret = cst92xx_write_command(&cfg->i2c, CST92XX_C_CMD_MODE);
 	if (ret < 0) {
-		LOG_ERR("failed reading chip id");
+		LOG_ERR("Failed enter command mode");
+		return ret;
+	}
+	k_msleep(10);
+
+	ret = cst92xx_read_data(&cfg->i2c, CST92XX_R_CHECKCODE, read_buffer, 4);
+	if (ret < 0) {
+		LOG_ERR("Failed to read chip check code");
 		return ret;
 	}
 
-	if ((chip_id != CST816S_CHIP_ID1) && (chip_id != CST816S_CHIP_ID2) &&
-	    (chip_id != CST816S_CHIP_ID3)) {
-		LOG_ERR("CST816S wrong chip id: returned 0x%x", chip_id);
+    uint32_t checkcode = read_buffer[3];
+    checkcode <<= 8;
+    checkcode |= read_buffer[2];
+    checkcode <<= 8;
+    checkcode |= read_buffer[1];
+    checkcode <<= 8;
+    checkcode |= read_buffer[0];
+
+	if ((checkcode & 0xFFFF0000) != CST92XX_FW_VER_CHECKCODE) {
+		LOG_ERR("Firmware info read error.");
 		return -ENODEV;
 	}
 
-	ret = i2c_reg_update_byte_dt(&cfg->i2c, CST816S_REG_IRQ_CTL,
-				     CST816S_IRQ_EN_TOUCH | CST816S_IRQ_EN_CHANGE,
-				     CST816S_IRQ_EN_TOUCH | CST816S_IRQ_EN_CHANGE);
+	LOG_DBG("Chip check code: 0x%x", checkcode);
+
+	ret = cst92xx_read_data(&cfg->i2c, CST92XX_R_RESOLUTION, read_buffer, 4);
 	if (ret < 0) {
-		LOG_ERR("Could not enable irq");
+		LOG_ERR("Failed to read chip resolution");
 		return ret;
 	}
+
+	data->resolution_x = (read_buffer[1] << 8) | read_buffer[0];
+    data->resolution_y = (read_buffer[3] << 8) | read_buffer[2];
+
+	LOG_DBG("Chip resolution X: %d, Y: %d", data->resolution_x, data->resolution_y);
+
+	ret = cst92xx_read_data(&cfg->i2c, CST92XX_R_CHIP_TYPE, read_buffer, 4);
+	if (ret < 0) {
+		LOG_ERR("Failed to read chip type");
+		return ret;
+	}
+
+	uint16_t chip_type = (read_buffer[3] << 8) | read_buffer[2];
+
+	uint32_t project_id = read_buffer[1];
+    project_id <<= 8;
+    project_id |= read_buffer[0];
+
+	if ((chip_type != CST9220_CHIP_ID) && (chip_type != CST9217_CHIP_ID)) {
+		LOG_ERR("Chip type error 0x%x", chip_type);
+		return -ENODEV;
+	}
+
+	LOG_DBG("Chip type: 0x%x, Project ID: 0x%x", chip_type, project_id);
+
+	ret = cst92xx_read_data(&cfg->i2c, CST92XX_R_FIRMWARE_VERSION, read_buffer, 8);
+	if (ret < 0) {
+		LOG_ERR("Failed to read chip firmware version");
+		return ret;
+	}
+
+	uint32_t fw_version = read_buffer[3];
+    fw_version <<= 8;
+    fw_version |= read_buffer[2];
+    fw_version <<= 8;
+    fw_version |= read_buffer[1];
+    fw_version <<= 8;
+    fw_version |= read_buffer[0];
+
+	uint32_t checksum = read_buffer[7];
+    checksum <<= 8;
+    checksum |= read_buffer[6];
+    checksum <<= 8;
+    checksum |= read_buffer[5];
+    checksum <<= 8;
+    checksum |= read_buffer[4];
+
+	if (fw_version == CST92XX_FW_VER_BLANK) {
+		LOG_ERR("Chip ic don't have firmware.");
+		return -ENODEV;
+	}
+
+	LOG_DBG("Chip firmware version: 0x%x, checksum: 0x%x", fw_version, checksum);
+
 	return ret;
 }
 
 static int cst92xx_init(const struct device *dev)
 {
+	LOG_INF("Initializing CST92XX driver");
+
 	struct cst92xx_data *data = dev->data;
 	int ret;
 
@@ -292,16 +333,16 @@ static int cst92xx_init(const struct device *dev)
 	return ret;
 }
 
-#define CST92XX_DEFINE(index)                                                                      \
-	static const struct cst92xx_config cst92xx_config_##index = {                              \
-		.i2c = I2C_DT_SPEC_INST_GET(index),                                                \
-		COND_CODE_1(CONFIG_INPUT_CST92XX_INTERRUPT,                                        \
-			    (.int_gpio = GPIO_DT_SPEC_INST_GET(index, irq_gpios),), ())           \
-			.rst_gpio = GPIO_DT_SPEC_INST_GET_OR(index, rst_gpios, {}),                \
-	};                                                                                         \
-	static struct cst92xx_data cst92xx_data_##index;                                           \
-	DEVICE_DT_INST_DEFINE(index, cst92xx_init, NULL, &cst92xx_data_##index,                    \
-			      &cst92xx_config_##index, POST_KERNEL, CONFIG_INPUT_INIT_PRIORITY,    \
-			      NULL);
+#define CST92XX_DEFINE(index)                                            	\
+	static const struct cst92xx_config cst92xx_config_##index = {           \
+		.i2c = I2C_DT_SPEC_INST_GET(index),                                 \
+		COND_CODE_1(CONFIG_INPUT_CST92XX_INTERRUPT,                         \
+			(.int_gpio = GPIO_DT_SPEC_INST_GET(index, irq_gpios),), ())     \
+		.rst_gpio = GPIO_DT_SPEC_INST_GET_OR(index, rst_gpios, {}),         \
+	};                                                                      \
+	static struct cst92xx_data cst92xx_data_##index;                       	\
+	DEVICE_DT_INST_DEFINE(index, cst92xx_init, NULL, &cst92xx_data_##index, \
+		&cst92xx_config_##index, POST_KERNEL, CONFIG_INPUT_INIT_PRIORITY,   \
+		NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(CST92XX_DEFINE)

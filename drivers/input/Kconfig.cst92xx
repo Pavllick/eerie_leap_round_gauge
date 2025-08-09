@@ -7,7 +7,7 @@ menuconfig INPUT_CST92XX
 	depends on DT_HAS_HYNITRON_CST92XX_ENABLED
 	select I2C
 	help
-	  Enable driver for hynitron cst816s touch panel.
+	  Enable driver for hynitron cst92xx touch panel.
 
 if INPUT_CST92XX
 

@@ -15,6 +15,7 @@
 	compatible = "waveshare,esp32-s3-touch-amoled-1.75";
 
 	aliases {
+		i2c-1 = &i2c1;
 		sw0 = &button0;
 		uart-0 = &uart0;
 		watchdog0 = &wdt0;
@@ -85,6 +86,12 @@
 			write-only;
 		};
 	};
+
+	/* Touch Controller */
+	lvgl_pointer {
+		compatible = "zephyr,lvgl-pointer-input";
+		input = <&cst92xx>;
+	};
 };
 
 &flash0 {
@@ -114,10 +121,10 @@
 	pinctrl-names = "default";
 
 	/* Hynitron CST92XX Capacitive Touch Controller */
-	cst92xx: cst92xx@15 {
+	cst92xx: cst92xx@5A {
 		status = "okay";
 		compatible = "hynitron,cst92xx";
-		reg = <0x15>;
+		reg = <0x5A>;
 		irq-gpios = <&gpio0 11 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
 		rst-gpios = <&gpio1 8 GPIO_ACTIVE_LOW>;
 	};
