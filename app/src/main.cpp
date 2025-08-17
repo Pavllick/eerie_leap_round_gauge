@@ -12,6 +12,9 @@
 #include "utilities/memory/heap_allocator.h"
 #include "utilities/dev_tools/system_info.h"
 // #include "utilities/time/boot_elapsed_time_service.h"
+
+#include "domain/device_tree/device_tree_setup.h"
+#include "domain/hardware/modbus_domain/modbus.h"
 // #include "domain/fs_domain/services/fs_service.h"
 
 // #include "configuration/system_config/system_config.h"
@@ -24,6 +27,8 @@ using namespace eerie_leap::utilities::dev_tools;
 
 // using namespace eerie_leap::controllers;
 
+using namespace eerie_leap::domain::device_tree;
+using namespace eerie_leap::domain::hardware::modbus_domain;
 // using namespace eerie_leap::domain::fs_domain::services;
 // using namespace eerie_leap::configuration::services;
 
@@ -120,6 +125,12 @@ void lv_example_arc_3() {
 
 int main()
 {
+    DeviceTreeSetup::Initialize();
+    auto& device_tree_setup = DeviceTreeSetup::Get();
+
+    auto modbus = make_shared_ext<Modbus>(device_tree_setup.GetModbusIface().value());
+    modbus->Initialize();
+
 	if (!device_is_ready(display_dev)) {
 		LOG_ERR("Device not ready, aborting test");
 		return 0;

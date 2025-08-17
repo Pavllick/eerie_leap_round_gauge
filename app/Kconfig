@@ -2,6 +2,10 @@ menu "Zephyr"
 source "Kconfig.zephyr"
 endmenu
 
+config EERIE_LEAP_MODBUS_BAUD_RATE
+	int "Modbus baud rate"
+	default 115200
+
 module = APP
 module-str = APP
 source "subsys/logging/Kconfig.template.log_config"

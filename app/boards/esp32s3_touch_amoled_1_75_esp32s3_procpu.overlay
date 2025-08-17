@@ -2,6 +2,10 @@
 // https://www.espressif.com/sites/default/files/documentation/esp32-s3_technical_reference_manual_en.pdf
 
 / {
+    aliases {
+        modbus0 = &modbus0;
+    };
+
     chosen {
         zephyr,console = &usb_serial;
         zephyr,shell-uart = &usb_serial;
@@ -10,4 +14,29 @@
 
 &usb_serial {
     status = "okay";
+};
+
+&uart1 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart1_default>;
+	pinctrl-names = "default";
+
+    modbus0: modbus0 {
+		compatible = "zephyr,modbus-serial";
+		status = "okay";
+	};
+};
+
+&pinctrl {
+	uart1_default: uart1_default {
+		group1 {
+			pinmux = <UART1_TX_GPIO17>;
+			output-high;
+		};
+		group2 {
+			pinmux = <UART1_RX_GPIO16>;
+			bias-pull-up;
+		};
+	};
 };
