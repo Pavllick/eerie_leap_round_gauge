@@ -14,7 +14,7 @@
 // #include "utilities/time/boot_elapsed_time_service.h"
 
 #include "domain/device_tree/device_tree_setup.h"
-#include "domain/hardware/modbus_domain/modbus.h"
+#include "subsys/modbus/modbus.h"
 // #include "domain/fs_domain/services/fs_service.h"
 
 // #include "configuration/system_config/system_config.h"
@@ -28,7 +28,7 @@ using namespace eerie_leap::utilities::dev_tools;
 // using namespace eerie_leap::controllers;
 
 using namespace eerie_leap::domain::device_tree;
-using namespace eerie_leap::domain::hardware::modbus_domain;
+using namespace eerie_leap::subsys::modbus;
 // using namespace eerie_leap::domain::fs_domain::services;
 // using namespace eerie_leap::configuration::services;
 

@@ -4,7 +4,7 @@
 
 LOG_MODULE_REGISTER(modbus_logger);
 
-namespace eerie_leap::domain::hardware::modbus_domain {
+namespace eerie_leap::subsys::modbus {
 
 static uint16_t holding_reg[8];
 
@@ -59,4 +59,4 @@ int Modbus::WriteRegisters(uint8_t address, uint16_t start_address, void* data, 
     return modbus_write_holding_regs(client_iface_, address, start_address, (uint16_t*)data, count);
 }
 
-}  // namespace eerie_leap::domain::hardware::modbus_domain
+}  // namespace eerie_leap::subsys::modbus

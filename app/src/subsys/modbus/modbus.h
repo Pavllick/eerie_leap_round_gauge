@@ -2,7 +2,7 @@
 
 #include <zephyr/modbus/modbus.h>
 
-namespace eerie_leap::domain::hardware::modbus_domain {
+namespace eerie_leap::subsys::modbus {
 
 class Modbus {
 private:
@@ -22,4 +22,4 @@ public:
     static int WriteRegisterCallback(uint16_t addr, uint16_t reg);
 };
 
-}  // namespace eerie_leap::domain::hardware::modbus_domain
+}  // namespace eerie_leap::subsys::modbus
