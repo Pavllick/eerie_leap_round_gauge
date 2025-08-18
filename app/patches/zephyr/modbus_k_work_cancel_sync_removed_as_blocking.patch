@@ -1,0 +1,20 @@
+diff --git a/subsys/modbus/modbus_core.c b/subsys/modbus/modbus_core.c
+index 3e6f87c053b..aaee906e97e 100644
+--- a/subsys/modbus/modbus_core.c
++++ b/subsys/modbus/modbus_core.c
+@@ -376,7 +376,6 @@ init_client_error:
+ int modbus_disable(const uint8_t iface)
+ {
+ 	struct modbus_context *ctx;
+-	struct k_work_sync work_sync;
+ 
+ 	ctx = modbus_get_context(iface);
+ 	if (ctx == NULL) {
+@@ -397,7 +396,6 @@ int modbus_disable(const uint8_t iface)
+ 		LOG_ERR("Unknown MODBUS mode");
+ 	}
+ 
+-	k_work_cancel_sync(&ctx->server_work, &work_sync);
+ 	ctx->rxwait_to = 0;
+ 	ctx->unit_id = 0;
+ 	ctx->mbs_user_cb = NULL;

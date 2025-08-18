@@ -11,10 +11,13 @@
 
 #include "utilities/memory/heap_allocator.h"
 #include "utilities/dev_tools/system_info.h"
+#include "utilities/guid/guid_generator.h"
 // #include "utilities/time/boot_elapsed_time_service.h"
 
-#include "domain/device_tree/device_tree_setup.h"
 #include "subsys/modbus/modbus.h"
+
+#include "domain/device_tree/device_tree_setup.h"
+#include "domain/interface_domain/interface.h"
 // #include "domain/fs_domain/services/fs_service.h"
 
 // #include "configuration/system_config/system_config.h"
@@ -23,12 +26,15 @@
 
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::utilities::dev_tools;
+using namespace eerie_leap::utilities::guid;
 // using namespace eerie_leap::utilities::time;
 
 // using namespace eerie_leap::controllers;
 
-using namespace eerie_leap::domain::device_tree;
 using namespace eerie_leap::subsys::modbus;
+
+using namespace eerie_leap::domain::device_tree;
+using namespace eerie_leap::domain::interface_domain;
 // using namespace eerie_leap::domain::fs_domain::services;
 // using namespace eerie_leap::configuration::services;
 
@@ -128,8 +134,11 @@ int main()
     DeviceTreeSetup::Initialize();
     auto& device_tree_setup = DeviceTreeSetup::Get();
 
+    auto guid_generator = make_shared_ext<GuidGenerator>();
+
     auto modbus = make_shared_ext<Modbus>(device_tree_setup.GetModbusIface().value());
-    modbus->Initialize();
+    auto interface = make_shared_ext<Interface>(modbus, guid_generator);
+    interface->Initialize();
 
 	if (!device_is_ready(display_dev)) {
 		LOG_ERR("Device not ready, aborting test");

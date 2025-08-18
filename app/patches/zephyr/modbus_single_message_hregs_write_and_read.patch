@@ -1,0 +1,206 @@
+diff --git a/include/zephyr/modbus/modbus.h b/include/zephyr/modbus/modbus.h
+index 89b0727f102..2dd0ad6e610 100644
+--- a/include/zephyr/modbus/modbus.h
++++ b/include/zephyr/modbus/modbus.h
+@@ -373,11 +373,14 @@ struct modbus_user_callbacks {
+ 	int (*input_reg_rd_fp)(uint16_t addr, float *reg);
+ 
+ 	/** Holding Register read callback */
+-	int (*holding_reg_rd)(uint16_t addr, uint16_t *reg);
++	int (*holding_regs_rd)(uint16_t addr, uint16_t *reg, uint16_t num_regs);
+ 
+ 	/** Holding Register write callback */
+ 	int (*holding_reg_wr)(uint16_t addr, uint16_t reg);
+ 
++	/** Holding Registers write callback */
++	int (*holding_regs_wr)(uint16_t addr, uint16_t* reg, uint16_t num_regs);
++
+ 	/** Floating Point Holding Register read callback */
+ 	int (*holding_reg_rd_fp)(uint16_t addr, float *reg);
+ 
+diff --git a/subsys/modbus/modbus_server.c b/subsys/modbus/modbus_server.c
+index 2dd980f3d8e..e7d34cd8088 100644
+--- a/subsys/modbus/modbus_server.c
++++ b/subsys/modbus/modbus_server.c
+@@ -308,7 +308,7 @@ static bool mbs_fc03_hreg_read(struct modbus_context *ctx)
+ {
+ 	const uint16_t regs_limit = 125;
+ 	const uint8_t request_len = 4;
+-	uint8_t *presp;
++	// uint8_t *presp;
+ 	uint16_t err = 0;
+ 	uint16_t reg_addr;
+ 	uint16_t reg_qty;
+@@ -335,22 +335,16 @@ static bool mbs_fc03_hreg_read(struct modbus_context *ctx)
+ 	if ((reg_addr < MODBUS_FP_EXTENSIONS_ADDR) ||
+ 	    !IS_ENABLED(CONFIG_MODBUS_FP_EXTENSIONS)) {
+ 		/* Read integer register */
+-		if (ctx->mbs_user_cb->holding_reg_rd == NULL) {
++		if (ctx->mbs_user_cb->holding_regs_rd == NULL) {
+ 			mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
+ 			return true;
+ 		}
+ 
+ 	} else {
+ 		/* Read floating-point register */
+-		if (ctx->mbs_user_cb->holding_reg_rd_fp == NULL) {
+-			mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
+-			return true;
+-		}
+-
+-		if (num_bytes % sizeof(uint32_t)) {
+-			mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
+-			return true;
+-		}
++		LOG_ERR("Floating-point extensions not supported");
++		mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
++		return true;
+ 	}
+ 
+ 	/* Number of data bytes + byte count. */
+@@ -359,45 +353,26 @@ static bool mbs_fc03_hreg_read(struct modbus_context *ctx)
+ 	ctx->tx_adu.data[0] = (uint8_t)num_bytes;
+ 
+ 	/* Reset the pointer to the start of the response payload */
+-	presp = &ctx->tx_adu.data[1];
+-	/* Loop through each register requested. */
+-	while (reg_qty > 0) {
+-		if (reg_addr < MODBUS_FP_EXTENSIONS_ADDR) {
+-			uint16_t reg;
++	uint16_t *norm_prx_data = (uint16_t *)&ctx->tx_adu.data[1];
+ 
+-			/* Read integer register */
+-			err = ctx->mbs_user_cb->holding_reg_rd(reg_addr, &reg);
+-			if (err == 0) {
+-				sys_put_be16(reg, presp);
+-				presp += sizeof(uint16_t);
+-			}
+-
+-			/* Increment current register address */
+-			reg_addr++;
+-			reg_qty--;
+-		} else if (IS_ENABLED(CONFIG_MODBUS_FP_EXTENSIONS)) {
+-			float fp;
+-			uint32_t reg;
++	if (reg_addr < MODBUS_FP_EXTENSIONS_ADDR) {
++		err = ctx->mbs_user_cb->holding_regs_rd(reg_addr, norm_prx_data, reg_qty);
+ 
+-			/* Read floating-point register */
+-			err = ctx->mbs_user_cb->holding_reg_rd_fp(reg_addr, &fp);
+-			if (err == 0) {
+-				memcpy(&reg, &fp, sizeof(reg));
+-				sys_put_be32(reg, presp);
+-				presp += sizeof(uint32_t);
++		if (err == 0) {
++			for (uint16_t reg_cntr = 0; reg_cntr < reg_qty; reg_cntr++) {
++				norm_prx_data[reg_cntr] = sys_get_be16(&norm_prx_data[reg_cntr]);
+ 			}
+-
+-			/* Increment current register address */
+-			reg_addr += 2;
+-			reg_qty -= 2;
+-		}
+-
+-		if (err != 0) {
+-			LOG_INF("Holding register address not supported");
+-			mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_DATA_ADDR);
+-			return true;
+ 		}
++	} else if (IS_ENABLED(CONFIG_MODBUS_FP_EXTENSIONS)) {
++		LOG_ERR("Floating-point extensions not supported");
++		mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
++		return true;
++	}
+ 
++	if (err != 0) {
++		LOG_INF("Holding register address not supported");
++		mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_DATA_ADDR);
++		return true;
+ 	}
+ 
+ 	return true;
+@@ -831,7 +806,6 @@ static bool mbs_fc16_hregs_write(struct modbus_context *ctx)
+ 	const uint16_t regs_limit = 125;
+ 	const uint8_t request_len = 6;
+ 	const uint8_t response_len = 4;
+-	uint8_t *prx_data;
+ 	int err;
+ 	uint16_t reg_addr;
+ 	uint16_t reg_qty;
+@@ -856,21 +830,15 @@ static bool mbs_fc16_hregs_write(struct modbus_context *ctx)
+ 	if ((reg_addr < MODBUS_FP_EXTENSIONS_ADDR) ||
+ 	    !IS_ENABLED(CONFIG_MODBUS_FP_EXTENSIONS)) {
+ 		/* Write integer register */
+-		if (ctx->mbs_user_cb->holding_reg_wr == NULL) {
++		if (ctx->mbs_user_cb->holding_regs_wr == NULL) {
+ 			mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
+ 			return true;
+ 		}
+ 	} else {
+ 		/* Write floating-point register */
+-		if (ctx->mbs_user_cb->holding_reg_wr_fp == NULL) {
+-			mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
+-			return true;
+-		}
+-
+-		if (num_bytes % sizeof(uint32_t)) {
+-			mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
+-			return true;
+-		}
++		LOG_ERR("Floating-point extensions not supported");
++		mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
++		return true;
+ 	}
+ 
+ 	/* Compare number of bytes and payload length */
+@@ -887,34 +855,25 @@ static bool mbs_fc16_hregs_write(struct modbus_context *ctx)
+ 	}
+ 
+ 	/* The 1st registers data byte is 6th element in payload */
+-	prx_data = &ctx->rx_adu.data[5];
+-
+-	for (uint16_t reg_cntr = 0; reg_cntr < reg_qty;) {
+-		uint16_t addr = reg_addr + reg_cntr;
++	uint16_t *norm_prx_data = (uint16_t *)&ctx->rx_adu.data[5];
+ 
+-		if ((reg_addr < MODBUS_FP_EXTENSIONS_ADDR) ||
+-		    !IS_ENABLED(CONFIG_MODBUS_FP_EXTENSIONS)) {
+-			uint16_t reg_val = sys_get_be16(prx_data);
+-
+-			prx_data += sizeof(uint16_t);
+-			err = ctx->mbs_user_cb->holding_reg_wr(addr, reg_val);
+-			reg_cntr++;
+-		} else {
+-			uint32_t reg_val = sys_get_be32(prx_data);
+-			float fp;
+-
+-			/* Write to floating point register */
+-			memcpy(&fp, &reg_val, sizeof(uint32_t));
+-			prx_data += sizeof(uint32_t);
+-			err = ctx->mbs_user_cb->holding_reg_wr_fp(addr, fp);
+-			reg_cntr += 2;
++	if ((reg_addr < MODBUS_FP_EXTENSIONS_ADDR) ||
++	    !IS_ENABLED(CONFIG_MODBUS_FP_EXTENSIONS)) {
++		for (uint16_t reg_cntr = 0; reg_cntr < reg_qty; reg_cntr++) {
++			norm_prx_data[reg_cntr] = sys_get_be16(&norm_prx_data[reg_cntr]);
+ 		}
++	} else {
++		LOG_ERR("Floating-point extensions not supported");
++		mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
++		return true;
++	}
+ 
+-		if (err != 0) {
+-			LOG_INF("Register address not supported");
+-			mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_DATA_ADDR);
+-			return true;
+-		}
++	err = ctx->mbs_user_cb->holding_regs_wr(reg_addr, norm_prx_data, reg_qty);
++
++	if (err != 0) {
++		LOG_INF("Register address not supported");
++		mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_DATA_ADDR);
++		return true;
+ 	}
+ 
+ 	/* Assemble response payload */
