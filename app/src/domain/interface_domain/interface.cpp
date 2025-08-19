@@ -1,8 +1,12 @@
 #include <zephyr/logging/log.h>
 
+#include "utilities/time/time_helpers.hpp"
+
 #include "interface.h"
 
 namespace eerie_leap::domain::interface_domain {
+
+using namespace eerie_leap::utilities::time;
 
 LOG_MODULE_REGISTER(interface_logger);
 
@@ -32,6 +36,12 @@ int Interface::Initialize() {
     return modbus_->Initialize(callbacks);
 }
 
+int Interface::RegisterReadingHandler(size_t sensor_id_hash, ReadingHandler handler) {
+    reading_handlers_[sensor_id_hash] = std::move(handler);
+
+    return 0;
+}
+
 int Interface::Get(RequestType request_type, uint16_t* data, size_t size_bytes) {
     if(request_type == RequestType::GET_RESOLVE_SERVER_ID_GUID) {
         for(int i = 0; i < size_bytes; i++) {
@@ -55,12 +65,30 @@ int Interface::Set(RequestType request_type, uint16_t* data, size_t size_bytes) 
 
         if(guid.AsUint64() == server_guid_.AsUint64()) {
             server_id_resolved_ = true;
-            LOG_INF("Server ID resolved, ID: %d", modbus_->GetServerId());
+            LOG_DBG("Server ID resolved, ID: %d", modbus_->GetServerId());
 
             return 0;
         }
 
         return ServerIdResolveNext();
+    } else if(request_type == RequestType::SET_READING) {
+        SensorReadingDto reading = *(SensorReadingDto*)data;
+
+        auto time = TimeHelpers::FromMilliseconds(reading.timestamp_ms);
+
+        LOG_DBG("Sensor Reading - ID: %lu, Guid: %llu, Value: %.3f, Time: %s\n",
+            reading.sensor_id_hash,
+            reading.id.AsUint64(),
+            reading.value,
+            TimeHelpers::GetFormattedString(time).c_str());
+
+        auto reading_handler = reading_handlers_.find(reading.sensor_id_hash);
+        if(reading_handler == reading_handlers_.end())
+            return 0;
+
+        reading_handler->second(reading);
+
+        return 0;
     }
 
     return -1;

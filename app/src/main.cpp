@@ -60,38 +60,14 @@ void display_invalidate_cb(lv_event_t* e) {
     area->y2 |= 1;
 }
 
-void set_angle(void* obj, int32_t v) {
-    lv_arc_set_value((lv_obj_t*)obj, v);
-}
-
-void lv_example_arc_2() {
-    /*Create an Arc*/
-    lv_obj_t* arc = lv_arc_create(lv_screen_active());
-    lv_arc_set_rotation(arc, 270);
-    lv_arc_set_bg_angles(arc, 0, 360);
-    lv_obj_remove_style(arc, NULL, LV_PART_KNOB);
-    lv_obj_remove_flag(arc, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_center(arc);
-
-    lv_anim_t anim;
-    lv_anim_init(&anim);
-    lv_anim_set_var(&anim, arc);
-    lv_anim_set_exec_cb(&anim, set_angle);
-    lv_anim_set_duration(&anim, 1000);
-    lv_anim_set_repeat_count(&anim, LV_ANIM_REPEAT_INFINITE);
-    lv_anim_set_repeat_delay(&anim, 500);
-    lv_anim_set_values(&anim, 0, 100);
-    lv_anim_start(&anim);
-}
-
-lv_obj_t* ui_label = nullptr;
+static lv_obj_t* ui_label = nullptr;
 
 void update_label(void* obj, int32_t v) {
     lv_arc_set_value((lv_obj_t*)obj, v);
     lv_label_set_text(ui_label, std::to_string(v).c_str());
 }
 
-void lv_example_arc_3() {
+lv_obj_t* create_ui_arc() {
     lv_obj_t* ui_arc = lv_arc_create(lv_screen_active());
     lv_arc_set_range(ui_arc, 0, 99);
     lv_obj_set_width(ui_arc, lv_pct(100));
@@ -118,15 +94,17 @@ void lv_example_arc_3() {
     lv_obj_set_y(ui_label, -55);
 
 
-    lv_anim_t anim;
-    lv_anim_init(&anim);
-    lv_anim_set_var(&anim, ui_arc);
-    lv_anim_set_exec_cb(&anim, update_label);
-    lv_anim_set_duration(&anim, 2000);
-    lv_anim_set_repeat_count(&anim, LV_ANIM_REPEAT_INFINITE);
-    lv_anim_set_repeat_delay(&anim, 500);
-    lv_anim_set_values(&anim, 0, 99);
-    lv_anim_start(&anim);
+    // lv_anim_t anim;
+    // lv_anim_init(&anim);
+    // lv_anim_set_var(&anim, ui_arc);
+    // lv_anim_set_exec_cb(&anim, update_label);
+    // lv_anim_set_duration(&anim, 2000);
+    // lv_anim_set_repeat_count(&anim, LV_ANIM_REPEAT_INFINITE);
+    // lv_anim_set_repeat_delay(&anim, 500);
+    // lv_anim_set_values(&anim, 0, 99);
+    // lv_anim_start(&anim);
+
+    return ui_arc;
 }
 
 int main()
@@ -150,7 +128,12 @@ int main()
     auto* act_scr = lv_display_get_default();
     lv_display_add_event_cb(act_scr, display_invalidate_cb, LV_EVENT_INVALIDATE_AREA, nullptr);
 
-    lv_example_arc_3();
+    auto* ui_arc = create_ui_arc();
+    interface->RegisterReadingHandler(2348664336, [ui_arc](SensorReadingDto& reading) {
+        update_label(ui_arc, static_cast<int>(reading.value));
+
+        return 0;
+    });
 
 	display_blanking_off(display_dev);
 
