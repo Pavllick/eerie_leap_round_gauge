@@ -12,7 +12,11 @@ LOG_MODULE_REGISTER(main_view_logger);
 MainView::MainView() : indicator_objects_() {}
 
 int MainView::Render() {
-    indicator_objects_.ui_arc = CreateArcIndicator(0, 100);
+    indicator_objects_.range_start = 0;
+    indicator_objects_.range_end = 100;
+    indicator_objects_.value = 0;
+
+    indicator_objects_.ui_arc = CreateArcIndicator(indicator_objects_.range_start, indicator_objects_.range_end);
     indicator_objects_.ui_label = CreateLabelIndicator();
     value_change_animation_ = CreateValueChangeAnimation();
 
@@ -59,6 +63,8 @@ void MainView::UpdateIndicator(void* obj, int32_t value) {
 
     lv_arc_set_value(ui_arc, value);
     lv_label_set_text(ui_label, std::to_string(value).c_str());
+
+    indicator_objects->value = value;
 }
 
 lv_anim_t MainView::CreateValueChangeAnimation() {
@@ -66,7 +72,7 @@ lv_anim_t MainView::CreateValueChangeAnimation() {
     lv_anim_init(&anim);
     lv_anim_set_var(&anim, &indicator_objects_);
     lv_anim_set_exec_cb(&anim, UpdateIndicator);
-    lv_anim_set_duration(&anim, 1000);
+    lv_anim_set_duration(&anim, 100);
     lv_anim_set_repeat_count(&anim, 0);
 
     return anim;
@@ -83,9 +89,9 @@ void MainView::ValueChangeAnimation(lv_anim_t anim, int32_t range, int32_t start
 }
 
 void MainView::Update(int32_t value) {
-    // ValueChangeAnimation(value_change_animation_, 100, lv_arc_get_value(indicator_objects_.ui_arc), value);
+    ValueChangeAnimation(value_change_animation_, indicator_objects_.range_end - indicator_objects_.range_start, indicator_objects_.value, value);
 
-    UpdateIndicator(&indicator_objects_, value);
+    // UpdateIndicator(&indicator_objects_, value);
 }
 
 } // namespace eerie_leap::views::main

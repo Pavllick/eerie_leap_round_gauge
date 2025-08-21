@@ -1,6 +1,6 @@
 #include <zephyr/logging/log.h>
 
-#include "domain/sensor_domain/services/reading_processing_service.h"
+#include "domain/sensor_domain/services/reading_processor_service.h"
 
 #include "types/sensor_reading_dto.h"
 #include "interface.h"
@@ -9,10 +9,10 @@ namespace eerie_leap::domain::interface_domain {
 
 LOG_MODULE_REGISTER(interface_logger);
 
-Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<GuidGenerator> guid_generator, std::shared_ptr<ReadingProcessingService> reading_processing_service)
+Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<GuidGenerator> guid_generator, std::shared_ptr<ReadingProcessorService> reading_processor_service)
     : modbus_(modbus),
     guid_generator_(std::move(guid_generator)),
-    reading_processing_service_(std::move(reading_processing_service)),
+    reading_processor_service_(std::move(reading_processor_service)),
     server_id_(modbus->GetServerId()),
     server_id_counter_(0) {
 
@@ -71,7 +71,7 @@ int Interface::Set(RequestType request_type, uint16_t* data, size_t size_bytes) 
         return ServerIdResolveNext();
     } else if(request_type == RequestType::SET_READING) {
         SensorReadingDto reading = *(SensorReadingDto*)data;
-        reading_processing_service_->ProcessReading(reading);
+        reading_processor_service_->ProcessReading(reading);
 
         return 0;
     }

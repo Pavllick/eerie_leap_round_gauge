@@ -5,6 +5,9 @@
 namespace eerie_leap::views::main {
 
 struct LvIndicatorObjects {
+    int32_t range_start;
+    int32_t range_end;
+    int32_t value;
     lv_obj_t* ui_arc;
     lv_obj_t* ui_label;
 };

@@ -1,31 +1,36 @@
 #include <zephyr/logging/log.h>
 
 #include "utilities/memory/heap_allocator.h"
-#include "reading_processing_service.h"
-#include "reading_handler.h"
+#include "reading_processor_service.h"
 
 namespace eerie_leap::domain::sensor_domain::services {
 
 using namespace eerie_leap::utilities::memory;
 
-LOG_MODULE_REGISTER(reading_processing_service_logger);
+LOG_MODULE_REGISTER(reading_processor_service_logger);
 
-K_KERNEL_STACK_MEMBER(ReadingProcessingService::stack_area_, ReadingProcessingService::k_stack_size_);
+#ifdef CONFIG_SHARED_MULTI_HEAP
+Z_KERNEL_STACK_DEFINE_IN(ReadingProcessorService::stack_area_, ReadingProcessorService::k_stack_size_, __attribute__((section(".ext_ram.bss"))));
+#else
+K_KERNEL_STACK_MEMBER(ReadingProcessorService::stack_area_, ReadingProcessorService::k_stack_size_);
+#endif
 
-ReadingProcessingService::ReadingProcessingService() {
+ReadingProcessorService::ReadingProcessorService() {
     k_sem_init(&processing_semaphore_, 1, 1);
 };
 
-void ReadingProcessingService::Initialize() {
+void ReadingProcessorService::Initialize() {
     k_work_queue_init(&work_q);
     k_work_queue_start(&work_q, stack_area_,
         K_THREAD_STACK_SIZEOF(stack_area_),
         k_priority_, NULL);
 
-    LOG_INF("Reading processing service initialized.");
+    k_thread_name_set(&work_q.thread, "reading_processor");
+
+    LOG_INF("Reading processor service initialized.");
 }
 
-void ReadingProcessingService::ProcessReadingWorkTask(k_work* work) {
+void ReadingProcessorService::ProcessReadingWorkTask(k_work* work) {
     ReadingTask* task = CONTAINER_OF(work, ReadingTask, work);
 
     if(k_sem_take(task->processing_semaphore, PROCESSING_TIMEOUT) != 0) {
@@ -43,7 +48,7 @@ void ReadingProcessingService::ProcessReadingWorkTask(k_work* work) {
     k_sem_give(task->processing_semaphore);
 }
 
-int ReadingProcessingService::RegisterReadingHandler(size_t sensor_id_hash, ReadingHandler handler) {
+int ReadingProcessorService::RegisterReadingHandler(size_t sensor_id_hash, ReadingHandler handler) {
     auto task = make_shared_ext<ReadingTask>();
     task->processing_semaphore = &processing_semaphore_;
     task->reading_handler = std::move(handler);
@@ -56,7 +61,7 @@ int ReadingProcessingService::RegisterReadingHandler(size_t sensor_id_hash, Read
     return 0;
 }
 
-int ReadingProcessingService::ProcessReading(SensorReadingDto reading) {
+int ReadingProcessorService::ProcessReading(SensorReadingDto reading) {
     auto task = reading_tasks_.find(reading.sensor_id_hash);
     if(task == reading_tasks_.end())
         return -1;

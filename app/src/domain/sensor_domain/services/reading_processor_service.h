@@ -11,7 +11,7 @@
 
 namespace eerie_leap::domain::sensor_domain::services {
 
-class ReadingProcessingService {
+class ReadingProcessorService {
 private:
     static constexpr int k_stack_size_ = CONFIG_EERIE_LEAP_READING_PROCESSOR_THREAD_STACK_SIZE;
     static constexpr int k_priority_ = K_PRIO_COOP(10);
@@ -27,7 +27,7 @@ private:
     static void ProcessReadingWorkTask(k_work* work);
 
 public:
-    ReadingProcessingService();
+    ReadingProcessorService();
 
     void Initialize();
 
