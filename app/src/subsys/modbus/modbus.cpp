@@ -10,7 +10,7 @@ namespace eerie_leap::subsys::modbus {
 // callbacks have to be static, but we need to access instance members
 Modbus* instance = nullptr;
 
-Modbus::Modbus(const char* iface_name) : iface_name_(iface_name), client_iface_(modbus_iface_get_by_name(iface_name_)) {
+Modbus::Modbus(const char* iface_name, uint8_t server_id) : iface_name_(iface_name), client_iface_(modbus_iface_get_by_name(iface_name_)) {
     callbacks_ = {
         .holding_regs_rd = ReadRegistersCallback,
         .holding_reg_wr = WriteRegisterCallback,
@@ -21,7 +21,7 @@ Modbus::Modbus(const char* iface_name) : iface_name_(iface_name), client_iface_(
         .mode = MODBUS_MODE_RTU,
         .server = {
             .user_cb = &callbacks_,
-            .unit_id = 1,
+            .unit_id = server_id,
         },
         .serial = {
             .baud = CONFIG_EERIE_LEAP_MODBUS_BAUD_RATE,

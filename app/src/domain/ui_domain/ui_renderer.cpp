@@ -11,11 +11,8 @@ LOG_MODULE_REGISTER(renderer_logger);
 
 const device* UiRenderer::display_dev_ = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
 
-#ifdef CONFIG_SHARED_MULTI_HEAP
-Z_KERNEL_STACK_DEFINE_IN(UiRenderer::stack_area_, UiRenderer::k_stack_size_, __attribute__((section(".ext_ram.bss"))));
-#else
+// Should be allocated on internal RAM to take an advantage of DMA for rendering
 K_KERNEL_STACK_MEMBER(UiRenderer::stack_area_, UiRenderer::k_stack_size_);
-#endif
 
 int UiRenderer::Initialize() {
     if(!device_is_ready(display_dev_)) {

@@ -1,19 +1,23 @@
 #include <zephyr/logging/log.h>
 
-#include "utilities/time/time_helpers.hpp"
+#include "domain/sensor_domain/services/reading_processing_service.h"
 
+#include "types/sensor_reading_dto.h"
 #include "interface.h"
 
 namespace eerie_leap::domain::interface_domain {
 
-using namespace eerie_leap::utilities::time;
-
 LOG_MODULE_REGISTER(interface_logger);
 
-Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<GuidGenerator> guid_generator)
-    : modbus_(modbus), guid_generator_(guid_generator), server_id_(modbus->GetServerId()), server_id_counter_(0) {
-        server_id_resolved_ = server_id_ != Modbus::DEFAULT_SERVER_ID;
-    }
+Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<GuidGenerator> guid_generator, std::shared_ptr<ReadingProcessingService> reading_processing_service)
+    : modbus_(modbus),
+    guid_generator_(std::move(guid_generator)),
+    reading_processing_service_(std::move(reading_processing_service)),
+    server_id_(modbus->GetServerId()),
+    server_id_counter_(0) {
+
+    server_id_resolved_ = server_id_ != Modbus::DEFAULT_SERVER_ID;
+}
 
 int Interface::Initialize() {
     server_guid_ = guid_generator_->Generate();
@@ -34,12 +38,6 @@ int Interface::Initialize() {
     };
 
     return modbus_->Initialize(callbacks);
-}
-
-int Interface::RegisterReadingHandler(size_t sensor_id_hash, ReadingHandler handler) {
-    reading_handlers_[sensor_id_hash] = std::move(handler);
-
-    return 0;
 }
 
 int Interface::Get(RequestType request_type, uint16_t* data, size_t size_bytes) {
@@ -73,20 +71,7 @@ int Interface::Set(RequestType request_type, uint16_t* data, size_t size_bytes) 
         return ServerIdResolveNext();
     } else if(request_type == RequestType::SET_READING) {
         SensorReadingDto reading = *(SensorReadingDto*)data;
-
-        auto time = TimeHelpers::FromMilliseconds(reading.timestamp_ms);
-
-        LOG_DBG("Sensor Reading - ID: %lu, Guid: %llu, Value: %.3f, Time: %s\n",
-            reading.sensor_id_hash,
-            reading.id.AsUint64(),
-            reading.value,
-            TimeHelpers::GetFormattedString(time).c_str());
-
-        auto reading_handler = reading_handlers_.find(reading.sensor_id_hash);
-        if(reading_handler == reading_handlers_.end())
-            return 0;
-
-        reading_handler->second(reading);
+        reading_processing_service_->ProcessReading(reading);
 
         return 0;
     }

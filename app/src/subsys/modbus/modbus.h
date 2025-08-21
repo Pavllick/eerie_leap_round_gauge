@@ -17,7 +17,7 @@ private:
 public:
     static const uint8_t DEFAULT_SERVER_ID = 0xFF;
 
-    Modbus(const char* iface_name);
+    Modbus(const char* iface_name, uint8_t server_id = DEFAULT_SERVER_ID);
 
     int Initialize(ModbusCallbacks callbacks_ext);
     int UpdateServerId(uint8_t server_id);

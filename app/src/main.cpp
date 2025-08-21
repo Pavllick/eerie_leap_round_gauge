@@ -15,6 +15,7 @@
 #include "domain/device_tree/device_tree_setup.h"
 #include "domain/interface_domain/interface.h"
 #include "domain/ui_domain/ui_renderer.h"
+#include "domain/sensor_domain/services/reading_processing_service.h"
 // #include "domain/fs_domain/services/fs_service.h"
 
 #include "views/main/main_view.h"
@@ -37,6 +38,7 @@ using namespace eerie_leap::subsys::modbus;
 using namespace eerie_leap::domain::device_tree;
 using namespace eerie_leap::domain::interface_domain;
 using namespace eerie_leap::domain::ui_domain;
+using namespace eerie_leap::domain::sensor_domain::services;
 // using namespace eerie_leap::domain::fs_domain::services;
 // using namespace eerie_leap::configuration::services;
 
@@ -57,15 +59,18 @@ int main()
 
     auto guid_generator = make_shared_ext<GuidGenerator>();
 
-    auto modbus = make_shared_ext<Modbus>(device_tree_setup.GetModbusIface().value());
-    auto interface = make_shared_ext<Interface>(modbus, guid_generator);
+    auto reading_processing_service = make_shared_ext<ReadingProcessingService>();
+    reading_processing_service->Initialize();
+
+    auto modbus = make_shared_ext<Modbus>(device_tree_setup.GetModbusIface().value(), 1);
+    auto interface = make_shared_ext<Interface>(modbus, guid_generator, reading_processing_service);
     if(interface->Initialize() != 0)
         return -1;
 
     auto main_view = make_shared_ext<MainView>();
 
-    auto ui_controller = make_shared_ext<UiController>(interface, main_view);
-    if(ui_controller->Initialize() != 0)
+    auto ui_controller = make_shared_ext<UiController>(reading_processing_service, interface, main_view);
+    if(ui_controller->Initialize({ 2348664336 }) != 0)
         return -1;
 
     auto ui_renderer = make_shared_ext<UiRenderer>();
