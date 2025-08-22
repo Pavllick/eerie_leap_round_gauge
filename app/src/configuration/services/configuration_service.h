@@ -9,7 +9,7 @@
 
 #include "utilities/memory/heap_allocator.h"
 #include "configuration/cbor_traits/system_config_trait.h"
-#include "domain/fs_domain/services/i_fs_service.h"
+#include "subsys/fs/services/i_fs_service.h"
 #include "utilities/cbor/cbor_serializer.hpp"
 #include "loaded_config.hpp"
 
@@ -17,7 +17,7 @@ namespace eerie_leap::configuration::services {
 
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::configuration::traits;
-using namespace eerie_leap::domain::fs_domain::services;
+using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::utilities::cbor;
 
 template <typename T>

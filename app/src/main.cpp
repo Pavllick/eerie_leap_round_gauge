@@ -10,13 +10,13 @@
 #include "utilities/guid/guid_generator.h"
 // #include "utilities/time/boot_elapsed_time_service.h"
 
+#include "subsys/fs/services/fs_service.h"
 #include "subsys/modbus/modbus.h"
 
 #include "domain/device_tree/device_tree_setup.h"
 #include "domain/interface_domain/interface.h"
 #include "domain/ui_domain/ui_renderer.h"
 #include "domain/sensor_domain/services/reading_processor_service.h"
-// #include "domain/fs_domain/services/fs_service.h"
 
 #include "views/main_view.h"
 
@@ -33,13 +33,13 @@ using namespace eerie_leap::utilities::guid;
 
 // using namespace eerie_leap::controllers;
 
+using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::modbus;
 
 using namespace eerie_leap::domain::device_tree;
 using namespace eerie_leap::domain::interface_domain;
 using namespace eerie_leap::domain::ui_domain;
 using namespace eerie_leap::domain::sensor_domain::services;
-// using namespace eerie_leap::domain::fs_domain::services;
 // using namespace eerie_leap::configuration::services;
 
 using namespace eerie_leap::views;
@@ -54,15 +54,21 @@ const size_t DISPLAY_HEIGHT = 466;
 
 int main()
 {
-    DeviceTreeSetup::Initialize();
-    auto& device_tree_setup = DeviceTreeSetup::Get();
+    auto& device_tree_setup = DeviceTreeSetup::Create();
+    device_tree_setup->Initialize();
+
+    auto fs_service = make_shared_ext<FsService>(device_tree_setup->GetInternalFsMp().value());
+    if(!fs_service->Initialize()) {
+        LOG_ERR("Failed to initialize File System.");
+        return -1;
+    }
 
     auto guid_generator = make_shared_ext<GuidGenerator>();
 
     auto reading_processor_service = make_shared_ext<ReadingProcessorService>();
     reading_processor_service->Initialize();
 
-    auto modbus = make_shared_ext<Modbus>(device_tree_setup.GetModbusIface().value(), 1);
+    auto modbus = make_shared_ext<Modbus>(device_tree_setup->GetModbusIface().value(), 1);
     auto interface = make_shared_ext<Interface>(modbus, guid_generator, reading_processor_service);
     if(interface->Initialize() != 0)
         return -1;

@@ -1,15 +1,15 @@
 #pragma once
 
-#include <vector>
+#include <memory>
 #include <optional>
 
 #include <zephyr/devicetree.h>
 #include <zephyr/device.h>
 #include <zephyr/fs/fs.h>
 
-// // File System
-// #define INT_FS_NODE DT_ALIAS(lfs1)
-// FS_FSTAB_DECLARE_ENTRY(INT_FS_NODE);
+// File System
+#define INT_FS_NODE DT_ALIAS(lfs1)
+FS_FSTAB_DECLARE_ENTRY(INT_FS_NODE);
 
 // Modbus
 #if DT_HAS_ALIAS(modbus0)
@@ -20,6 +20,8 @@ namespace eerie_leap::domain::device_tree {
 
 class DeviceTreeSetup {
 private:
+    static std::shared_ptr<DeviceTreeSetup> instance_;
+
     static std::optional<fs_mount_t> int_fs_mp_;
     static std::optional<fs_mount_t> sd_fs_mp_;
     static std::optional<char*> modbus_iface_;
@@ -33,12 +35,13 @@ private:
     static void InitAdc();
 
 public:
-    static DeviceTreeSetup& Get();
-    static void Initialize();
+    static std::shared_ptr<DeviceTreeSetup>& Create();
+    static std::shared_ptr<DeviceTreeSetup>& Get();
+    void Initialize();
 
-    static std::optional<fs_mount_t>& GetInternalFsMp() { return int_fs_mp_; }
-    static std::optional<fs_mount_t>& GetSdFsMp() { return sd_fs_mp_; }
-    static std::optional<char*>& GetModbusIface() { return modbus_iface_; }
+    std::optional<fs_mount_t>& GetInternalFsMp() { return int_fs_mp_; }
+    std::optional<fs_mount_t>& GetSdFsMp() { return sd_fs_mp_; }
+    std::optional<char*>& GetModbusIface() { return modbus_iface_; }
 };
 
 } // namespace eerie_leap::domain::device_tree

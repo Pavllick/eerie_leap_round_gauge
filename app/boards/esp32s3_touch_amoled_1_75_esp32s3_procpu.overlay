@@ -3,6 +3,7 @@
 
 / {
     aliases {
+        lfs1 = &lfs1;
         modbus0 = &modbus0;
     };
 
@@ -10,6 +11,35 @@
         zephyr,console = &usb_serial;
         zephyr,shell-uart = &usb_serial;
     };
+
+    fstab {
+        compatible = "zephyr,fstab";
+
+        lfs1: lfs1 {
+            compatible = "zephyr,fstab,littlefs";
+            read-size = <16>;
+			prog-size = <256>;
+			cache-size = <256>;
+			lookahead-size = <32>;
+            block-cycles = <512>;
+            partition = <&lfs1_partition>;
+            mount-point = "/lfs1";
+            automount;
+        };
+    };
+};
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		lfs1_partition: partition@700000 {
+			label = "lfs1_storage";
+			reg = <0x700000 DT_SIZE_M(1)>; // 1MB at offset 7MB
+		};
+	};
 };
 
 &usb_serial {
@@ -39,4 +69,8 @@
 			bias-pull-up;
 		};
 	};
+};
+
+&spi3 {
+	status = "okay";
 };

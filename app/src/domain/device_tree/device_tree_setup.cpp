@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <optional>
 
 #include <zephyr/logging/log.h>
 
@@ -7,6 +8,8 @@
 namespace eerie_leap::domain::device_tree {
 
 LOG_MODULE_REGISTER(dt_setup_logger);
+
+std::shared_ptr<DeviceTreeSetup> DeviceTreeSetup::instance_ = nullptr;
 
 std::optional<fs_mount_t> DeviceTreeSetup::int_fs_mp_ = std::nullopt;
 std::optional<fs_mount_t> DeviceTreeSetup::sd_fs_mp_ = std::nullopt;
@@ -18,14 +21,20 @@ void DeviceTreeSetup::Initialize() {
     InitModbus();
 }
 
-DeviceTreeSetup& DeviceTreeSetup::Get() {
-    static DeviceTreeSetup instance;
-    return instance;
+std::shared_ptr<DeviceTreeSetup>& DeviceTreeSetup::Create() {
+    if(instance_ == nullptr)
+        instance_ = std::shared_ptr<DeviceTreeSetup>(new DeviceTreeSetup());
+
+    return instance_;
+}
+
+std::shared_ptr<DeviceTreeSetup>& DeviceTreeSetup::Get() {
+    return instance_;
 }
 
 void DeviceTreeSetup::InitInternalFs() {
-    // int_fs_mp_ = std::make_optional<fs_mount_t>(FS_FSTAB_ENTRY(INT_FS_NODE));
-    // LOG_INF("Internal File System initialized.");
+    int_fs_mp_ = std::make_optional<fs_mount_t>(FS_FSTAB_ENTRY(INT_FS_NODE));
+    LOG_INF("Internal File System initialized.");
 }
 
 void DeviceTreeSetup::InitSdFs() {

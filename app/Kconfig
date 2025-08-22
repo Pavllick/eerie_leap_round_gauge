@@ -2,10 +2,6 @@ menu "Zephyr"
 source "Kconfig.zephyr"
 endmenu
 
-config EERIE_LEAP_MODBUS_BAUD_RATE
-	int "Modbus baud rate"
-	default 115200
-
 config EERIE_LEAP_UI_RENDERER_THREAD_STACK_SIZE
 	int "UI renderer thread stack size"
 	default 8192
@@ -13,6 +9,26 @@ config EERIE_LEAP_UI_RENDERER_THREAD_STACK_SIZE
 config EERIE_LEAP_READING_PROCESSOR_THREAD_STACK_SIZE
 	int "Reading processor thread stack size"
 	default 4096
+
+config EERIE_LEAP_FS_SD_THREAD_STACK_SIZE
+	int "SD thread stack size"
+	default 2048
+
+config EERIE_LEAP_SD_CHECK_INTERVAL_MS
+	int "SD check interval ms"
+	default 1000
+
+config EERIE_LEAP_SD_DRIVE_NAME
+	string "SD drive name"
+	default "SD"
+
+config EERIE_LEAP_SD_MOUNT_POINT
+	string "SD mount point"
+	default "/ext"
+
+config EERIE_LEAP_MODBUS_BAUD_RATE
+	int "Modbus baud rate"
+	default 115200
 
 module = APP
 module-str = APP

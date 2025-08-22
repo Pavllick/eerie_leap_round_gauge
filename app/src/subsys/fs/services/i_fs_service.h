@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace eerie_leap::domain::fs_domain::services {
+namespace eerie_leap::subsys::fs::services {
 
 class IFsService {
 public:
@@ -20,4 +20,4 @@ public:
     virtual bool Format() = 0;
 };
 
-} // namespace eerie_leap::domain::fs_domain::services
+} // namespace eerie_leap::subsys::fs::services
