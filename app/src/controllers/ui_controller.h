@@ -6,13 +6,13 @@
 
 #include "domain/interface_domain/interface.h"
 #include "domain/sensor_domain/services/reading_processor_service.h"
-#include "views/main/main_view.h"
+#include "views/main_view.h"
 
 namespace eerie_leap::controllers {
 
 using namespace eerie_leap::domain::interface_domain;
 using namespace eerie_leap::domain::sensor_domain::services;
-using namespace eerie_leap::views::main;
+using namespace eerie_leap::views;
 
 class UiController {
 private:

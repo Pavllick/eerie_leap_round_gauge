@@ -18,7 +18,7 @@
 #include "domain/sensor_domain/services/reading_processor_service.h"
 // #include "domain/fs_domain/services/fs_service.h"
 
-#include "views/main/main_view.h"
+#include "views/main_view.h"
 
 #include "controllers/ui_controller.h"
 
@@ -42,7 +42,7 @@ using namespace eerie_leap::domain::sensor_domain::services;
 // using namespace eerie_leap::domain::fs_domain::services;
 // using namespace eerie_leap::configuration::services;
 
-using namespace eerie_leap::views::main;
+using namespace eerie_leap::views;
 
 using namespace eerie_leap::controllers;
 

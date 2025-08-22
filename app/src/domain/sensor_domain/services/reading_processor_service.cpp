@@ -1,11 +1,13 @@
 #include <zephyr/logging/log.h>
 
 #include "utilities/memory/heap_allocator.h"
+#include "utilities/time/time_helpers.hpp"
 #include "reading_processor_service.h"
 
 namespace eerie_leap::domain::sensor_domain::services {
 
 using namespace eerie_leap::utilities::memory;
+using namespace eerie_leap::utilities::time;
 
 LOG_MODULE_REGISTER(reading_processor_service_logger);
 
@@ -39,9 +41,11 @@ void ReadingProcessorService::ProcessReadingWorkTask(k_work* work) {
         return;
     }
 
-    LOG_INF("Sensor Reading - ID: %lu, Value: %.3f\n",
+    LOG_DBG("Sensor Reading - ID: %lu, Guid: %llu, Value: %.3f, Time: %s\n",
         task->reading.sensor_id_hash,
-        task->reading.value);
+        task->reading.id.AsUint64(),
+        task->reading.value,
+        TimeHelpers::GetFormattedString(TimeHelpers::FromMilliseconds(task->reading.timestamp_ms)).c_str());
 
     task->reading_handler(task->reading);
 

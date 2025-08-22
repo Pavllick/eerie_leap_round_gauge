@@ -19,7 +19,7 @@ int UiController::Initialize(std::vector<uint32_t> sensor_ids) {
             if(reading.status != ReadingStatus::PROCESSED)
                 return -1;
 
-            main_view_->Update(static_cast<int>(reading.value));
+            main_view_->Update(reading.value);
 
             return 0;
         });
