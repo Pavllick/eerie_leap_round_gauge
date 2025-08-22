@@ -22,16 +22,16 @@
 
 #include "controllers/ui_controller.h"
 
-// #include "configuration/system_config/system_config.h"
-// #include "configuration/services/configuration_service.h"
-// #include "controllers/system_configuration_controller.h"
+#include "configuration/services/configuration_service.h"
+#include "configuration/system_config/system_config.h"
+#include "controllers/configuation/system_configuration_controller.h"
 
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::utilities::dev_tools;
 using namespace eerie_leap::utilities::guid;
 // using namespace eerie_leap::utilities::time;
 
-// using namespace eerie_leap::controllers;
+using namespace eerie_leap::controllers;
 
 using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::modbus;
@@ -40,11 +40,12 @@ using namespace eerie_leap::domain::device_tree;
 using namespace eerie_leap::domain::interface_domain;
 using namespace eerie_leap::domain::ui_domain;
 using namespace eerie_leap::domain::sensor_domain::services;
-// using namespace eerie_leap::configuration::services;
+using namespace eerie_leap::configuration::services;
 
 using namespace eerie_leap::views;
 
 using namespace eerie_leap::controllers;
+using namespace eerie_leap::controllers::configuation;
 
 LOG_MODULE_REGISTER(main_logger);
 
@@ -67,6 +68,14 @@ int main()
 
     auto reading_processor_service = make_shared_ext<ReadingProcessorService>();
     reading_processor_service->Initialize();
+
+    auto system_config_service = make_shared_ext<ConfigurationService<SystemConfig>>("system_config", fs_service);
+    auto system_configuration_controller = make_shared_ext<SystemConfigurationController>(system_config_service);
+
+    auto system_config = std::make_shared<SystemConfiguration>();
+    // system_config->hw_version = 0x00000001;
+    // system_config->sw_version = 0x00000001;
+    // system_configuration_controller->Update(system_config);
 
     auto modbus = make_shared_ext<Modbus>(device_tree_setup->GetModbusIface().value(), 1);
     auto interface = make_shared_ext<Interface>(modbus, guid_generator, reading_processor_service);

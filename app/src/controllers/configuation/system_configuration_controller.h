@@ -6,7 +6,7 @@
 #include "configuration/services/configuration_service.h"
 #include "domain/system_domain/system_configuration.h"
 
-namespace eerie_leap::controllers {
+namespace eerie_leap::controllers::configuation {
 
 using namespace eerie_leap::configuration::services;
 using namespace eerie_leap::domain::system_domain;
@@ -25,4 +25,4 @@ public:
     std::shared_ptr<SystemConfiguration> Get(bool force_load = false);
 };
 
-} // namespace eerie_leap::controllers
+} // namespace eerie_leap::controllers::configuation

@@ -1,7 +1,7 @@
 #include "utilities/memory/heap_allocator.h"
 #include "system_configuration_controller.h"
 
-namespace eerie_leap::controllers {
+namespace eerie_leap::controllers::configuation {
 
 LOG_MODULE_REGISTER(system_config_ctrl_logger);
 
@@ -52,4 +52,4 @@ std::shared_ptr<SystemConfiguration> SystemConfigurationController::Get(bool for
     return system_configuration_;
 }
 
-} // namespace eerie_leap::controllers
+} // namespace eerie_leap::controllers::configuation
