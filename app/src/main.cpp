@@ -72,10 +72,7 @@ int main()
     auto system_config_service = make_shared_ext<ConfigurationService<SystemConfig>>("system_config", fs_service);
     auto system_configuration_controller = make_shared_ext<SystemConfigurationController>(system_config_service);
 
-    auto system_config = std::make_shared<SystemConfiguration>();
-    // system_config->hw_version = 0x00000001;
-    // system_config->sw_version = 0x00000001;
-    // system_configuration_controller->Update(system_config);
+    auto system_config = system_configuration_controller->Get();
 
     auto modbus = make_shared_ext<Modbus>(device_tree_setup->GetModbusIface().value(), 1);
     auto interface = make_shared_ext<Interface>(modbus, guid_generator, reading_processor_service);

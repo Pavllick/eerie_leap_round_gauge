@@ -1,4 +1,5 @@
 #include <zephyr/kernel.h>
+
 #include "guid_generator.h"
 
 namespace eerie_leap::utilities::guid {

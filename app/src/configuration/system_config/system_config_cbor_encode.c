@@ -33,8 +33,11 @@ static bool encode_SystemConfig(
 {
 	zcbor_log("%s\r\n", __func__);
 
-	bool res = (((zcbor_list_start_encode(state, 2) && ((((zcbor_uint32_encode(state, (&(*input).hw_version))))
-	&& ((zcbor_uint32_encode(state, (&(*input).sw_version))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 2))));
+	bool res = (((zcbor_list_start_encode(state, 5) && ((((zcbor_uint64_encode(state, (&(*input).device_id))))
+	&& ((zcbor_uint32_encode(state, (&(*input).hw_version))))
+	&& ((zcbor_uint32_encode(state, (&(*input).sw_version))))
+	&& ((zcbor_uint32_encode(state, (&(*input).build_number))))
+	&& ((zcbor_uint32_encode(state, (&(*input).interface_channel))))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 5))));
 
 	log_result(state, res, __func__);
 	return res;

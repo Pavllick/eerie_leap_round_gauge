@@ -33,8 +33,11 @@ static bool decode_SystemConfig(
 {
 	zcbor_log("%s\r\n", __func__);
 
-	bool res = (((zcbor_list_start_decode(state) && ((((zcbor_uint32_decode(state, (&(*result).hw_version))))
-	&& ((zcbor_uint32_decode(state, (&(*result).sw_version))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
+	bool res = (((zcbor_list_start_decode(state) && ((((zcbor_uint64_decode(state, (&(*result).device_id))))
+	&& ((zcbor_uint32_decode(state, (&(*result).hw_version))))
+	&& ((zcbor_uint32_decode(state, (&(*result).sw_version))))
+	&& ((zcbor_uint32_decode(state, (&(*result).build_number))))
+	&& ((zcbor_uint32_decode(state, (&(*result).interface_channel))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
 
 	log_result(state, res, __func__);
 	return res;

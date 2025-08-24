@@ -2,15 +2,14 @@
 
 #include <atomic>
 #include <memory>
-#include <zephyr/random/random.h>
+
+#include "subsys/random/rng.h"
 
 #include "guid.hpp"
-#include "utilities/time/i_time_service.h"
 
 namespace eerie_leap::utilities::guid {
 
-using namespace std::chrono;
-using namespace eerie_leap::utilities::time;
+using namespace eerie_leap::subsys::random;
 
 class GuidGenerator {
 private:
@@ -18,7 +17,7 @@ private:
     std::atomic<uint16_t> counter_;
 
 public:
-    explicit GuidGenerator() : device_hash_(sys_rand32_get()), counter_(0) {}
+    explicit GuidGenerator() : device_hash_(Rng::Get16(true)), counter_(0) {}
 
     Guid Generate();
 };

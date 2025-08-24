@@ -26,8 +26,11 @@ extern "C" {
 #define DEFAULT_MAX_QTY 24
 
 struct SystemConfig {
+	uint64_t device_id;
 	uint32_t hw_version;
 	uint32_t sw_version;
+	uint32_t build_number;
+	uint32_t interface_channel;
 };
 
 #ifdef __cplusplus
