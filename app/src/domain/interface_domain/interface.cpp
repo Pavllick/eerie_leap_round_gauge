@@ -9,9 +9,9 @@ namespace eerie_leap::domain::interface_domain {
 
 LOG_MODULE_REGISTER(interface_logger);
 
-Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<GuidGenerator> guid_generator, std::shared_ptr<ReadingProcessorService> reading_processor_service)
+Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<SystemConfigurationController> system_configuration_controller, std::shared_ptr<ReadingProcessorService> reading_processor_service)
     : modbus_(modbus),
-    guid_generator_(std::move(guid_generator)),
+    system_configuration_controller_(std::move(system_configuration_controller)),
     reading_processor_service_(std::move(reading_processor_service)),
     server_id_(modbus->GetServerId()),
     server_id_counter_(0) {
@@ -20,8 +20,7 @@ Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<GuidGenerat
 }
 
 int Interface::Initialize() {
-    server_guid_ = guid_generator_->Generate();
-    LOG_INF("Interface Server GUID: %llu", server_guid_.AsUint64());
+    device_id_ = system_configuration_controller_->Get()->device_id;
 
     ModbusCallbacks callbacks = {
         .holding_regs_rd = [this](uint16_t addr, uint16_t *reg, uint16_t num_regs) -> int {
@@ -43,7 +42,7 @@ int Interface::Initialize() {
 int Interface::Get(RequestType request_type, uint16_t* data, size_t size_bytes) {
     if(request_type == RequestType::GET_RESOLVE_SERVER_ID_GUID) {
         for(int i = 0; i < size_bytes; i++) {
-            data[i] = ((uint16_t*)&server_guid_)[i];
+            data[i] = ((uint16_t*)&device_id_)[i];
         }
 
         return 0;
@@ -53,15 +52,18 @@ int Interface::Get(RequestType request_type, uint16_t* data, size_t size_bytes) 
 }
 
 int Interface::Set(RequestType request_type, uint16_t* data, size_t size_bytes) {
-    if(request_type == RequestType::GET_RESOLVE_SERVER_ID) {
+    if(request_type == RequestType::SET_RESOLVE_SERVER_ID) {
         server_id_resolved_ = false;
         server_id_counter_ = 0;
 
         return ServerIdResolveNext();
     } else if(request_type == RequestType::SET_RESOLVE_SERVER_ID_GUID) {
-        Guid guid = *(Guid*)data;
+        uint64_t device_id = *(uint64_t*)data;
 
-        if(guid.AsUint64() == server_guid_.AsUint64()) {
+        if(device_id == device_id_) {
+            if(!system_configuration_controller_->UpdateInterfaceChannel(modbus_->GetServerId()))
+                return -1;
+
             server_id_resolved_ = true;
             LOG_DBG("Server ID resolved, ID: %d", modbus_->GetServerId());
 

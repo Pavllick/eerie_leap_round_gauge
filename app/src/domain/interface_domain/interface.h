@@ -3,29 +3,29 @@
 #include <cstdint>
 #include <memory>
 
-#include "utilities/guid/guid_generator.h"
 #include "subsys/modbus/modbus.h"
 #include "domain/sensor_domain/services/reading_processor_service.h"
+#include "controllers/configuation/system_configuration_controller.h"
 
 #include "types/request_type.h"
 
 namespace eerie_leap::domain::interface_domain {
 
-using namespace eerie_leap::utilities::guid;
 using namespace eerie_leap::subsys::modbus;
 using namespace eerie_leap::domain::sensor_domain::services;
 using namespace eerie_leap::domain::interface_domain::types;
+using namespace eerie_leap::controllers::configuation;
 
 class Interface {
 private:
     std::shared_ptr<Modbus> modbus_;
-    std::shared_ptr<GuidGenerator> guid_generator_;
+    std::shared_ptr<SystemConfigurationController> system_configuration_controller_;
     std::shared_ptr<ReadingProcessorService> reading_processor_service_;
 
     uint8_t server_id_;
     uint8_t server_id_counter_;
     bool server_id_resolved_;
-    Guid server_guid_;
+    uint64_t device_id_;
 
     static const uint16_t RESPONSE_SUCCESS = 0;
     static const uint16_t RESPONSE_FAILURE = 1;
@@ -41,7 +41,9 @@ private:
     int ServerIdResolveNext();
 
 public:
-    explicit Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<GuidGenerator> guid_generator, std::shared_ptr<ReadingProcessorService> reading_processor_service);
+    Interface(std::shared_ptr<Modbus> modbus,
+        std::shared_ptr<SystemConfigurationController> system_configuration_controller,
+        std::shared_ptr<ReadingProcessorService> reading_processor_service);
     int Initialize();
 };
 

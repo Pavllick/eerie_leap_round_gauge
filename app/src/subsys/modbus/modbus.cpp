@@ -21,13 +21,15 @@ Modbus::Modbus(const char* iface_name, uint8_t server_id) : iface_name_(iface_na
         .mode = MODBUS_MODE_RTU,
         .server = {
             .user_cb = &callbacks_,
-            .unit_id = server_id,
+            .unit_id = server_id == 0 ? DEFAULT_SERVER_ID : server_id,
         },
         .serial = {
             .baud = CONFIG_EERIE_LEAP_MODBUS_BAUD_RATE,
             .parity = UART_CFG_PARITY_NONE,
         },
     };
+
+    LOG_INF("Modbus initialized, server ID: %d", server_id);
 
     instance = this;
 }

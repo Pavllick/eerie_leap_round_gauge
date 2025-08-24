@@ -72,10 +72,10 @@ int main()
     auto system_config_service = make_shared_ext<ConfigurationService<SystemConfig>>("system_config", fs_service);
     auto system_configuration_controller = make_shared_ext<SystemConfigurationController>(system_config_service);
 
-    auto system_config = system_configuration_controller->Get();
-
-    auto modbus = make_shared_ext<Modbus>(device_tree_setup->GetModbusIface().value(), 1);
-    auto interface = make_shared_ext<Interface>(modbus, guid_generator, reading_processor_service);
+    auto modbus = make_shared_ext<Modbus>(
+        device_tree_setup->GetModbusIface().value(),
+        system_configuration_controller->Get()->interface_channel);
+    auto interface = make_shared_ext<Interface>(modbus, system_configuration_controller, reading_processor_service);
     if(interface->Initialize() != 0)
         return -1;
 
