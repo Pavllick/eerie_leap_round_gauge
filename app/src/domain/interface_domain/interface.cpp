@@ -17,6 +17,7 @@ Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<SystemConfi
     server_id_counter_(0) {
 
     server_id_resolved_ = server_id_ != Modbus::DEFAULT_SERVER_ID;
+    status_ = ComUserStatus::NOT_CONFIGURED;
 }
 
 int Interface::Initialize() {
@@ -39,10 +40,24 @@ int Interface::Initialize() {
     return modbus_->Initialize(callbacks);
 }
 
-int Interface::Get(RequestType request_type, uint16_t* data, size_t size_bytes) {
-    if(request_type == RequestType::GET_RESOLVE_SERVER_ID_GUID) {
-        for(int i = 0; i < size_bytes; i++) {
+void Interface::SetStatus(ComUserStatus status) {
+    status_ = status;
+}
+
+ComUserStatus Interface::GetStatus() const {
+    return status_;
+}
+
+int Interface::Get(ComRequestType com_request_type, uint16_t* data, size_t size_bytes) {
+    if(com_request_type == ComRequestType::GET_RESOLVE_SERVER_ID_GUID) {
+        for(int i = 0; i < size_bytes / 2; i++) {
             data[i] = ((uint16_t*)&device_id_)[i];
+        }
+
+        return 0;
+    } else if(com_request_type == ComRequestType::GET_STATUS) {
+        for(int i = 0; i < size_bytes / 2; i++) {
+            data[0] = (uint16_t)status_;
         }
 
         return 0;
@@ -51,13 +66,13 @@ int Interface::Get(RequestType request_type, uint16_t* data, size_t size_bytes) 
     return -1;
 }
 
-int Interface::Set(RequestType request_type, uint16_t* data, size_t size_bytes) {
-    if(request_type == RequestType::SET_RESOLVE_SERVER_ID) {
+int Interface::Set(ComRequestType com_request_type, uint16_t* data, size_t size_bytes) {
+    if(com_request_type == ComRequestType::SET_RESOLVE_SERVER_ID) {
         server_id_resolved_ = false;
         server_id_counter_ = 0;
 
         return ServerIdResolveNext();
-    } else if(request_type == RequestType::SET_RESOLVE_SERVER_ID_GUID) {
+    } else if(com_request_type == ComRequestType::SET_RESOLVE_SERVER_ID_GUID) {
         uint64_t device_id = *(uint64_t*)data;
 
         if(device_id == device_id_) {
@@ -71,9 +86,15 @@ int Interface::Set(RequestType request_type, uint16_t* data, size_t size_bytes) 
         }
 
         return ServerIdResolveNext();
-    } else if(request_type == RequestType::SET_READING) {
+    } else if(com_request_type == ComRequestType::SET_READING) {
         SensorReadingDto reading = *(SensorReadingDto*)data;
         reading_processor_service_->ProcessReading(reading);
+
+        return 0;
+    } else if(com_request_type == ComRequestType::SET_ACK) {
+        ComUserStatus ack_status = *(ComUserStatus*)data;
+        if(ack_status == status_)
+            status_ = ComUserStatus::OK;
 
         return 0;
     }
@@ -82,19 +103,19 @@ int Interface::Set(RequestType request_type, uint16_t* data, size_t size_bytes) 
 }
 
 int Interface::ReadHoldingRegister(uint16_t addr, uint16_t *reg) {
-    return Get(static_cast<RequestType>(addr), reg, sizeof(uint16_t));
+    return Get(static_cast<ComRequestType>(addr), reg, sizeof(uint16_t));
 }
 
 int Interface::ReadHoldingRegisters(uint16_t addr, uint16_t *reg, uint16_t num_regs) {
-    return Get(static_cast<RequestType>(addr), reg, num_regs * sizeof(uint16_t));
+    return Get(static_cast<ComRequestType>(addr), reg, num_regs * sizeof(uint16_t));
 }
 
 int Interface::WriteHoldingRegister(uint16_t addr, uint16_t reg) {
-    return Set(static_cast<RequestType>(addr), &reg, sizeof(uint16_t));
+    return Set(static_cast<ComRequestType>(addr), &reg, sizeof(uint16_t));
 }
 
 int Interface::WriteHoldingRegisters(uint16_t addr, uint16_t* reg, uint16_t num_regs) {
-    return Set(static_cast<RequestType>(addr), reg, num_regs * sizeof(uint16_t));
+    return Set(static_cast<ComRequestType>(addr), reg, num_regs * sizeof(uint16_t));
 }
 
 int Interface::ServerIdResolveNext() {
