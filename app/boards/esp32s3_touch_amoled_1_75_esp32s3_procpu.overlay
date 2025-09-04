@@ -3,8 +3,9 @@
 
 / {
     aliases {
-        lfs1 = &lfs1;
+        intfs0 = &intfs0;
         modbus0 = &modbus0;
+        gpio0buttons = &gpio0buttons;
     };
 
     chosen {
@@ -16,18 +17,27 @@
     fstab {
         compatible = "zephyr,fstab";
 
-        lfs1: lfs1 {
+        intfs0: intfs0 {
             compatible = "zephyr,fstab,littlefs";
             read-size = <16>;
 			prog-size = <256>;
 			cache-size = <256>;
 			lookahead-size = <32>;
             block-cycles = <512>;
-            partition = <&lfs1_partition>;
-            mount-point = "/lfs1";
+            partition = <&intfs0_partition>;
+            mount-point = "/intfs0";
             automount;
         };
     };
+
+    gpio0buttons: gpio0buttons {
+		compatible = "gpio-keys";
+
+		di_0: di_0 {
+			gpios = <&gpio0 0 GPIO_PULL_UP>;
+            zephyr,code = <INPUT_BTN_0>;
+		};
+	};
 };
 
 &flash0 {
@@ -36,8 +46,8 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 
-		lfs1_partition: partition@700000 {
-			label = "lfs1_storage";
+		intfs0_partition: partition@700000 {
+			label = "intfs0_storage";
 			reg = <0x700000 DT_SIZE_M(1)>; // 1MB at offset 7MB
 		};
 	};
