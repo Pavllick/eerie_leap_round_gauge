@@ -7,6 +7,7 @@ services:
     environment:
       - DISPLAY=:0
     volumes:
+      - /dev/bus/usb:/dev/bus/usb:rw,rshared
       - ./:/home/ubuntu/zephyr/workspace/project:cached
       - ${HOME}/.Xauthority:/home/ubuntu/.Xauthority:ro
     ports:

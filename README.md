@@ -91,8 +91,8 @@ west build -p auto -b qemu_cortex_m3 ./app
 
 <details>
 <summary>
-    ESP32S3 DevKitC v1.3
-    <a href="https://docs.zephyrproject.org/latest/boards/espressif/esp32s3_devkitc/doc/index.html">(Reference Docs)</a>
+    Waveshare ESP32S3 Touch AMOLED 1.75
+    <a href="https://www.waveshare.com/wiki/ESP32-S3-Touch-AMOLED-1.75">(Reference Docs)</a>
 </summary>
 <br>
 
@@ -109,6 +109,31 @@ west build -p auto -b esp32s3_devkitc/esp32s3/procpu ./app
 **Serial Monitor:**  
 ```shell
 west espressif monitor
+```
+
+**Debugging**
+
+Debugging works to some extent <a href="https://github.com/Marus/cortex-debug">Cortex-Debug</a> extension for <a href="https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug">VS Code</a> can be used for that purpose, config example set up for Docker container can be found in [.vscode_example/launch.json](.vscode_example/launch.json).
+
+For manual GDB run use ether `west debug` or run OpenOCD in one terminal:
+```shell
+/home/ubuntu/zephyr/workspace/utilities/openocd-esp32/bin/openocd \
+-f /home/ubuntu/zephyr/workspace/utilities/openocd-esp32/share/openocd/scripts/board/esp32s3-builtin.cfg \
+-c "set ESP32_ONLYCPU 1; set ESP_FLASH_SIZE 0; set ESP_RTOS Zephyr" \
+-c "init; halt; esp appimage_offset 0" \
+-c "esp32s3.cpu0 configure -rtos Zephyr" \
+-c "init" \
+-c "reset init"
+```
+
+And GDB in another:
+```shell
+/home/ubuntu/zephyr-sdk-0.17.4/xtensa-espressif_esp32s3_zephyr-elf/bin/xtensa-espressif_esp32s3_zephyr-elf-gdb \
+-ex 'target extended-remote :3333' \
+-ex 'symbol-file build/zephyr/zephyr.elf' \
+-ex 'mon reset halt'   -ex 'maintenance flush register-cache' \
+-ex 'break main' \
+-ex 'continue'
 ```
 
 </details>

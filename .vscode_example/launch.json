@@ -2,7 +2,51 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Native Sim",
+            // https://docs.espressif.com/projects/esp-idf/en/v5.5.1/esp32s3/api-guides/jtag-debugging/using-debugger.html
+            // https://docs.espressif.com/projects/esp-idf/en/v5.5.1/esp32s3/api-guides/jtag-debugging/tips-and-quirks.html#jtag-debugging-tip-debugger-startup-commands
+            "name": "ESP32S3 Debug",
+            "type": "cortex-debug",
+            "request": "attach", // attach instead of launch, because otherwise flash write is attempted, but fails
+            "cwd": "${workspaceRoot}",
+            "executable": "./build/zephyr/zephyr.elf",
+            "servertype": "openocd",
+            "interface": "jtag",
+            "toolchainPrefix": "xtensa-espressif_esp32s3_zephyr-elf",
+            "armToolchainPath": "/home/ubuntu/zephyr-sdk-0.17.4/xtensa-espressif_esp32s3_zephyr-elf/bin/",
+            "serverpath": "/home/ubuntu/zephyr/workspace/utilities/openocd-esp32/bin/openocd",
+            "showDevDebugOutput": "raw",
+            "configFiles": [
+                "/home/ubuntu/zephyr/workspace/utilities/openocd-esp32/share/openocd/scripts/interface/esp_usb_jtag.cfg",
+                "/home/ubuntu/zephyr/workspace/utilities/openocd-esp32/share/openocd/scripts/board/esp32s3-builtin.cfg",
+                // "${workspaceFolder}/boards/waveshare/esp32s3_touch_amoled_1_75/support/openocd.cfg"
+            ],
+            "openOCDLaunchCommands": [
+                "set ESP_RTOS none",
+                "set ESP_FLASH_SIZE 0",
+                "set ESP32_ONLYCPU 1",
+                "esp32s3.cpu0 configure -rtos Zephyr",
+                "init",
+                "reset halt",
+                "esp appimage_offset 0",
+                "reset"
+            ],
+            "overrideAttachCommands": [
+                "mon reset halt",
+                "maintenance flush register-cache",
+                "set remote hardware-watchpoint-limit 2",
+                "mon halt",
+                "flushregs",
+                "break main",
+                "continue"
+            ],
+            "overrideResetCommands": [
+                "mon reset halt",
+                "break main",
+                "continue"
+            ]
+        },
+        {
+            "name": "Native Sim Debug",
             "preLaunchTask": "Build NativeSim",
             "type": "cppdbg",
             "request": "launch",
@@ -26,7 +70,7 @@
             }
         },
         {
-            "name": "Debug QEMU Cortex-M3",
+            "name": "QEMU Cortex-M3 Debug",
             "preLaunchTask": "Build QEMU Cortex-M3",
             "type": "cppdbg",
             "request": "launch",
