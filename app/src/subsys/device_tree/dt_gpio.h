@@ -20,8 +20,6 @@ private:
 
     DtGpio() = default;
 
-    static void InitializeButton(gpio_dt_spec& button);
-
 public:
     static void Initialize();
 
