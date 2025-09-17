@@ -20,8 +20,6 @@ int UiRenderer::Initialize() {
 		return -1;
 	}
 
-    lv_display_set_offset(nullptr, 6, 0);
-
     auto* act_scr = lv_display_get_default();
     lv_display_add_event_cb(act_scr, DisplayInvalidateCb, LV_EVENT_INVALIDATE_AREA, nullptr);
 

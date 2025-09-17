@@ -12,6 +12,8 @@ class MainView {
 private:
     RadialDigitalGauge radial_digital_gauge_;
 
+    void RenderBackground();
+
 public:
     MainView();
 

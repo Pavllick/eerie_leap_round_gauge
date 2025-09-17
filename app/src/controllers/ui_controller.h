@@ -23,7 +23,7 @@ private:
     std::unordered_map<uint32_t, float> current_display_values_;
 
 public:
-    UiController(std::shared_ptr<ReadingProcessorService> reading_processor_service, std::shared_ptr<Interface> interface, std::shared_ptr<MainView> main_view);
+    UiController(std::shared_ptr<ReadingProcessorService> reading_processor_service, std::shared_ptr<MainView> main_view);
 
     int Initialize(std::vector<uint32_t> sensor_ids);
 };

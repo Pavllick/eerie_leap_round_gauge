@@ -6,8 +6,8 @@ namespace eerie_leap::controllers {
 
 using namespace eerie_leap::domain::interface_domain::types;
 
-UiController::UiController(std::shared_ptr<ReadingProcessorService> reading_processor_service, std::shared_ptr<Interface> interface, std::shared_ptr<MainView> main_view)
-    : reading_processor_service_(std::move(reading_processor_service)), interface_(std::move(interface)), main_view_(std::move(main_view)) {}
+UiController::UiController(std::shared_ptr<ReadingProcessorService> reading_processor_service, std::shared_ptr<MainView> main_view)
+    : reading_processor_service_(std::move(reading_processor_service)), main_view_(std::move(main_view)) {}
 
 int UiController::Initialize(std::vector<uint32_t> sensor_ids) {
     main_view_->Render();

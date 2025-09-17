@@ -1,61 +1,21 @@
 / {
 	aliases {
-		lfs1 = &lfs1;
-		gpioc = &gpioc;
+		intfs0 = &intfs0;
 	};
 
 	fstab {
 		compatible = "zephyr,fstab";
-		lfs1: lfs1 {
+		intfs0: intfs0 {
 			compatible = "zephyr,fstab,littlefs";
 			read-size = <16>;
 			prog-size = <16>;
 			cache-size = <64>;
 			lookahead-size = <32>;
 			block-cycles = <512>;
-			partition = <&lfs1_partition>;
-			mount-point = "/lfs1";
+			partition = <&intfs0_partition>;
+			mount-point = "/intfs0";
 			automount;
 		};
-	};
-
-	gpioc: gpioc {
-		compatible = "gpio-keys";
-
-		di_0: di_0 {
-			gpios = < &gpio0 9 (GPIO_PULL_UP | GPIO_ACTIVE_LOW) >;
-		};
-
-		di_1: di_1 {
-			gpios = < &gpio0 10 (GPIO_PULL_UP | GPIO_ACTIVE_LOW) >;
-		};
-
-		di_2: di_2 {
-			gpios = < &gpio0 11 (GPIO_PULL_UP | GPIO_ACTIVE_LOW) >;
-		};
-
-		di_3: di_3 {
-			gpios = < &gpio0 12 (GPIO_PULL_UP | GPIO_ACTIVE_LOW) >;
-		};
-
-		di_4: di_4 {
-			gpios = < &gpio0 13 (GPIO_PULL_UP | GPIO_ACTIVE_LOW) >;
-		};
-
-		di_5: di_5 {
-			gpios = < &gpio0 14 (GPIO_PULL_UP | GPIO_ACTIVE_LOW) >;
-		};
-	};
-
-	gpio0: gpio_emul {
-		status = "okay";
-		compatible = "zephyr,gpio-emul";
-		rising-edge;
-		falling-edge;
-		high-level;
-		low-level;
-		gpio-controller;
-		#gpio-cells = <2>;
 	};
 };
 
@@ -72,9 +32,15 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 
-		lfs1_partition: partition@1000 {
-			label = "lfs1_storage";
+		intfs0_partition: partition@1000 {
+			label = "intfs0_storage";
 			reg = <0x00001000 DT_SIZE_M(1)>;  // 0x00001000 offset, 1MB size
 		};
 	};
+};
+
+&sdl_dc {
+    compatible = "zephyr,sdl-dc";
+    height = <466>;
+    width = <466>;
 };

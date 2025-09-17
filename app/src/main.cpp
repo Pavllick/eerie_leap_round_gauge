@@ -8,7 +8,10 @@
 #include "utilities/memory/heap_allocator.h"
 #include "utilities/dev_tools/system_info.h"
 #include "utilities/guid/guid_generator.h"
-// #include "utilities/time/boot_elapsed_time_service.h"
+
+#include "subsys/device_tree/dt_configurator.h"
+#include "subsys/device_tree/dt_fs.h"
+#include "subsys/device_tree/dt_modbus.h"
 
 #include "subsys/fs/services/fs_service.h"
 #include "subsys/modbus/modbus.h"
@@ -33,6 +36,7 @@ using namespace eerie_leap::utilities::guid;
 
 using namespace eerie_leap::controllers;
 
+using namespace eerie_leap::subsys::device_tree;
 using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::modbus;
 
@@ -53,12 +57,10 @@ constexpr uint32_t SLEEP_TIME_MS = 2000;
 const size_t DISPLAY_WIDTH = 466;
 const size_t DISPLAY_HEIGHT = 466;
 
-int main()
-{
-    auto& device_tree_setup = DeviceTreeSetup::Create();
-    device_tree_setup->Initialize();
+int main() {
+    DtConfigurator::Initialize();
 
-    auto fs_service = make_shared_ext<FsService>(device_tree_setup->GetInternalFsMp().value());
+    auto fs_service = make_shared_ext<FsService>(DtFs::GetInternalFsMp().value());
     if(!fs_service->Initialize()) {
         LOG_ERR("Failed to initialize File System.");
         return -1;
@@ -72,16 +74,20 @@ int main()
     auto system_config_service = make_shared_ext<ConfigurationService<SystemConfig>>("system_config", fs_service);
     auto system_configuration_controller = make_shared_ext<SystemConfigurationController>(system_config_service);
 
+    std::shared_ptr<Interface> interface = nullptr;
+    if(DtModbus::Get().has_value()) {
     auto modbus = make_shared_ext<Modbus>(
-        device_tree_setup->GetModbusIface().value(),
+            DtModbus::Get().value(),
         system_configuration_controller->Get()->interface_channel);
-    auto interface = make_shared_ext<Interface>(modbus, system_configuration_controller, reading_processor_service);
+
+        interface = make_shared_ext<Interface>(modbus, system_configuration_controller, reading_processor_service);
     if(interface->Initialize() != 0)
         return -1;
+    }
 
     auto main_view = make_shared_ext<MainView>();
 
-    auto ui_controller = make_shared_ext<UiController>(reading_processor_service, interface, main_view);
+    auto ui_controller = make_shared_ext<UiController>(reading_processor_service, main_view);
     if(ui_controller->Initialize({ 2348664336 }) != 0)
         return -1;
 
