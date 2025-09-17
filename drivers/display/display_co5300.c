@@ -247,6 +247,8 @@ static int co5300_set_brightness(const struct device *dev, const uint8_t brightn
 }
 
 static int co5300_set_window(const struct device *dev, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
+    const struct co5300_config *config = dev->config;
+
 	struct display_capabilities capabilities;
 	co5300_get_capabilities(dev, &capabilities);
 	if (x > capabilities.x_resolution || y > capabilities.y_resolution) {
@@ -256,8 +258,9 @@ static int co5300_set_window(const struct device *dev, uint16_t x, uint16_t y, u
 	uint16_t tx_data[2];
 	int ret = 0;
 
-	tx_data[0] = sys_cpu_to_be16(x);
-	tx_data[1] = sys_cpu_to_be16(x + width - 1U);
+    uint16_t x_normalized = x + config->x_offset;
+	tx_data[0] = sys_cpu_to_be16(x_normalized);
+	tx_data[1] = sys_cpu_to_be16(x_normalized + width - 1U);
 
 	uint8_t cmd = CO5300_W_CASET;
 	ret = co5300_transmit(dev, MSPI_IO_MODE_SINGLE, &cmd, tx_data, 4U, false);
@@ -265,8 +268,9 @@ static int co5300_set_window(const struct device *dev, uint16_t x, uint16_t y, u
 		return ret;
 	}
 
-	tx_data[0] = sys_cpu_to_be16(y);
-	tx_data[1] = sys_cpu_to_be16(y + height - 1U);
+    uint16_t y_normalized = y + config->y_offset;
+	tx_data[0] = sys_cpu_to_be16(y_normalized);
+	tx_data[1] = sys_cpu_to_be16(y_normalized + height - 1U);
 
 	cmd = CO5300_W_PASET;
 	ret = co5300_transmit(dev, MSPI_IO_MODE_SINGLE, &cmd, tx_data, 4U, false);
@@ -470,6 +474,8 @@ static DEVICE_API(display, co5300_api) = {
 		.reset_gpio = GPIO_DT_SPEC_INST_GET_OR(inst, reset_gpios, {}),  \
 		.height = DT_INST_PROP(inst, height),                           \
 		.width = DT_INST_PROP(inst, width),                             \
+        .x_offset = DT_INST_PROP(inst, x_offset),                       \
+		.y_offset = DT_INST_PROP(inst, y_offset),                       \
 		.pixel_format = DT_INST_PROP(inst, pixel_format),               \
 		.write_only = DT_INST_PROP(inst, write_only),                   \
 		.orientation = DT_INST_ENUM_IDX(inst, orientation),             \

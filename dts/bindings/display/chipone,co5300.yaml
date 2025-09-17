@@ -37,6 +37,16 @@ properties:
       - "270"
     description: Display orientation (CW) in degrees.
 
+  x-offset:
+    type: int
+    default: 0
+    description: The column offset in pixels of the display
+
+  y-offset:
+    type: int
+    default: 0
+    description: The row offset in pixels of the display
+
   display-invert:
     type: boolean
     description: |

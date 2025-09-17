@@ -136,6 +136,8 @@ struct co5300_config {
 	const struct gpio_dt_spec reset_gpio;
 	uint16_t height;
 	uint16_t width;
+    uint16_t x_offset;
+    uint16_t y_offset;
 	uint8_t pixel_format;
 	bool write_only;
 	uint8_t orientation;
