@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 
+#include <zephyr/kernel.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/input/input.h>
 #include <zephyr/logging/log.h>
