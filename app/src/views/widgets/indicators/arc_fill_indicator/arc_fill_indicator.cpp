@@ -1,21 +1,31 @@
+#include "views/widgets/utilitites/frame.h"
+
 #include "arc_fill_indicator.h"
 
 namespace eerie_leap::views::widgets::indicators {
 
+using namespace eerie_leap::views::widgets::utilitites;
+
 ArcFillIndicator::ArcFillIndicator(float range_start, float range_end) : state_() {
+    state_.is_smooth = true;
     state_.range_start = range_start;
     state_.range_end = range_end;
     state_.value = range_start;
+
+    auto container = std::make_shared<Frame>();
+    container->Build();
+    state_.container = std::move(container);
 }
 
 int ArcFillIndicator::Render() {
-    state_.lv_obj = CreateArcIndicator(static_cast<int32_t>(state_.range_start), static_cast<int32_t>(state_.range_end));
+    state_.lv_obj = Create(state_.container->GetObject(), static_cast<int32_t>(state_.range_start), static_cast<int32_t>(state_.range_end));
 
     return 0;
 }
 
-lv_obj_t* ArcFillIndicator::CreateArcIndicator(int32_t range_start, int32_t range_end) {
-    lv_obj_t* ui_arc = lv_arc_create(lv_screen_active());
+lv_obj_t* ArcFillIndicator::Create(lv_obj_t* parent, int32_t range_start, int32_t range_end) {
+    lv_obj_t* ui_arc = lv_arc_create(parent);
+
     lv_arc_set_range(ui_arc, range_start, range_end);
     lv_obj_set_width(ui_arc, lv_pct(100));
     lv_obj_set_height(ui_arc, lv_pct(100));

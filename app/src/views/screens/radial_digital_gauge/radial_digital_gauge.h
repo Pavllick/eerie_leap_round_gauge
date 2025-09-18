@@ -5,15 +5,18 @@
 
 #include <lvgl.h>
 
+#include "views/widgets/utilitites/frame.h"
 #include "views/widgets/indicators/i_indicator.h"
 
 namespace eerie_leap::views::screens {
 
+using namespace eerie_leap::views::widgets::utilitites;
 using namespace eerie_leap::views::widgets::indicators;
 
 struct RadialDigitalGaugeState {
     int32_t range;
     int32_t value;
+
     std::list<std::shared_ptr<IIndicator>> indicators;
 };
 
@@ -22,6 +25,7 @@ private:
     lv_anim_t value_change_animation_;
 
     RadialDigitalGaugeState state_;
+    std::list<std::shared_ptr<Frame>> frames_;
 
     lv_anim_t CreateValueChangeAnimation();
     static void UpdateIndicator(void* obj, int32_t value);

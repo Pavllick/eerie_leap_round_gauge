@@ -10,7 +10,7 @@ class DigitalIndicator : public IIndicator {
 private:
     IndicatorState state_;
 
-    static lv_obj_t* CreateDigitalIndicator();
+    static lv_obj_t* Create(lv_obj_t* parent);
 
 public:
     DigitalIndicator(float range_start, float range_end);
