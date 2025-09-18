@@ -78,6 +78,8 @@ int GpioButtons::InitializeButton(gpio_dt_spec& button) {
             return ret;
         }
     }
+
+    return 0;
 }
 
 }  // namespace eerie_leap::subsys::gpio

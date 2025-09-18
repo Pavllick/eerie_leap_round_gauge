@@ -12,9 +12,11 @@
 #include "subsys/device_tree/dt_configurator.h"
 #include "subsys/device_tree/dt_fs.h"
 #include "subsys/device_tree/dt_modbus.h"
+#include "subsys/device_tree/dt_gpio.h"
 
 #include "subsys/fs/services/fs_service.h"
 #include "subsys/modbus/modbus.h"
+#include "subsys/gpio/gpio_buttons.h"
 
 #include "domain/device_tree/device_tree_setup.h"
 #include "domain/interface_domain/interface.h"
@@ -39,6 +41,7 @@ using namespace eerie_leap::controllers;
 using namespace eerie_leap::subsys::device_tree;
 using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::modbus;
+using namespace eerie_leap::subsys::gpio;
 
 using namespace eerie_leap::domain::device_tree;
 using namespace eerie_leap::domain::interface_domain;
