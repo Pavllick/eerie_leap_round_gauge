@@ -4,8 +4,11 @@
 #include <zephyr/logging/log.h>
 
 #include "utilities/memory/heap_allocator.h"
+
 #include "views/widgets/indicators/arc_fill_indicator/arc_fill_indicator.h"
 #include "views/widgets/indicators/digital_indicator/digital_indicator.h"
+#include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
+
 #include "radial_digital_gauge.h"
 
 namespace eerie_leap::views::screens {
@@ -19,9 +22,22 @@ RadialDigitalGauge::RadialDigitalGauge(float range_start, float range_end) : sta
     state_.value = static_cast<int32_t>(range_start);
 
     auto arc_fill_indicator = ArcFillIndicator(range_start, range_end);
-    auto digital_indicator = DigitalIndicator(range_start, range_end);
     state_.indicators.push_back(make_shared_ext<ArcFillIndicator>(arc_fill_indicator));
+
+    auto digital_indicator = DigitalIndicator(range_start, range_end);
     state_.indicators.push_back(make_shared_ext<DigitalIndicator>(digital_indicator));
+
+    auto horizontal_chart_indicator = HorizontalChartIndicator(
+        range_start, range_end, 36, HorizontalChartIndicatorType::BAR);
+    state_.indicators.push_back(make_shared_ext<HorizontalChartIndicator>(horizontal_chart_indicator));
+
+    auto chart_frame = Frame()
+        .Build()
+        .AddObject(horizontal_chart_indicator.GetState()->container)
+        .SetHeight(140, true)
+        .AlignBottom();
+    frames_.push_back(std::make_shared<Frame>(chart_frame));
+
     value_change_animation_ = CreateValueChangeAnimation();
 }
 
@@ -45,7 +61,6 @@ lv_anim_t RadialDigitalGauge::CreateValueChangeAnimation() {
     lv_anim_init(&anim);
     lv_anim_set_var(&anim, &state_);
     lv_anim_set_exec_cb(&anim, UpdateIndicator);
-    lv_anim_set_duration(&anim, 100);
     lv_anim_set_repeat_count(&anim, 0);
 
     return anim;

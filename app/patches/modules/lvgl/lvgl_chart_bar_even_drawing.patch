@@ -1,0 +1,14 @@
+diff --git a/src/widgets/chart/lv_chart.c b/src/widgets/chart/lv_chart.c
+index 6f17bd373..19b28f654 100644
+--- a/src/widgets/chart/lv_chart.c
++++ b/src/widgets/chart/lv_chart.c
+@@ -1170,7 +1170,8 @@ static void draw_series_bar(lv_obj_t * obj, lv_layer_t * layer)
+             x_act = obj->coords.x1 + x_ofs;
+         }
+         else {
+-            x_act = (int32_t)((int32_t)(w - block_w) * i) / (chart->point_cnt - 1) + obj->coords.x1 + x_ofs;
++            // draw bars with static spacing and width
++            x_act = obj->coords.x1 + x_ofs + i * (block_w + block_gap);
+         }
+ 
+         col_dsc.base.id2 = i;
