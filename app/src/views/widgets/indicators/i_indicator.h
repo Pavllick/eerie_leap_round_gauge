@@ -1,27 +1,17 @@
 #pragma once
 
-#include <memory>
+#include <optional>
 
-#include <lvgl.h>
-
-#include "views/widgets/utilitites/frame.h"
+#include "views/widgets/indicators/indicator_state.h"
+#include "views/widgets/i_widget.h"
 
 namespace eerie_leap::views::widgets::indicators {
 
-using namespace eerie_leap::views::widgets::utilitites;
+using namespace eerie_leap::views::widgets;
 
-struct IndicatorState {
-    std::shared_ptr<Frame> container;
-    lv_obj_t* lv_obj;
-    bool is_smooth;
-    float range_start;
-    float range_end;
-    float value;
-};
-
-class IIndicator {
+class IIndicator : public IWidget {
 public:
-    virtual int Render() = 0;
+    virtual std::optional<uint32_t> GetSensorId() const = 0;
     virtual void Update(float value) = 0;
     virtual const IndicatorState* GetState() const = 0;
 };

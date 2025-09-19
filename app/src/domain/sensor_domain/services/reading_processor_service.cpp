@@ -47,27 +47,31 @@ void ReadingProcessorService::ProcessReadingWorkTask(k_work* work) {
         task->reading.value,
         TimeHelpers::GetFormattedString(TimeHelpers::FromMilliseconds(task->reading.timestamp_ms)).c_str());
 
-    task->reading_handler(task->reading);
+    for(auto& handler : task->reading_handlers)
+        handler(task->reading);
 
     k_sem_give(task->processing_semaphore);
 }
 
-int ReadingProcessorService::RegisterReadingHandler(size_t sensor_id_hash, ReadingHandler handler) {
-    auto task = make_shared_ext<ReadingTask>();
-    task->processing_semaphore = &processing_semaphore_;
-    task->reading_handler = std::move(handler);
+int ReadingProcessorService::RegisterReadingHandler(uint32_t sensor_id_hash, ReadingHandler handler) {
+    if(!sensors_reading_tasks_.contains(sensor_id_hash)) {
+        auto task = make_shared_ext<ReadingTask>();
+        task->processing_semaphore = &processing_semaphore_;
 
-    memset(&task->reading, 0, sizeof(SensorReadingDto));
+        memset(&task->reading, 0, sizeof(SensorReadingDto));
 
-    k_work_init(&task->work, ProcessReadingWorkTask);
-    reading_tasks_[sensor_id_hash] = std::move(task);
+        k_work_init(&task->work, ProcessReadingWorkTask);
+        sensors_reading_tasks_[sensor_id_hash] = std::move(task);
+    }
+
+    sensors_reading_tasks_[sensor_id_hash]->reading_handlers.push_back(std::move(handler));
 
     return 0;
 }
 
 int ReadingProcessorService::ProcessReading(SensorReadingDto reading) {
-    auto task = reading_tasks_.find(reading.sensor_id_hash);
-    if(task == reading_tasks_.end())
+    auto task = sensors_reading_tasks_.find(reading.sensor_id_hash);
+    if(task == sensors_reading_tasks_.end())
         return -1;
 
     task->second->reading = reading;

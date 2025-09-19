@@ -1,7 +1,6 @@
 #pragma once
 
-#include <memory>
-#include <functional>
+#include <vector>
 
 #include <zephyr/kernel.h>
 
@@ -15,7 +14,7 @@ using namespace eerie_leap::domain::interface_domain::types;
 struct ReadingTask {
     k_work work;
     k_sem* processing_semaphore;
-    ReadingHandler reading_handler;
+    std::vector<ReadingHandler> reading_handlers;
     SensorReadingDto reading;
 };
 

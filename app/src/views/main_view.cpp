@@ -10,18 +10,19 @@ namespace eerie_leap::views {
 
 LOG_MODULE_REGISTER(main_view_logger);
 
-MainView::MainView() : radial_digital_gauge_(0, 100) {}
+MainView::MainView() {}
+
+void MainView::AddScreen(uint32_t id, std::unique_ptr<IScreen> screen) {
+    screens_[id] = std::move(screen);
+}
 
 int MainView::Render() {
     RenderBackground();
 
-    radial_digital_gauge_.Render();
+    for(auto& screen : screens_)
+        screen.second->Render();
 
     return 0;
-}
-
-void MainView::Update(float value) {
-    radial_digital_gauge_.Update(value);
 }
 
 void MainView::RenderBackground() {

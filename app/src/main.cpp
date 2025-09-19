@@ -21,15 +21,32 @@
 #include "domain/device_tree/device_tree_setup.h"
 #include "domain/interface_domain/interface.h"
 #include "domain/ui_domain/ui_renderer.h"
+#include "domain/sensor_domain/models/sensor.h"
 #include "domain/sensor_domain/services/reading_processor_service.h"
 
-#include "views/main_view.h"
-
-#include "controllers/ui_controller.h"
+#include "controllers/gague_controller.h"
 
 #include "configuration/services/configuration_service.h"
 #include "configuration/system_config/system_config.h"
 #include "controllers/configuation/system_configuration_controller.h"
+
+#include "views/widgets/widget_factory.h"
+
+#include "views/configuration/gauge_configuration.h"
+#include "views/configuration/gauge_settings.h"
+#include "views/screens/configuration/screen_configuration.h"
+#include "views/screens/configuration/grid_settings.h"
+#include "views/widgets/configuration/widget_configuration.h"
+#include "views/widgets/configuration/widget_type.h"
+#include "views/widgets/configuration/widget_size.h"
+#include "views/widgets/configuration/widget_position.h"
+#include "views/widgets/configuration/widget_property.h"
+
+using namespace eerie_leap::views::widgets;
+
+using namespace eerie_leap::views::configuration;
+using namespace eerie_leap::views::screens::configuration;
+using namespace eerie_leap::views::widgets::configuration;
 
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::utilities::dev_tools;
@@ -46,6 +63,7 @@ using namespace eerie_leap::subsys::gpio;
 using namespace eerie_leap::domain::device_tree;
 using namespace eerie_leap::domain::interface_domain;
 using namespace eerie_leap::domain::ui_domain;
+using namespace eerie_leap::domain::sensor_domain::models;
 using namespace eerie_leap::domain::sensor_domain::services;
 using namespace eerie_leap::configuration::services;
 
@@ -59,6 +77,9 @@ LOG_MODULE_REGISTER(main_logger);
 constexpr uint32_t SLEEP_TIME_MS = 2000;
 const size_t DISPLAY_WIDTH = 466;
 const size_t DISPLAY_HEIGHT = 466;
+
+std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> SetupTestSensors();
+std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig();
 
 int main() {
     DtConfigurator::Initialize();
@@ -88,11 +109,15 @@ int main() {
         return -1;
     }
 
-    auto main_view = make_shared_ext<MainView>();
+    auto sensors = SetupTestSensors();
+    auto gauge_config = SetupTestGaugeConfig();
 
-    auto ui_controller = make_shared_ext<UiController>(reading_processor_service, main_view);
-    if(ui_controller->Initialize({ 2348664336 }) != 0)
+    auto widget_factory = WidgetFactory::GetInstance();
+
+    auto gague_controller = make_shared_ext<GagueController>(sensors, reading_processor_service, widget_factory);
+    if(gague_controller->Configure(*gauge_config) != 0)
         return -1;
+    gague_controller->Render();
 
     auto ui_renderer = make_shared_ext<UiRenderer>();
     if(ui_renderer->Initialize() != 0)
@@ -108,4 +133,161 @@ int main() {
 	}
 
 	return 0;
+}
+
+std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> SetupTestSensors() {
+    Sensor sensor_1 {
+        .id = "sensor_1",
+        .id_hash = 2348664336,
+        .metadata = {
+            .name = "Sensor 1",
+            .unit = "km/h",
+            .description = "Test Sensor 1"
+        },
+        .configuration = {
+            .type = SensorType::PHYSICAL_ANALOG,
+            .channel = 0,
+            .sampling_rate_ms = 10
+        }
+    };
+
+    Sensor sensor_2 {
+        .id = "sensor_2",
+        .metadata = {
+            .name = "Sensor 2",
+            .unit = "km/h",
+            .description = "Test Sensor 2"
+        },
+        .configuration = {
+            .type = SensorType::PHYSICAL_ANALOG,
+            .channel = 1,
+            .sampling_rate_ms = 500
+        }
+    };
+
+    Sensor sensor_3 {
+        .id = "sensor_3",
+        .metadata = {
+            .name = "Sensor 3",
+            .unit = "km/h",
+            .description = "Test Sensor 3"
+        },
+        .configuration = {
+            .type = SensorType::VIRTUAL_ANALOG,
+            .sampling_rate_ms = 2000
+        }
+    };
+
+    Sensor sensor_4 {
+        .id = "sensor_4",
+        .metadata = {
+            .name = "Sensor 4",
+            .unit = "",
+            .description = "Test Sensor 4"
+        },
+        .configuration = {
+            .type = SensorType::PHYSICAL_INDICATOR,
+            .channel = 1,
+            .sampling_rate_ms = 1000
+        }
+    };
+
+    Sensor sensor_5 {
+        .id = "sensor_5",
+        .metadata = {
+            .name = "Sensor 5",
+            .unit = "",
+            .description = "Test Sensor 5"
+        },
+        .configuration = {
+            .type = SensorType::VIRTUAL_INDICATOR,
+            .sampling_rate_ms = 1000
+        }
+    };
+
+    std::vector<std::shared_ptr<Sensor>> sensors = {
+        make_shared_ext<Sensor>(sensor_1),
+        make_shared_ext<Sensor>(sensor_2),
+        make_shared_ext<Sensor>(sensor_3),
+        // make_shared_ext<Sensor>(sensor_4),
+        // make_shared_ext<Sensor>(sensor_5)
+    };
+
+    auto sensors_ptr = make_shared_ext<std::vector<std::shared_ptr<Sensor>>>(sensors);
+
+    return sensors_ptr;
+}
+
+std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig() {
+    auto gauge_configuration = make_shared_ext<GaugeConfiguration>();
+    gauge_configuration->active_screen_index = 0;
+
+    ScreenConfiguration screen_configuration {
+        .id = 0,
+        .grid = GridSettings {
+            .snap_enabled = true,
+            .grid_size = 3,
+            .spacing = 3
+        },
+        .widget_configurations = {
+            WidgetConfiguration {
+                .type = WidgetType::IndicatorArcFill,
+                .id = 0,
+                .position = WidgetPosition {
+                    .x = 0,
+                    .y = 0
+                },
+                .size = WidgetSize {
+                    .width = 3,
+                    .height = 3
+                },
+                .is_animation_enabled = true,
+                .properties = {
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" }
+                }
+            },
+            WidgetConfiguration {
+                .type = WidgetType::IndicatorDigital,
+                .id = 1,
+                .position = WidgetPosition {
+                    .x = 0,
+                    .y = 0
+                },
+                .size = WidgetSize {
+                    .width = 3,
+                    .height = 3
+                },
+                .is_animation_enabled = true,
+                .properties = {
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" }
+                }
+            },
+            WidgetConfiguration {
+            .type = WidgetType::IndicatorHorizontalChart,
+                .id = 2,
+            .position = WidgetPosition {
+            .x = 0,
+                    .y = 2
+            },
+            .size = WidgetSize {
+            .width = 3,
+                    .height = 1
+            },
+                .is_animation_enabled = false,
+            .properties = {
+            { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
+            { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
+            { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" }
+            }
+}
+        }
+    };
+
+    gauge_configuration->screen_configurations.push_back(screen_configuration);
+
+    return gauge_configuration;
 }

@@ -22,7 +22,7 @@ private:
     k_sem processing_semaphore_;
     static constexpr k_timeout_t PROCESSING_TIMEOUT = K_MSEC(200);
 
-    std::unordered_map<size_t, std::shared_ptr<ReadingTask>> reading_tasks_;
+    std::unordered_map<uint32_t, std::shared_ptr<ReadingTask>> sensors_reading_tasks_;
 
     static void ProcessReadingWorkTask(k_work* work);
 
@@ -31,7 +31,7 @@ public:
 
     void Initialize();
 
-    int RegisterReadingHandler(size_t sensor_id_hash, ReadingHandler handler);
+    int RegisterReadingHandler(uint32_t sensor_id_hash, ReadingHandler handler);
     int ProcessReading(SensorReadingDto reading);
 };
 
