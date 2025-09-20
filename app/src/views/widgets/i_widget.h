@@ -25,10 +25,10 @@ public:
     virtual bool IsAnimationEnabled() const = 0;
 
     // Layout
-    virtual WidgetPosition GetPosition() const = 0;
-    virtual void SetPosition(const WidgetPosition& pos) = 0;
-    virtual WidgetSize GetSize() const = 0;
-    virtual void SetSize(const WidgetSize& size) = 0;
+    virtual WidgetPosition GetPositionPx() const = 0;
+    virtual void SetPositionPx(const WidgetPosition& pos) = 0;
+    virtual WidgetSize GetSizePx() const = 0;
+    virtual void SetSizePx(const WidgetSize& size) = 0;
 };
 
 } // namespace eerie_leap::views::widgets

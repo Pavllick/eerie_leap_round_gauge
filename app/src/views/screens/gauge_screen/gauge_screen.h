@@ -3,8 +3,6 @@
 #include <memory>
 #include <vector>
 
-#include <lvgl.h>
-
 #include "views/widgets/i_widget.h"
 #include "views/screens/i_screen.h"
 #include "views/screens/configuration/screen_configuration.h"

@@ -226,18 +226,19 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig() {
         .id = 0,
         .grid = GridSettings {
             .snap_enabled = true,
-            .grid_size = 3,
-            .spacing = 3
+            .grid_width = 3,
+            .grid_height = 3,
+            .spacing_px = 0
         },
         .widget_configurations = {
             WidgetConfiguration {
                 .type = WidgetType::IndicatorArcFill,
                 .id = 0,
-                .position = WidgetPosition {
+                .position_grid = WidgetPosition {
                     .x = 0,
                     .y = 0
                 },
-                .size = WidgetSize {
+                .size_grid = WidgetSize {
                     .width = 3,
                     .height = 3
                 },
@@ -251,13 +252,13 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig() {
             WidgetConfiguration {
                 .type = WidgetType::IndicatorDigital,
                 .id = 1,
-                .position = WidgetPosition {
+                .position_grid = WidgetPosition {
                     .x = 0,
-                    .y = 0
+                    .y = 1
                 },
-                .size = WidgetSize {
+                .size_grid = WidgetSize {
                     .width = 3,
-                    .height = 3
+                    .height = 1
                 },
                 .is_animation_enabled = true,
                 .properties = {
@@ -269,11 +270,11 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig() {
             WidgetConfiguration {
             .type = WidgetType::IndicatorHorizontalChart,
                 .id = 2,
-            .position = WidgetPosition {
+                .position_grid = WidgetPosition {
             .x = 0,
-                    .y = 2
+                    .y = 0
             },
-            .size = WidgetSize {
+                .size_grid = WidgetSize {
             .width = 3,
                     .height = 1
             },
