@@ -142,18 +142,10 @@ And GDB in another:
 
 ### Required tools
 
-#### CBOR Schemas
+#### CBOR
 
-The project uses [zcbor](https://github.com/NordicSemiconductor/zcbor) to generate CBOR helpers from schemas. To install zcbor:
+CMake uses [zcbor](https://github.com/NordicSemiconductor/zcbor) to generate CBOR helpers from schemas and expects to find it in the system path. To install zcbor:
 
 ```shell
 pip install zcbor
-```
-
-### Generating CBOR helpers
-
-#### Example command to generate SystemConfig helpers:
-
-```shell
-zcbor code -sed --default-max-qty 24 -c ./app/src/configuration/cbor_schemas/system_config.cddl -t SystemConfig --output-h ./app/src/configuration/system_config/system_config_cbor.h --output-c ./app/src/configuration/system_config/system_config_cbor.c --output-h-types ./app/src/configuration/system_config/system_config.h
 ```
