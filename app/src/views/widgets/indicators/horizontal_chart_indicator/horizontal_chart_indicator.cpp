@@ -72,6 +72,11 @@ void HorizontalChartIndicator::Configure(const WidgetConfiguration& config) {
         config.properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::CHART_POINT_COUNT),
         30);
+
+    chart_type_ = static_cast<HorizontalChartIndicatorType>(GetConfigValue<int>(
+        config.properties,
+        WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE),
+        static_cast<std::uint16_t>(HorizontalChartIndicatorType::BAR)));
 }
 
 } // namespace eerie_leap::views::widgets::indicators

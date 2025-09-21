@@ -36,14 +36,15 @@ void IndicatorBase::ValueChangeAnimation(lv_anim_t anim, int32_t range, int32_t 
 }
 
 void IndicatorBase::Update(float value) {
-    if(IsAnimationEnabled())
+    if(IsAnimationEnabled()) {
         ValueChangeAnimation(
             value_change_animation_,
             static_cast<int32_t>(range_end_ - range_start_),
             static_cast<int32_t>(value_),
             static_cast<int32_t>(value));
-    else
+    } else {
         UpdateIndicator(static_cast<int32_t>(value));
+    }
 }
 
 std::optional<uint32_t> IndicatorBase::GetSensorId() const {

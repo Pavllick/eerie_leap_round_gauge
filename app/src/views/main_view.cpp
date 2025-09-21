@@ -25,10 +25,30 @@ int MainView::Render() {
     return 0;
 }
 
+void RenderCenterCrossHelperGuides(lv_obj_t* screen) {
+    lv_obj_t * panel1 = lv_obj_create(screen);
+    lv_obj_set_width(panel1, 2);
+    lv_obj_set_height(panel1, 466);
+    lv_obj_set_align(panel1, LV_ALIGN_CENTER);
+    lv_obj_remove_flag(panel1, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_border_color(panel1, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_opa(panel1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t * panel2 = lv_obj_create(screen);
+    lv_obj_set_width(panel2, 466);
+    lv_obj_set_height(panel2, 2);
+    lv_obj_set_align(panel2, LV_ALIGN_CENTER);
+    lv_obj_remove_flag(panel2, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_border_color(panel2, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_opa(panel2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
 void MainView::RenderBackground() {
     lv_obj_t * screen = lv_screen_active();
     lv_obj_set_style_bg_color(screen, lv_color_hex(0xFFFFFF), 0);
     lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
+
+    // RenderCenterCrossHelperGuides(screen);
 
     lv_refr_now(lv_display_get_default());
 }

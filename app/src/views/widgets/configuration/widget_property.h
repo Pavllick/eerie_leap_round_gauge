@@ -12,7 +12,8 @@ enum class WidgetPropertyType : std::uint16_t {
     MIN_VALUE,
     MAX_VALUE,
     SENSOR_ID,
-    CHART_POINT_COUNT
+    CHART_POINT_COUNT,
+    CHART_TYPE
 };
 
 class WidgetProperty {
@@ -21,7 +22,8 @@ private:
         "MIN_VALUE"sv,
         "MAX_VALUE"sv,
         "SENSOR_ID"sv,
-        "CHART_POINT_COUNT"sv
+        "CHART_POINT_COUNT"sv,
+        "CHART_TYPE"sv
     };
 
 public:

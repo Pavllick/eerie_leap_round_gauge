@@ -24,9 +24,16 @@ lv_obj_t* DigitalIndicator::Create(lv_obj_t* parent) {
     lv_obj_set_align(ui_label, LV_ALIGN_CENTER);
     lv_label_set_text(ui_label, "0");
     lv_obj_set_style_text_font(ui_label, &lv_font_unscii_16, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_transform_scale(ui_label, 1500, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_x(ui_label, -65);
-    lv_obj_set_y(ui_label, -55);
+
+    // Scaling and alignment
+    lv_obj_center(ui_label);
+    lv_obj_set_align(ui_label, LV_ALIGN_CENTER);
+    lv_obj_set_style_text_align(ui_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_width(ui_label, 32);
+    lv_obj_set_height(ui_label, 16);
+    lv_obj_set_style_transform_pivot_x(ui_label, 16, 0);
+    lv_obj_set_style_transform_pivot_y(ui_label, 8, 0);
+    lv_obj_set_style_transform_scale(ui_label, 1300, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     return ui_label;
 }

@@ -253,11 +253,11 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig() {
                 .type = WidgetType::IndicatorDigital,
                 .id = 1,
                 .position_grid = WidgetPosition {
-                    .x = 0,
+                    .x = 1,
                     .y = 1
                 },
                 .size_grid = WidgetSize {
-                    .width = 3,
+                    .width = 1,
                     .height = 1
                 },
                 .is_animation_enabled = true,
@@ -282,7 +282,46 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig() {
             .properties = {
             { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
             { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
-            { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" }
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_POINT_COUNT), 35 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE), static_cast<std::uint16_t>(HorizontalChartIndicatorType::LINE) }
+                }
+            },
+            WidgetConfiguration {
+                .type = WidgetType::IndicatorHorizontalChart,
+                .id = 2,
+                .position_grid = WidgetPosition {
+                    .x = 0,
+                    .y = 1
+                },
+                .size_grid = WidgetSize {
+                    .width = 3,
+                    .height = 1
+                },
+                .is_animation_enabled = true,
+                .properties = {
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE), static_cast<std::uint16_t>(HorizontalChartIndicatorType::LINE) }
+                }
+            },
+            WidgetConfiguration {
+                .type = WidgetType::IndicatorHorizontalChart,
+                .id = 2,
+                .position_grid = WidgetPosition {
+                    .x = 0,
+                    .y = 2
+                },
+                .size_grid = WidgetSize {
+                    .width = 3,
+                    .height = 1
+                },
+                .is_animation_enabled = true,
+                .properties = {
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
             }
 }
         }

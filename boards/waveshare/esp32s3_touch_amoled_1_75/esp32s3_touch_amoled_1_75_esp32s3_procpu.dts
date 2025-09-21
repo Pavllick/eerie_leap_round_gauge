@@ -69,7 +69,7 @@
 			compatible = "chipone,co5300";
 			reg = <0>;
 			status = "okay";
-			/* Should be less than or equal to max-dma-buf-size */
+			/* Should be less than or equal to CONFIG_MSPI_DMA_MAX_BUFFER_SIZE */
 			max-buf-size = <10240>;
 
 			// MSPI device properties
@@ -83,7 +83,7 @@
 			reset-gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>; // Reset pin
 
 			// Display properties
-			pixel-format = <PANEL_PIXEL_FORMAT_RGB_565>;
+			pixel-format = <PANEL_PIXEL_FORMAT_L_8>;
 			width = <466>;
 			height = <466>;
             x-offset = <6>;
