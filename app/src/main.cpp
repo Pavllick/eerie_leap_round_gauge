@@ -18,7 +18,6 @@
 #include "subsys/modbus/modbus.h"
 #include "subsys/gpio/gpio_buttons.h"
 
-#include "domain/device_tree/device_tree_setup.h"
 #include "domain/interface_domain/interface.h"
 #include "domain/ui_domain/ui_renderer.h"
 #include "domain/sensor_domain/models/sensor.h"
@@ -28,12 +27,11 @@
 
 #include "configuration/services/configuration_service.h"
 #include "configuration/system_config/system_config.h"
-#include "controllers/configuation/system_configuration_controller.h"
 
-#include "views/widgets/widget_factory.h"
+#include "controllers/configuration/system_configuration_controller.h"
+#include "controllers/configuration/gauge_configuration_controller.h"
 
 #include "views/configuration/gauge_configuration.h"
-#include "views/configuration/gauge_settings.h"
 #include "views/screens/configuration/screen_configuration.h"
 #include "views/screens/configuration/grid_settings.h"
 #include "views/widgets/configuration/widget_configuration.h"
@@ -41,8 +39,10 @@
 #include "views/widgets/configuration/widget_size.h"
 #include "views/widgets/configuration/widget_position.h"
 #include "views/widgets/configuration/widget_property.h"
+#include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 
 using namespace eerie_leap::views::widgets;
+using namespace eerie_leap::views::widgets::indicators;
 
 using namespace eerie_leap::views::configuration;
 using namespace eerie_leap::views::screens::configuration;
@@ -51,7 +51,6 @@ using namespace eerie_leap::views::widgets::configuration;
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::utilities::dev_tools;
 using namespace eerie_leap::utilities::guid;
-// using namespace eerie_leap::utilities::time;
 
 using namespace eerie_leap::controllers;
 
@@ -60,23 +59,18 @@ using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::modbus;
 using namespace eerie_leap::subsys::gpio;
 
-using namespace eerie_leap::domain::device_tree;
 using namespace eerie_leap::domain::interface_domain;
 using namespace eerie_leap::domain::ui_domain;
 using namespace eerie_leap::domain::sensor_domain::models;
 using namespace eerie_leap::domain::sensor_domain::services;
 using namespace eerie_leap::configuration::services;
 
-using namespace eerie_leap::views;
-
 using namespace eerie_leap::controllers;
-using namespace eerie_leap::controllers::configuation;
+using namespace eerie_leap::controllers::configuration;
 
 LOG_MODULE_REGISTER(main_logger);
 
 constexpr uint32_t SLEEP_TIME_MS = 2000;
-const size_t DISPLAY_WIDTH = 466;
-const size_t DISPLAY_HEIGHT = 466;
 
 std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> SetupTestSensors();
 std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig();
@@ -98,6 +92,9 @@ int main() {
     auto system_config_service = make_shared_ext<ConfigurationService<SystemConfig>>("system_config", fs_service);
     auto system_configuration_controller = make_shared_ext<SystemConfigurationController>(system_config_service);
 
+    auto gauge_config_service = make_shared_ext<ConfigurationService<GaugeConfig>>("gauge_config", fs_service);
+    auto gauge_configuration_controller = make_shared_ext<GaugeConfigurationController>(gauge_config_service);
+
     std::shared_ptr<Interface> interface = nullptr;
     if(DtModbus::Get().has_value()) {
     auto modbus = make_shared_ext<Modbus>(
@@ -109,14 +106,18 @@ int main() {
         return -1;
     }
 
+    // NOTE: This is a temporary solution.
     auto sensors = SetupTestSensors();
     auto gauge_config = SetupTestGaugeConfig();
+    gauge_configuration_controller->Update(gauge_config);
 
     auto widget_factory = WidgetFactory::GetInstance();
 
-    auto gague_controller = make_shared_ext<GagueController>(sensors, reading_processor_service, widget_factory);
-    if(gague_controller->Configure(*gauge_config) != 0)
-        return -1;
+    auto gague_controller = make_shared_ext<GagueController>(
+        gauge_configuration_controller,
+        sensors,
+        reading_processor_service,
+        widget_factory);
     gague_controller->Render();
 
     auto ui_renderer = make_shared_ext<UiRenderer>();
@@ -226,8 +227,8 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig() {
         .id = 0,
         .grid = GridSettings {
             .snap_enabled = true,
-            .grid_width = 3,
-            .grid_height = 3,
+            .width = 3,
+            .height = 3,
             .spacing_px = 0
         },
         .widget_configurations = {

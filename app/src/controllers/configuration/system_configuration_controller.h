@@ -7,7 +7,7 @@
 #include "configuration/services/configuration_service.h"
 #include "domain/system_domain/system_configuration.h"
 
-namespace eerie_leap::controllers::configuation {
+namespace eerie_leap::controllers::configuration {
 
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::configuration::services;
@@ -34,4 +34,4 @@ public:
     std::shared_ptr<SystemConfiguration> Get(bool force_load = false);
 };
 
-} // namespace eerie_leap::controllers::configuation
+} // namespace eerie_leap::controllers::configuration

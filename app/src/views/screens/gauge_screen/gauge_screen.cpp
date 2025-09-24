@@ -29,8 +29,8 @@ void UpdateWidgetSize(std::unique_ptr<IWidget>& widget, GridSettings& grid_setti
 
     auto widget_config = widget->GetConfiguration();
 
-    uint32_t width = (screen_width / grid_settings.grid_width) * widget_config.size_grid.width - grid_settings.spacing_px * 2;
-    uint32_t height = (screen_height / grid_settings.grid_height) * widget_config.size_grid.height - grid_settings.spacing_px * 2;
+    uint32_t width = (screen_width / grid_settings.width) * widget_config.size_grid.width - grid_settings.spacing_px * 2;
+    uint32_t height = (screen_height / grid_settings.height) * widget_config.size_grid.height - grid_settings.spacing_px * 2;
 
     widget->SetSizePx({.width = width, .height = height});
 }
@@ -46,8 +46,8 @@ void UpdateWidgetPosition(std::unique_ptr<IWidget>& widget, GridSettings& grid_s
     if(size_px.width == 0 || size_px.height == 0)
         throw std::runtime_error("Widget size is not set.");
 
-    uint32_t cell_width = (screen_width / grid_settings.grid_width) + (grid_settings.spacing_px * 2);
-    uint32_t cell_height = (screen_height / grid_settings.grid_height) + (grid_settings.spacing_px * 2);
+    uint32_t cell_width = (screen_width / grid_settings.width) + (grid_settings.spacing_px * 2);
+    uint32_t cell_height = (screen_height / grid_settings.height) + (grid_settings.spacing_px * 2);
 
     int x = cell_width * widget_config.position_grid.x;
     int y = screen_height - cell_height * widget_config.position_grid.y - size_px.height;

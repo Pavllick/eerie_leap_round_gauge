@@ -2,7 +2,7 @@
 
 #include "system_configuration_controller.h"
 
-namespace eerie_leap::controllers::configuation {
+namespace eerie_leap::controllers::configuration {
 
 using namespace eerie_leap::subsys::random;
 using namespace eerie_leap::utilities::memory;
@@ -165,4 +165,4 @@ std::shared_ptr<SystemConfiguration> SystemConfigurationController::Get(bool for
     return system_configuration_;
 }
 
-} // namespace eerie_leap::controllers::configuation
+} // namespace eerie_leap::controllers::configuration

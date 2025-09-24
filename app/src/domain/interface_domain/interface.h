@@ -5,7 +5,7 @@
 
 #include "subsys/modbus/modbus.h"
 #include "domain/sensor_domain/services/reading_processor_service.h"
-#include "controllers/configuation/system_configuration_controller.h"
+#include "controllers/configuration/system_configuration_controller.h"
 
 #include "types/com_request_type.h"
 #include "types/com_user_status.h"
@@ -15,7 +15,7 @@ namespace eerie_leap::domain::interface_domain {
 using namespace eerie_leap::subsys::modbus;
 using namespace eerie_leap::domain::sensor_domain::services;
 using namespace eerie_leap::domain::interface_domain::types;
-using namespace eerie_leap::controllers::configuation;
+using namespace eerie_leap::controllers::configuration;
 
 class Interface {
 private:

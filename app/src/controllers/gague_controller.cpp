@@ -13,12 +13,17 @@ using namespace eerie_leap::views::screens;
 using namespace eerie_leap::views::widgets::indicators;
 
 GagueController::GagueController(
+    std::shared_ptr<GaugeConfigurationController> gauge_configuration_controller,
     std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> sensors,
     std::shared_ptr<ReadingProcessorService> reading_processor_service,
     std::shared_ptr<WidgetFactory> widget_factory)
-    : sensors_(std::move(sensors)), reading_processor_service_(std::move(reading_processor_service)), widget_factory_(std::move(widget_factory)) {
+    : gauge_configuration_controller_(std::move(gauge_configuration_controller)),
+    sensors_(std::move(sensors)),
+    reading_processor_service_(std::move(reading_processor_service)),
+    widget_factory_(std::move(widget_factory)) {
 
         main_view_ = make_shared_ext<MainView>();
+        Configure(*gauge_configuration_controller_->Get());
     }
 
 int GagueController::Configure(GaugeConfiguration& config) {
@@ -31,7 +36,6 @@ int GagueController::Configure(GaugeConfiguration& config) {
             RegisterIndicatorReadingHandler(widget);
 
         main_view_->AddScreen(screen_config.id, std::move(screen));
-
     }
 
     return 0;
