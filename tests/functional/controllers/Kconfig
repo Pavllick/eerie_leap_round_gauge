@@ -1,0 +1,33 @@
+menu "Zephyr"
+source "Kconfig.zephyr"
+endmenu
+
+config EERIE_LEAP_HW_VERSION_MAJOR
+	int "Hardware version major"
+	range 0 255
+	default 0
+
+config EERIE_LEAP_HW_VERSION_MINOR
+	int "Hardware version minor"
+	range 0 255
+	default 0
+
+config EERIE_LEAP_HW_VERSION_PATCH
+	int "Hardware version patch"
+	range 0 65535
+	default 0
+
+config EERIE_LEAP_SW_VERSION_MAJOR
+	int "Software version major"
+	range 0 255
+	default 0
+
+config EERIE_LEAP_SW_VERSION_MINOR
+	int "Software version minor"
+	range 0 255
+	default 0
+
+config EERIE_LEAP_SW_VERSION_PATCH
+	int "Software version patch"
+	range 0 65535
+	default 0

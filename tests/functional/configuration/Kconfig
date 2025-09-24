@@ -1,0 +1,19 @@
+menu "Zephyr"
+source "Kconfig.zephyr"
+endmenu
+
+config EERIE_LEAP_FS_SD_THREAD_STACK_SIZE
+	int "SD thread stack size"
+	default 2048
+
+config EERIE_LEAP_ADC_VOLTAGE_MAX_MV
+	int "ADC voltage max"
+	default 3100
+
+config EERIE_LEAP_SENSOR_VOLTAGE_MAX_MV
+	int "Sensor voltage max"
+	default 5000
+
+config EERIE_LEAP_SD_CHECK_INTERVAL_MS
+	int "SD check interval ms"
+	default 1000
