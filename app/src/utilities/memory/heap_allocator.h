@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 
 #ifdef CONFIG_SHARED_MULTI_HEAP
 #include <zephyr/sys/printk.h>
@@ -36,11 +37,21 @@ public:
     constexpr HeapAllocator(const HeapAllocator<U>& obj) noexcept {}
 
     T* allocate(size_t n) {
+        void* pointer = nullptr;
+
     #ifdef CONFIG_SHARED_MULTI_HEAP
-        return static_cast<T*>(shared_multi_heap_aligned_alloc(SMH_REG_ATTR_EXTERNAL, kAlignment, n * sizeof(T)));
+        pointer = shared_multi_heap_aligned_alloc(SMH_REG_ATTR_EXTERNAL, kAlignment, n * sizeof(T));
     #else
-        return static_cast<T*>(k_malloc(n * sizeof(T)));
+        pointer = k_malloc(n * sizeof(T));
     #endif
+
+        if(pointer == nullptr) {
+            LOG_MODULE_DECLARE(heap_allocator_logger);
+            LOG_ERR("Failed to allocate %zu bytes for %zu elements of type %s\n", n * sizeof(T), n, typeid(T).name());
+            throw std::bad_alloc();
+        }
+
+        return static_cast<T*>(pointer);
     }
 
     void deallocate(T* p, size_t) noexcept {

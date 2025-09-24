@@ -1,5 +1,11 @@
 #include "heap_allocator.h"
 
+namespace eerie_leap::utilities::memory {
+
+LOG_MODULE_REGISTER(heap_allocator_logger);
+
+} // namespace eerie_leap::utilities::memory
+
 // #ifdef CONFIG_SHARED_MULTI_HEAP
 
 // inline void* operator new(std::size_t sz) {
