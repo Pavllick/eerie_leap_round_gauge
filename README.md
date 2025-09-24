@@ -149,3 +149,5 @@ CMake uses [zcbor](https://github.com/NordicSemiconductor/zcbor) to generate CBO
 ```shell
 pip install zcbor
 ```
+
+To generate ZCBOR classes use helpers defined in `app/CMakeLists.txt`, new classes will be placed in `app/src/configuration/generated/` directory.

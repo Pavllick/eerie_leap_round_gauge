@@ -9,6 +9,7 @@
 
 #include "utilities/memory/heap_allocator.h"
 #include "configuration/cbor_traits/system_config_trait.h"
+#include "configuration/cbor_traits/gauge_config_trait.h"
 #include "subsys/fs/services/i_fs_service.h"
 #include "utilities/cbor/cbor_serializer.hpp"
 #include "loaded_config.hpp"
@@ -46,6 +47,7 @@ public:
         LOG_MODULE_DECLARE(configuration_service_logger);
 
         auto config_bytes = cbor_serializer_->Serialize(*configuration);
+        LOG_INF("Saved %s configuration size: %d", configuration_file_path_.c_str(), config_bytes->size());
 
         if (!config_bytes) {
             LOG_ERR("Failed to serialize configuration %s.", configuration_file_path_.c_str());
@@ -88,7 +90,7 @@ public:
             .config = config
         };
 
-        LOG_INF("%s configuration loaded successfully.", configuration_file_path_.c_str());
+        LOG_INF("Loaded %s configuration successfully. Size: %d", configuration_file_path_.c_str(), out_len);
 
         return loaded_config;
     }

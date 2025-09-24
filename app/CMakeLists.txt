@@ -43,7 +43,7 @@ function(generate_zcbor_configuration cddl_path base_name)
     endforeach()
 
     # Define output paths
-    set(output_dir "${CMAKE_CURRENT_SOURCE_DIR}/src/configuration/${base_name}")
+    set(output_dir "${CMAKE_CURRENT_SOURCE_DIR}/src/configuration/generated/${base_name}")
     set(output_cbor_h "${output_dir}/${base_name}_cbor.h")
     set(output_cbor_c "${output_dir}/${base_name}_cbor.c")
     set(output_cbor_decode_h "${output_dir}/${base_name}_cbor_decode.h")
@@ -83,7 +83,8 @@ function(generate_zcbor_configuration cddl_path base_name)
     )
 endfunction()
 
-generate_zcbor_configuration("system_config.cddl" "system_config")
+# generate_zcbor_configuration("system_config.cddl" "system_config")
+# generate_zcbor_configuration("gauge_config.cddl" "gauge_config")
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(eerie_leap_round_gauge)
