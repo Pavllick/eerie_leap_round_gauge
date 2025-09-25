@@ -24,6 +24,7 @@
 #include "domain/sensor_domain/services/reading_processor_service.h"
 
 #include "controllers/gague_controller.h"
+#include "controllers/gpio_controller.h"
 
 #include "configuration/services/configuration_service.h"
 #include "configuration/system_config/system_config.h"
@@ -73,7 +74,7 @@ LOG_MODULE_REGISTER(main_logger);
 constexpr uint32_t SLEEP_TIME_MS = 2000;
 
 std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> SetupTestSensors();
-std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig();
+std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig(std::shared_ptr<GaugeConfigurationController> gauge_configuration_controller);
 
 int main() {
     DtConfigurator::Initialize();
@@ -108,8 +109,7 @@ int main() {
 
     // NOTE: This is a temporary solution.
     auto sensors = SetupTestSensors();
-    auto gauge_config = SetupTestGaugeConfig();
-    gauge_configuration_controller->Update(gauge_config);
+    SetupTestGaugeConfig(gauge_configuration_controller);
 
     auto widget_factory = WidgetFactory::GetInstance();
 
@@ -125,6 +125,28 @@ int main() {
         return -1;
 
     ui_renderer->Start();
+
+    std::shared_ptr<GpioController> gpio_controller;
+    do {
+        if(interface == nullptr) {
+            LOG_WRN("No interface configured.");
+            break;
+        }
+
+        if(!DtGpio::GetButtons().has_value()) {
+            LOG_WRN("No buttons configured.");
+            break;
+        }
+
+        auto gpio_buttons = make_shared_ext<GpioButtons>(DtGpio::GetButtons().value());
+        if(gpio_buttons->Initialize() != 0) {
+            LOG_ERR("Failed to initialize buttons.");
+            break;
+        }
+
+        gpio_controller = make_shared_ext<GpioController>(gpio_buttons, interface);
+        gpio_controller->Initialize();
+    } while(false);
 
 	while (true) {
         k_msleep(SLEEP_TIME_MS);
@@ -219,7 +241,7 @@ std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> SetupTestSensors() {
     return sensors_ptr;
 }
 
-std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig() {
+std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig(std::shared_ptr<GaugeConfigurationController> gauge_configuration_controller) {
     auto gauge_configuration = make_shared_ext<GaugeConfiguration>();
     gauge_configuration->active_screen_index = 0;
 
@@ -329,6 +351,8 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig() {
     };
 
     gauge_configuration->screen_configurations.push_back(screen_configuration);
+
+    gauge_configuration_controller->Update(gauge_configuration);
 
     return gauge_configuration;
 }

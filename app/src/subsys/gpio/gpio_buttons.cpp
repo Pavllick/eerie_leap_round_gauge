@@ -22,11 +22,19 @@ int GpioButtons::Initialize() {
     return 0;
 }
 
-void button_pressed(const struct device* dev, gpio_callback* callback, uint32_t pins) {
+void GpioButtons::ButtonPressedCallback(const struct device* dev, gpio_callback* callback, uint32_t pins) {
     GpioButtonCbData* cb_data = CONTAINER_OF(callback, GpioButtonCbData, callback);
 
-    for(auto& handler : cb_data->handlers)
+    int64_t now = k_uptime_get();
+
+    if(now - cb_data->last_press_time < cb_data->DEBOUNCE_MS)
+        return;
+
+    cb_data->last_press_time = now;
+
+    for(auto& handler : cb_data->handlers) {
         handler();
+    }
 }
 
 bool GpioButtons::RegisterCallback(int index, GptioButtonHandler handler) {
@@ -37,15 +45,15 @@ bool GpioButtons::RegisterCallback(int index, GptioButtonHandler handler) {
 
     if(cb_data_containers_.find(index) == cb_data_containers_.end()) {
         cb_data_containers_[index] = std::make_shared<GpioButtonCbData>();
+
+        auto& button = gpio_specs_.at(index);
+        gpio_init_callback(&cb_data_containers_[index]->callback,
+            ButtonPressedCallback,
+            BIT(button.pin));
+        gpio_add_callback(button.port, &cb_data_containers_[index]->callback);
     }
 
     cb_data_containers_[index]->handlers.push_back(handler);
-
-    auto& button = gpio_specs_.at(index);
-    gpio_init_callback(&cb_data_containers_[index]->callback,
-        button_pressed,
-        BIT(button.pin));
-    gpio_add_callback(button.port, &cb_data_containers_[index]->callback);
 
     return true;
 }
