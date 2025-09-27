@@ -4,9 +4,9 @@
 #include <cstdbool>
 #include <cstddef>
 #include <cstring>
-#include "gauge_config.h"
+#include "ui_config.h"
 
-int cbor_decode_GaugeConfig(
+int cbor_decode_UiConfig(
 		const uint8_t *payload, size_t payload_len,
-		struct GaugeConfig *result,
+		struct UiConfig *result,
 		size_t *payload_len_out);

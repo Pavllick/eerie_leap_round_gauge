@@ -7,7 +7,7 @@
 #include <zephyr/ztest.h>
 
 #include "utilities/cbor/cbor_helpers.hpp"
-#include "configuration/gauge_config/gauge_config.h"
+#include "configuration/ui_config/ui_config.h"
 #include "configuration/services/configuration_service.h"
 
 #include "subsys/device_tree/dt_fs.h"
@@ -19,16 +19,16 @@ using namespace eerie_leap::configuration::services;
 using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::device_tree;
 
-ZTEST_SUITE(configuration_service_gauge_config, NULL, NULL, NULL, NULL, NULL);
+ZTEST_SUITE(configuration_service_ui_config, NULL, NULL, NULL, NULL, NULL);
 
-ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_int_Save_successfully_saved_and_loaded) {
-    auto gauge_config = make_shared_ext<GaugeConfig>();
-    memset(gauge_config.get(), 0, sizeof(GaugeConfig));
+ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_int_Save_successfully_saved_and_loaded) {
+    auto ui_config = make_shared_ext<UiConfig>();
+    memset(ui_config.get(), 0, sizeof(UiConfig));
 
-    gauge_config->active_screen_index = 12;
+    ui_config->active_screen_index = 12;
 
-    gauge_config->properties_present = true;
-    gauge_config->properties.PropertyValueType_m_count = 4;
+    ui_config->properties_present = true;
+    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
     std::vector<int32_t> values = {1, 2, 3, 4};
@@ -39,19 +39,19 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_int
         property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_c;
         property_value.PropertyValueType_m.value = values[i];
-        gauge_config->properties.PropertyValueType_m.push_back(property_value);
+        ui_config->properties.PropertyValueType_m.push_back(property_value);
     }
 
     DtFs::InitInternalFs();
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto gauge_config_service = std::make_shared<ConfigurationService<GaugeConfig>>("gauge_config", fs_service);
+    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
 
-    auto save_res = gauge_config_service->Save(gauge_config.get());
+    auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
 
-    auto loaded_config = gauge_config_service->Load();
+    auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
@@ -65,14 +65,14 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_int
     }
 }
 
-ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_double_Save_successfully_saved_and_loaded) {
-    auto gauge_config = make_shared_ext<GaugeConfig>();
-    memset(gauge_config.get(), 0, sizeof(GaugeConfig));
+ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_double_Save_successfully_saved_and_loaded) {
+    auto ui_config = make_shared_ext<UiConfig>();
+    memset(ui_config.get(), 0, sizeof(UiConfig));
 
-    gauge_config->active_screen_index = 12;
+    ui_config->active_screen_index = 12;
 
-    gauge_config->properties_present = true;
-    gauge_config->properties.PropertyValueType_m_count = 4;
+    ui_config->properties_present = true;
+    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
     std::vector<double> values = {1.1, 2.2, 3.3, 4.4};
@@ -83,19 +83,19 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_dou
         property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_float_c;
         property_value.PropertyValueType_m.value = values[i];
-        gauge_config->properties.PropertyValueType_m.push_back(property_value);
+        ui_config->properties.PropertyValueType_m.push_back(property_value);
     }
 
     DtFs::InitInternalFs();
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto gauge_config_service = std::make_shared<ConfigurationService<GaugeConfig>>("gauge_config", fs_service);
+    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
 
-    auto save_res = gauge_config_service->Save(gauge_config.get());
+    auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
 
-    auto loaded_config = gauge_config_service->Load();
+    auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
@@ -109,14 +109,14 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_dou
     }
 }
 
-ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_string_Save_successfully_saved_and_loaded) {
-    auto gauge_config = make_shared_ext<GaugeConfig>();
-    memset(gauge_config.get(), 0, sizeof(GaugeConfig));
+ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_Save_successfully_saved_and_loaded) {
+    auto ui_config = make_shared_ext<UiConfig>();
+    memset(ui_config.get(), 0, sizeof(UiConfig));
 
-    gauge_config->active_screen_index = 12;
+    ui_config->active_screen_index = 12;
 
-    gauge_config->properties_present = true;
-    gauge_config->properties.PropertyValueType_m_count = 4;
+    ui_config->properties_present = true;
+    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
     std::vector<std::string> values = {"v_0", "v_1", "v_2", "v_3"};
@@ -127,19 +127,19 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
         property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_tstr_c;
         property_value.PropertyValueType_m.value = CborHelpers::ToZcborString(&values[i]);
-        gauge_config->properties.PropertyValueType_m.push_back(property_value);
+        ui_config->properties.PropertyValueType_m.push_back(property_value);
     }
 
     DtFs::InitInternalFs();
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto gauge_config_service = std::make_shared<ConfigurationService<GaugeConfig>>("gauge_config", fs_service);
+    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
 
-    auto save_res = gauge_config_service->Save(gauge_config.get());
+    auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
 
-    auto loaded_config = gauge_config_service->Load();
+    auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
@@ -155,14 +155,14 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
     }
 }
 
-ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_bool_Save_successfully_saved_and_loaded) {
-    auto gauge_config = make_shared_ext<GaugeConfig>();
-    memset(gauge_config.get(), 0, sizeof(GaugeConfig));
+ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_bool_Save_successfully_saved_and_loaded) {
+    auto ui_config = make_shared_ext<UiConfig>();
+    memset(ui_config.get(), 0, sizeof(UiConfig));
 
-    gauge_config->active_screen_index = 12;
+    ui_config->active_screen_index = 12;
 
-    gauge_config->properties_present = true;
-    gauge_config->properties.PropertyValueType_m_count = 4;
+    ui_config->properties_present = true;
+    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
     std::vector<bool> values = {true, false, true, false};
@@ -173,19 +173,19 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_boo
         property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_bool_c;
         property_value.PropertyValueType_m.value = values[i];
-        gauge_config->properties.PropertyValueType_m.push_back(property_value);
+        ui_config->properties.PropertyValueType_m.push_back(property_value);
     }
 
     DtFs::InitInternalFs();
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto gauge_config_service = std::make_shared<ConfigurationService<GaugeConfig>>("gauge_config", fs_service);
+    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
 
-    auto save_res = gauge_config_service->Save(gauge_config.get());
+    auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
 
-    auto loaded_config = gauge_config_service->Load();
+    auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
@@ -199,14 +199,14 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_boo
     }
 }
 
-ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_int_list_Save_config_successfully_saved_and_loaded) {
-    auto gauge_config = make_shared_ext<GaugeConfig>();
-    memset(gauge_config.get(), 0, sizeof(GaugeConfig));
+ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_int_list_Save_config_successfully_saved_and_loaded) {
+    auto ui_config = make_shared_ext<UiConfig>();
+    memset(ui_config.get(), 0, sizeof(UiConfig));
 
-    gauge_config->active_screen_index = 12;
+    ui_config->active_screen_index = 12;
 
-    gauge_config->properties_present = true;
-    gauge_config->properties.PropertyValueType_m_count = 4;
+    ui_config->properties_present = true;
+    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
     std::vector<std::vector<int32_t>> values = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}};
@@ -217,19 +217,19 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_int
         property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_l_c;
         property_value.PropertyValueType_m.value = values[i];
-        gauge_config->properties.PropertyValueType_m.push_back(property_value);
+        ui_config->properties.PropertyValueType_m.push_back(property_value);
     }
 
     DtFs::InitInternalFs();
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto gauge_config_service = std::make_shared<ConfigurationService<GaugeConfig>>("gauge_config", fs_service);
+    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
 
-    auto save_res = gauge_config_service->Save(gauge_config.get());
+    auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
 
-    auto loaded_config = gauge_config_service->Load();
+    auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
@@ -243,14 +243,14 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_int
     }
 }
 
-ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_string_list_Save_config_successfully_saved_and_loaded) {
-    auto gauge_config = make_shared_ext<GaugeConfig>();
-    memset(gauge_config.get(), 0, sizeof(GaugeConfig));
+ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_list_Save_config_successfully_saved_and_loaded) {
+    auto ui_config = make_shared_ext<UiConfig>();
+    memset(ui_config.get(), 0, sizeof(UiConfig));
 
-    gauge_config->active_screen_index = 12;
+    ui_config->active_screen_index = 12;
 
-    gauge_config->properties_present = true;
-    gauge_config->properties.PropertyValueType_m_count = 4;
+    ui_config->properties_present = true;
+    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
     std::vector<std::vector<std::string>> values = {{"v_0", "v_1", "v_2"}, {"v_3", "v_4", "v_5"}, {"v_6", "v_7", "v_8"}, {"v_9", "v_10", "v_11"}};
@@ -272,19 +272,19 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
         property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_tstr_l_c;
         property_value.PropertyValueType_m.value = values_zcbor[i];
-        gauge_config->properties.PropertyValueType_m.push_back(property_value);
+        ui_config->properties.PropertyValueType_m.push_back(property_value);
     }
 
     DtFs::InitInternalFs();
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto gauge_config_service = std::make_shared<ConfigurationService<GaugeConfig>>("gauge_config", fs_service);
+    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
 
-    auto save_res = gauge_config_service->Save(gauge_config.get());
+    auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
 
-    auto loaded_config = gauge_config_service->Load();
+    auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
@@ -303,14 +303,14 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
     }
 }
 
-ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_string_map_Save_config_successfully_saved_and_loaded) {
-    auto gauge_config = make_shared_ext<GaugeConfig>();
-    memset(gauge_config.get(), 0, sizeof(GaugeConfig));
+ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_map_Save_config_successfully_saved_and_loaded) {
+    auto ui_config = make_shared_ext<UiConfig>();
+    memset(ui_config.get(), 0, sizeof(UiConfig));
 
-    gauge_config->active_screen_index = 12;
+    ui_config->active_screen_index = 12;
 
-    gauge_config->properties_present = true;
-    gauge_config->properties.PropertyValueType_m_count = 4;
+    ui_config->properties_present = true;
+    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
 
@@ -342,19 +342,19 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
         property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_map_c;
         property_value.PropertyValueType_m.value = values_zcbor[i];
-        gauge_config->properties.PropertyValueType_m.push_back(property_value);
+        ui_config->properties.PropertyValueType_m.push_back(property_value);
     }
 
     DtFs::InitInternalFs();
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto gauge_config_service = std::make_shared<ConfigurationService<GaugeConfig>>("gauge_config", fs_service);
+    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
 
-    auto save_res = gauge_config_service->Save(gauge_config.get());
+    auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
 
-    auto loaded_config = gauge_config_service->Load();
+    auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
@@ -380,14 +380,14 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
     }
 }
 
-ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_string_all_mixed_Save_config_successfully_saved_and_loaded) {
-    auto gauge_config = make_shared_ext<GaugeConfig>();
-    memset(gauge_config.get(), 0, sizeof(GaugeConfig));
+ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_all_mixed_Save_config_successfully_saved_and_loaded) {
+    auto ui_config = make_shared_ext<UiConfig>();
+    memset(ui_config.get(), 0, sizeof(UiConfig));
 
-    gauge_config->active_screen_index = 12;
+    ui_config->active_screen_index = 12;
 
-    gauge_config->properties_present = true;
-    gauge_config->properties.PropertyValueType_m_count = 7;
+    ui_config->properties_present = true;
+    ui_config->properties.PropertyValueType_m_count = 7;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3", "t_4", "t_5", "t_6"};
     int32_t uint32_t_value = 46;
@@ -406,7 +406,7 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
     };
 
     // int32_t
-    gauge_config->properties.PropertyValueType_m.push_back({
+    ui_config->properties.PropertyValueType_m.push_back({
         .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[0]),
         .PropertyValueType_m = {
             .value = uint32_t_value,
@@ -415,7 +415,7 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
     });
 
     // double
-    gauge_config->properties.PropertyValueType_m.push_back({
+    ui_config->properties.PropertyValueType_m.push_back({
         .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[1]),
         .PropertyValueType_m = {
             .value = double_value,
@@ -424,7 +424,7 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
     });
 
     // string
-    gauge_config->properties.PropertyValueType_m.push_back({
+    ui_config->properties.PropertyValueType_m.push_back({
         .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[2]),
         .PropertyValueType_m = {
             .value = CborHelpers::ToZcborString(&string_value),
@@ -432,7 +432,7 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
         }
     });
 
-        gauge_config->properties.PropertyValueType_m.push_back({
+        ui_config->properties.PropertyValueType_m.push_back({
         .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[3]),
         .PropertyValueType_m = {
             .value = bool_value,
@@ -441,7 +441,7 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
     });
 
     // int vector
-    gauge_config->properties.PropertyValueType_m.push_back({
+    ui_config->properties.PropertyValueType_m.push_back({
         .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[4]),
         .PropertyValueType_m = {
             .value = int_vector_value,
@@ -454,7 +454,7 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
     for(int i = 0; i < string_vector_value.size(); i++)
         string_vector_value_zcbor.push_back(CborHelpers::ToZcborString(&string_vector_value[i]));
 
-    gauge_config->properties.PropertyValueType_m.push_back({
+    ui_config->properties.PropertyValueType_m.push_back({
         .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[5]),
         .PropertyValueType_m = {
             .value = string_vector_value_zcbor,
@@ -472,7 +472,7 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
         });
     }
 
-    gauge_config->properties.PropertyValueType_m.push_back({
+    ui_config->properties.PropertyValueType_m.push_back({
         .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[6]),
         .PropertyValueType_m = {
             .value = string_map_value_zcbor,
@@ -484,12 +484,12 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto gauge_config_service = std::make_shared<ConfigurationService<GaugeConfig>>("gauge_config", fs_service);
+    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
 
-    auto save_res = gauge_config_service->Save(gauge_config.get());
+    auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
 
-    auto loaded_config = gauge_config_service->Load();
+    auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
@@ -547,14 +547,14 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_PropertyValueType_str
     }
 }
 
-ZTEST(configuration_service_gauge_config, test_GaugeConfig_Save_successfully_saved_and_loaded) {
-    auto gauge_config = make_shared_ext<GaugeConfig>();
-    memset(gauge_config.get(), 0, sizeof(GaugeConfig));
+ZTEST(configuration_service_ui_config, test_UiConfig_Save_successfully_saved_and_loaded) {
+    auto ui_config = make_shared_ext<UiConfig>();
+    memset(ui_config.get(), 0, sizeof(UiConfig));
 
-    gauge_config->active_screen_index = 12;
+    ui_config->active_screen_index = 12;
 
-    gauge_config->properties_present = true;
-    gauge_config->properties.PropertyValueType_m_count = 4;
+    ui_config->properties_present = true;
+    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
     std::vector<int32_t> values = {1, 2, 3, 4};
@@ -565,11 +565,11 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_Save_successfully_sav
         property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_c;
         property_value.PropertyValueType_m.value = values[i];
-        gauge_config->properties.PropertyValueType_m.push_back(property_value);
+        ui_config->properties.PropertyValueType_m.push_back(property_value);
     }
 
-    gauge_config->ScreenConfig_m_count = 1;
-    gauge_config->ScreenConfig_m.push_back({
+    ui_config->ScreenConfig_m_count = 1;
+    ui_config->ScreenConfig_m.push_back({
         .id = 1,
         .grid = {
             .snap_enabled = true,
@@ -651,12 +651,12 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_Save_successfully_sav
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto gauge_config_service = std::make_shared<ConfigurationService<GaugeConfig>>("gauge_config", fs_service);
+    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
 
-    auto save_res = gauge_config_service->Save(gauge_config.get());
+    auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
 
-    auto loaded_config = gauge_config_service->Load();
+    auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);

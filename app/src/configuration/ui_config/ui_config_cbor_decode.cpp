@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <cstring>
 #include "zcbor_decode.h"
-#include "gauge_config_cbor_decode.h"
+#include "ui_config_cbor_decode.h"
 #include "zcbor_print.h"
 
 #include <zephyr/kernel.h>
@@ -29,7 +29,7 @@ static bool decode_WidgetPositionConfig(zcbor_state_t *state, struct WidgetPosit
 static bool decode_WidgetSizeConfig(zcbor_state_t *state, struct WidgetSizeConfig *result);
 static bool decode_WidgetConfig(zcbor_state_t *state, struct WidgetConfig *result);
 static bool decode_ScreenConfig(zcbor_state_t *state, struct ScreenConfig *result);
-static bool decode_GaugeConfig(zcbor_state_t *state, struct GaugeConfig *result);
+static bool decode_UiConfig(zcbor_state_t *state, struct UiConfig *result);
 
 
 static bool decode_repeated_map_tstrtstr(
@@ -102,10 +102,10 @@ static bool decode_PropertyValueType(
 		*state = backup_state;
 		// Try list of int32_t
 		if (zcbor_list_start_decode(state)) {
-			auto buffer = make_shared_ext<ExtVector>(sizeof(int32_t) * GAUGE_CONFIG_MAX_PROPERTIES_COUNT);
+			auto buffer = make_shared_ext<ExtVector>(sizeof(int32_t) * UI_CONFIG_MAX_PROPERTIES_COUNT);
 			size_t count = 0;
 
-			if (zcbor_multi_decode(0, GAUGE_CONFIG_MAX_PROPERTIES_COUNT, &count, (zcbor_decoder_t*)zcbor_int32_decode,
+			if (zcbor_multi_decode(0, UI_CONFIG_MAX_PROPERTIES_COUNT, &count, (zcbor_decoder_t*)zcbor_int32_decode,
 					state, buffer->data(), sizeof(int32_t)) && zcbor_list_end_decode(state)) {
 
 				std::vector<int32_t> vec(count);
@@ -121,10 +121,10 @@ static bool decode_PropertyValueType(
 		*state = backup_state;
 		// Try list of strings
 		if (zcbor_list_start_decode(state)) {
-			auto buffer = make_shared_ext<ExtVector>(sizeof(zcbor_string) * GAUGE_CONFIG_MAX_PROPERTIES_COUNT);
+			auto buffer = make_shared_ext<ExtVector>(sizeof(zcbor_string) * UI_CONFIG_MAX_PROPERTIES_COUNT);
 			size_t count = 0;
 
-			if (zcbor_multi_decode(0, GAUGE_CONFIG_MAX_PROPERTIES_COUNT, &count, (zcbor_decoder_t*)zcbor_tstr_decode,
+			if (zcbor_multi_decode(0, UI_CONFIG_MAX_PROPERTIES_COUNT, &count, (zcbor_decoder_t*)zcbor_tstr_decode,
 				state, buffer->data(), sizeof(zcbor_string)) && zcbor_list_end_decode(state)) {
 
 				std::vector<zcbor_string> vec(count);
@@ -140,10 +140,10 @@ static bool decode_PropertyValueType(
 		*state = backup_state;
 		// Try map (vector of map_tstrtstr)
 		if (zcbor_map_start_decode(state)) {
-			auto buffer = make_shared_ext<ExtVector>(sizeof(map_tstrtstr) * GAUGE_CONFIG_MAX_PROPERTIES_COUNT);
+			auto buffer = make_shared_ext<ExtVector>(sizeof(map_tstrtstr) * UI_CONFIG_MAX_PROPERTIES_COUNT);
 			size_t count = 0;
 
-			if (zcbor_multi_decode(0, GAUGE_CONFIG_MAX_PROPERTIES_COUNT, &count, (zcbor_decoder_t*)decode_repeated_map_tstrtstr,
+			if (zcbor_multi_decode(0, UI_CONFIG_MAX_PROPERTIES_COUNT, &count, (zcbor_decoder_t*)decode_repeated_map_tstrtstr,
 				state, buffer->data(), sizeof(map_tstrtstr)) && zcbor_map_end_decode(state)) {
 
 				std::vector<map_tstrtstr> vec(count);
@@ -179,10 +179,10 @@ static bool decode_PropertiesConfig(
 	result->PropertyValueType_m_count = 0;
 	result->PropertyValueType_m.clear();
 
-	auto buffer = make_shared_ext<ExtVector>(sizeof(PropertiesConfig_PropertyValueType_m) * GAUGE_CONFIG_MAX_PROPERTIES_COUNT);
+	auto buffer = make_shared_ext<ExtVector>(sizeof(PropertiesConfig_PropertyValueType_m) * UI_CONFIG_MAX_PROPERTIES_COUNT);
 
 	bool res = zcbor_map_start_decode(state)
-		&& ((zcbor_multi_decode(0, GAUGE_CONFIG_MAX_PROPERTIES_COUNT, &(*result).PropertyValueType_m_count, (zcbor_decoder_t *)decode_repeated_PropertiesConfig_PropertyValueType_m, state, buffer->data(), sizeof(struct PropertiesConfig_PropertyValueType_m))) ||
+		&& ((zcbor_multi_decode(0, UI_CONFIG_MAX_PROPERTIES_COUNT, &(*result).PropertyValueType_m_count, (zcbor_decoder_t *)decode_repeated_PropertiesConfig_PropertyValueType_m, state, buffer->data(), sizeof(struct PropertiesConfig_PropertyValueType_m))) ||
 			(zcbor_list_map_end_force_decode(state), false))
 		&& zcbor_map_end_decode(state);
 
@@ -254,11 +254,11 @@ static bool decode_ScreenConfig(
 {
 	zcbor_log("%s\r\n", __func__);
 
-	auto buffer = make_shared_ext<ExtVector>(sizeof(WidgetConfig) * GAUGE_CONFIG_MAX_WIDGET_CONFIGURATIONS_COUNT);
+	auto buffer = make_shared_ext<ExtVector>(sizeof(WidgetConfig) * UI_CONFIG_MAX_WIDGET_CONFIGURATIONS_COUNT);
 
 	bool res = (((zcbor_list_start_decode(state) && ((((zcbor_uint32_decode(state, (&(*result).id))))
 	&& ((decode_GridSettingsConfig(state, (&(*result).grid))))
-	&& ((zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, GAUGE_CONFIG_MAX_WIDGET_CONFIGURATIONS_COUNT, &(*result).WidgetConfig_m_count, (zcbor_decoder_t *)decode_WidgetConfig, state, buffer->data(), sizeof(struct WidgetConfig))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
+	&& ((zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, UI_CONFIG_MAX_WIDGET_CONFIGURATIONS_COUNT, &(*result).WidgetConfig_m_count, (zcbor_decoder_t *)decode_WidgetConfig, state, buffer->data(), sizeof(struct WidgetConfig))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
 
 	if (res) {
 		result->WidgetConfig_m.resize(result->WidgetConfig_m_count);
@@ -270,17 +270,17 @@ static bool decode_ScreenConfig(
 	return res;
 }
 
-static bool decode_GaugeConfig(
-		zcbor_state_t *state, struct GaugeConfig *result)
+static bool decode_UiConfig(
+		zcbor_state_t *state, struct UiConfig *result)
 {
 	zcbor_log("%s\r\n", __func__);
 
-	auto buffer = make_shared_ext<ExtVector>(sizeof(ScreenConfig) * GAUGE_CONFIG_MAX_SCREEN_CONFIGURATIONS_COUNT);
+	auto buffer = make_shared_ext<ExtVector>(sizeof(ScreenConfig) * UI_CONFIG_MAX_SCREEN_CONFIGURATIONS_COUNT);
 
 	bool res = (((zcbor_list_start_decode(state) && ((((zcbor_uint32_decode(state, (&(*result).version))))
 	&& ((zcbor_uint32_decode(state, (&(*result).active_screen_index))))
 	&& ((*result).properties_present = ((decode_PropertiesConfig(state, (&(*result).properties)))), 1)
-	&& ((zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, GAUGE_CONFIG_MAX_SCREEN_CONFIGURATIONS_COUNT, &(*result).ScreenConfig_m_count, (zcbor_decoder_t *)decode_ScreenConfig, state, buffer->data(), sizeof(struct ScreenConfig))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))))
+	&& ((zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, UI_CONFIG_MAX_SCREEN_CONFIGURATIONS_COUNT, &(*result).ScreenConfig_m_count, (zcbor_decoder_t *)decode_ScreenConfig, state, buffer->data(), sizeof(struct ScreenConfig))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))))
 	|| (zcbor_list_map_end_force_decode(state), false))) && zcbor_list_end_decode(state)));
 
 	if (res) {
@@ -295,13 +295,13 @@ static bool decode_GaugeConfig(
 
 
 
-int cbor_decode_GaugeConfig(
+int cbor_decode_UiConfig(
 		const uint8_t *payload, size_t payload_len,
-		struct GaugeConfig *result,
+		struct UiConfig *result,
 		size_t *payload_len_out)
 {
 	zcbor_state_t states[10];
 
 	return zcbor_entry_function(payload, payload_len, (void *)result, payload_len_out, states,
-		(zcbor_decoder_t *)decode_GaugeConfig, sizeof(states) / sizeof(zcbor_state_t), 1);
+		(zcbor_decoder_t *)decode_UiConfig, sizeof(states) / sizeof(zcbor_state_t), 1);
 }

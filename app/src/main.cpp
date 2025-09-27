@@ -75,7 +75,7 @@ LOG_MODULE_REGISTER(main_logger);
 constexpr uint32_t SLEEP_TIME_MS = 2000;
 
 std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> SetupTestSensors();
-std::shared_ptr<UiConfiguration> SetupTestGaugeConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager);
+std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager);
 
 int main() {
     DtConfigurator::Initialize();
@@ -100,8 +100,8 @@ int main() {
     auto system_config_service = make_shared_ext<ConfigurationService<SystemConfig>>("system_config", fs_service);
     auto system_configuration_manager = make_shared_ext<SystemConfigurationManager>(system_config_service);
 
-    auto gauge_config_service = make_shared_ext<ConfigurationService<GaugeConfig>>("gauge_config", fs_service);
-    auto ui_configuration_manager = make_shared_ext<UiConfigurationManager>(gauge_config_service);
+    auto ui_config_service = make_shared_ext<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_configuration_manager = make_shared_ext<UiConfigurationManager>(ui_config_service);
 
     std::shared_ptr<Interface> interface = nullptr;
     if(DtModbus::Get().has_value()) {
@@ -116,7 +116,7 @@ int main() {
 
     // NOTE: This is a temporary solution.
     auto sensors = SetupTestSensors();
-    SetupTestGaugeConfig(ui_configuration_manager);
+    SetupTestUiConfig(ui_configuration_manager);
 
     auto widget_factory = WidgetFactory::GetInstance();
 
@@ -258,7 +258,7 @@ std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> SetupTestSensors() {
     return sensors_ptr;
 }
 
-std::shared_ptr<UiConfiguration> SetupTestGaugeConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager) {
+std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager) {
     auto ui_configuration = make_shared_ext<UiConfiguration>();
     ui_configuration->active_screen_index = 0;
 

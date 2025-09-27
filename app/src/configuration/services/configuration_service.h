@@ -9,7 +9,7 @@
 
 #include "utilities/memory/heap_allocator.h"
 #include "configuration/cbor_traits/system_config_trait.h"
-#include "configuration/cbor_traits/gauge_config_trait.h"
+#include "configuration/cbor_traits/ui_config_trait.h"
 #include "subsys/fs/services/i_fs_service.h"
 #include "utilities/cbor/cbor_serializer.hpp"
 #include "loaded_config.hpp"

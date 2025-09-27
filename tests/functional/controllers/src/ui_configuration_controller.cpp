@@ -2,7 +2,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
-#include "configuration/gauge_config/gauge_config.h"
+#include "configuration/ui_config/ui_config.h"
 #include "configuration/services/configuration_service.h"
 
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
@@ -22,7 +22,7 @@ using namespace eerie_leap::views::widgets::indicators;
 
 ZTEST_SUITE(ui_configuration_manager, NULL, NULL, NULL, NULL, NULL);
 
-std::shared_ptr<UiConfiguration> ui_configuration_manager_test_SetupTestGaugeConfig() {
+std::shared_ptr<UiConfiguration> ui_configuration_manager_test_SetupTestUiConfig() {
     auto ui_configuration = make_shared_ext<UiConfiguration>();
     ui_configuration->active_screen_index = 8;
 
@@ -102,11 +102,11 @@ ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_successf
 
     fs_service->Format();
 
-    auto ui_configuration_service = std::make_shared<ConfigurationService<GaugeConfig>>("gauge_config", fs_service);
+    auto ui_configuration_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
     auto ui_configuration_manager = std::make_shared<UiConfigurationManager>(ui_configuration_service);
 
-    auto gauge_config = ui_configuration_manager_test_SetupTestGaugeConfig();
-    bool result = ui_configuration_manager->Update(gauge_config);
+    auto ui_config = ui_configuration_manager_test_SetupTestUiConfig();
+    bool result = ui_configuration_manager->Update(ui_config);
     zassert_true(result);
 }
 
@@ -116,35 +116,35 @@ ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_and_Load
 
     fs_service->Format();
 
-    auto ui_configuration_service = std::make_shared<ConfigurationService<GaugeConfig>>("gauge_config", fs_service);
+    auto ui_configuration_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
     auto ui_configuration_manager = std::make_shared<UiConfigurationManager>(ui_configuration_service);
 
-    auto gauge_config = ui_configuration_manager_test_SetupTestGaugeConfig();
-    bool result = ui_configuration_manager->Update(gauge_config);
+    auto ui_config = ui_configuration_manager_test_SetupTestUiConfig();
+    bool result = ui_configuration_manager->Update(ui_config);
     zassert_true(result);
 
     auto saved_ui_configuration = *ui_configuration_manager->Get(true);
 
-    zassert_equal(saved_ui_configuration.active_screen_index, gauge_config->active_screen_index);
+    zassert_equal(saved_ui_configuration.active_screen_index, ui_config->active_screen_index);
 
-    for (std::size_t i = 0; i < gauge_config->screen_configurations.size(); i++) {
-        zassert_equal(saved_ui_configuration.screen_configurations[i].id, gauge_config->screen_configurations[i].id);
-        zassert_equal(saved_ui_configuration.screen_configurations[i].grid.snap_enabled, gauge_config->screen_configurations[i].grid.snap_enabled);
-        zassert_equal(saved_ui_configuration.screen_configurations[i].grid.width, gauge_config->screen_configurations[i].grid.width);
-        zassert_equal(saved_ui_configuration.screen_configurations[i].grid.height, gauge_config->screen_configurations[i].grid.height);
-        zassert_equal(saved_ui_configuration.screen_configurations[i].grid.spacing_px, gauge_config->screen_configurations[i].grid.spacing_px);
+    for (std::size_t i = 0; i < ui_config->screen_configurations.size(); i++) {
+        zassert_equal(saved_ui_configuration.screen_configurations[i].id, ui_config->screen_configurations[i].id);
+        zassert_equal(saved_ui_configuration.screen_configurations[i].grid.snap_enabled, ui_config->screen_configurations[i].grid.snap_enabled);
+        zassert_equal(saved_ui_configuration.screen_configurations[i].grid.width, ui_config->screen_configurations[i].grid.width);
+        zassert_equal(saved_ui_configuration.screen_configurations[i].grid.height, ui_config->screen_configurations[i].grid.height);
+        zassert_equal(saved_ui_configuration.screen_configurations[i].grid.spacing_px, ui_config->screen_configurations[i].grid.spacing_px);
 
-        for (std::size_t j = 0; j < gauge_config->screen_configurations[i].widget_configurations.size(); j++) {
-            zassert_equal(saved_ui_configuration.screen_configurations[i].widget_configurations[j].type, gauge_config->screen_configurations[i].widget_configurations[j].type);
-            zassert_equal(saved_ui_configuration.screen_configurations[i].widget_configurations[j].id, gauge_config->screen_configurations[i].widget_configurations[j].id);
-            zassert_equal(saved_ui_configuration.screen_configurations[i].widget_configurations[j].position_grid.x, gauge_config->screen_configurations[i].widget_configurations[j].position_grid.x);
-            zassert_equal(saved_ui_configuration.screen_configurations[i].widget_configurations[j].position_grid.y, gauge_config->screen_configurations[i].widget_configurations[j].position_grid.y);
-            zassert_equal(saved_ui_configuration.screen_configurations[i].widget_configurations[j].size_grid.width, gauge_config->screen_configurations[i].widget_configurations[j].size_grid.width);
-            zassert_equal(saved_ui_configuration.screen_configurations[i].widget_configurations[i].size_grid.height, gauge_config->screen_configurations[i].widget_configurations[i].size_grid.height);
-            zassert_equal(saved_ui_configuration.screen_configurations[i].widget_configurations[i].properties.size(), gauge_config->screen_configurations[i].widget_configurations[i].properties.size());
+        for (std::size_t j = 0; j < ui_config->screen_configurations[i].widget_configurations.size(); j++) {
+            zassert_equal(saved_ui_configuration.screen_configurations[i].widget_configurations[j].type, ui_config->screen_configurations[i].widget_configurations[j].type);
+            zassert_equal(saved_ui_configuration.screen_configurations[i].widget_configurations[j].id, ui_config->screen_configurations[i].widget_configurations[j].id);
+            zassert_equal(saved_ui_configuration.screen_configurations[i].widget_configurations[j].position_grid.x, ui_config->screen_configurations[i].widget_configurations[j].position_grid.x);
+            zassert_equal(saved_ui_configuration.screen_configurations[i].widget_configurations[j].position_grid.y, ui_config->screen_configurations[i].widget_configurations[j].position_grid.y);
+            zassert_equal(saved_ui_configuration.screen_configurations[i].widget_configurations[j].size_grid.width, ui_config->screen_configurations[i].widget_configurations[j].size_grid.width);
+            zassert_equal(saved_ui_configuration.screen_configurations[i].widget_configurations[i].size_grid.height, ui_config->screen_configurations[i].widget_configurations[i].size_grid.height);
+            zassert_equal(saved_ui_configuration.screen_configurations[i].widget_configurations[i].properties.size(), ui_config->screen_configurations[i].widget_configurations[i].properties.size());
 
-            for (auto& property : gauge_config->screen_configurations[i].widget_configurations[j].properties) {
-                zassert_true(saved_ui_configuration.screen_configurations[i].widget_configurations[j].properties[property.first] == gauge_config->screen_configurations[i].widget_configurations[j].properties[property.first]);
+            for (auto& property : ui_config->screen_configurations[i].widget_configurations[j].properties) {
+                zassert_true(saved_ui_configuration.screen_configurations[i].widget_configurations[j].properties[property.first] == ui_config->screen_configurations[i].widget_configurations[j].properties[property.first]);
             }
         }
     }

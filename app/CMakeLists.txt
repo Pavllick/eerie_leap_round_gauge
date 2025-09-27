@@ -84,7 +84,7 @@ function(generate_zcbor_configuration cddl_path base_name)
 endfunction()
 
 # generate_zcbor_configuration("system_config.cddl" "system_config")
-# generate_zcbor_configuration("gauge_config.cddl" "gauge_config")
+# generate_zcbor_configuration("ui_config.cddl" "ui_config")
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(eerie_leap_round_gauge)

@@ -1,4 +1,4 @@
-GaugeConfig = [
+UiConfig = [
     version: uint,
     active_screen_index: uint,
     ? properties: PropertiesConfig,

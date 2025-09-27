@@ -8,11 +8,11 @@ namespace eerie_leap::domain::ui_domain::configuration {
 using namespace eerie_leap::utilities::cbor;
 using namespace eerie_leap::utilities::memory;
 
-LOG_MODULE_REGISTER(gauge_config_ctrl_logger);
+LOG_MODULE_REGISTER(ui_config_ctrl_logger);
 
-UiConfigurationManager::UiConfigurationManager(std::shared_ptr<ConfigurationService<GaugeConfig>> ui_configuration_service) :
+UiConfigurationManager::UiConfigurationManager(std::shared_ptr<ConfigurationService<UiConfig>> ui_configuration_service) :
     ui_configuration_service_(std::move(ui_configuration_service)),
-    gauge_config_(nullptr),
+    ui_config_(nullptr),
     ui_configuration_(nullptr) {
 
     if(Get(true) == nullptr)
@@ -77,18 +77,18 @@ void ValueTypeToPropertyValueType(PropertiesConfig& properties_config, std::unor
 }
 
 bool UiConfigurationManager::Update(std::shared_ptr<UiConfiguration> ui_configuration) {
-    auto gauge_config = make_shared_ext<GaugeConfig>();
+    auto ui_config = make_shared_ext<UiConfig>();
 
-    gauge_config->active_screen_index = ui_configuration->active_screen_index;
+    ui_config->active_screen_index = ui_configuration->active_screen_index;
 
-    gauge_config->properties_present = ui_configuration->properties.size() > 0;
+    ui_config->properties_present = ui_configuration->properties.size() > 0;
     if(ui_configuration->properties.size() > 0) {
-        gauge_config->properties.PropertyValueType_m_count = ui_configuration->properties.size();
-        ValueTypeToPropertyValueType(gauge_config->properties, ui_configuration->properties);
+        ui_config->properties.PropertyValueType_m_count = ui_configuration->properties.size();
+        ValueTypeToPropertyValueType(ui_config->properties, ui_configuration->properties);
     }
 
-    gauge_config->ScreenConfig_m_count = ui_configuration->screen_configurations.size();
-    gauge_config->ScreenConfig_m.clear();
+    ui_config->ScreenConfig_m_count = ui_configuration->screen_configurations.size();
+    ui_config->ScreenConfig_m.clear();
     for(int i = 0; i < ui_configuration->screen_configurations.size(); i++) {
         ScreenConfig screen_config;
 
@@ -119,13 +119,13 @@ bool UiConfigurationManager::Update(std::shared_ptr<UiConfiguration> ui_configur
             screen_config.WidgetConfig_m.push_back(widget_config);
         }
 
-        gauge_config->ScreenConfig_m.push_back(screen_config);
+        ui_config->ScreenConfig_m.push_back(screen_config);
     }
 
-    if(!ui_configuration_service_->Save(gauge_config.get()))
+    if(!ui_configuration_service_->Save(ui_config.get()))
         return false;
 
-    gauge_config_ = gauge_config;
+    ui_config_ = ui_config;
     ui_configuration_ = ui_configuration;
 
     return true;
@@ -178,39 +178,39 @@ std::shared_ptr<UiConfiguration> UiConfigurationManager::Get(bool force_load) {
         return ui_configuration_;
     }
 
-    auto gauge_config = ui_configuration_service_->Load();
-    if(!gauge_config.has_value())
+    auto ui_config = ui_configuration_service_->Load();
+    if(!ui_config.has_value())
         return nullptr;
 
-    gauge_config_raw_ = gauge_config.value().config_raw;
-    gauge_config_ = gauge_config.value().config;
+    ui_config_raw_ = ui_config.value().config_raw;
+    ui_config_ = ui_config.value().config;
 
     UiConfiguration ui_configuration;
-    ui_configuration.active_screen_index = gauge_config_->active_screen_index;
+    ui_configuration.active_screen_index = ui_config_->active_screen_index;
 
-    if(gauge_config_->properties_present)
-        PropertyValueTypeToValueType(ui_configuration.properties, gauge_config_->properties);
+    if(ui_config_->properties_present)
+        PropertyValueTypeToValueType(ui_configuration.properties, ui_config_->properties);
 
-    for(int i = 0; i < gauge_config_->ScreenConfig_m_count; i++) {
+    for(int i = 0; i < ui_config_->ScreenConfig_m_count; i++) {
         ScreenConfiguration screen_configuration;
-        screen_configuration.id = gauge_config_->ScreenConfig_m[i].id;
+        screen_configuration.id = ui_config_->ScreenConfig_m[i].id;
 
-        screen_configuration.grid.snap_enabled = gauge_config_->ScreenConfig_m[i].grid.snap_enabled;
-        screen_configuration.grid.width = gauge_config_->ScreenConfig_m[i].grid.width;
-        screen_configuration.grid.height = gauge_config_->ScreenConfig_m[i].grid.height;
-        screen_configuration.grid.spacing_px = gauge_config_->ScreenConfig_m[i].grid.spacing_px;
+        screen_configuration.grid.snap_enabled = ui_config_->ScreenConfig_m[i].grid.snap_enabled;
+        screen_configuration.grid.width = ui_config_->ScreenConfig_m[i].grid.width;
+        screen_configuration.grid.height = ui_config_->ScreenConfig_m[i].grid.height;
+        screen_configuration.grid.spacing_px = ui_config_->ScreenConfig_m[i].grid.spacing_px;
 
-        for(int j = 0; j < gauge_config_->ScreenConfig_m[i].WidgetConfig_m_count; j++) {
+        for(int j = 0; j < ui_config_->ScreenConfig_m[i].WidgetConfig_m_count; j++) {
             WidgetConfiguration widget_configuration;
-            widget_configuration.type = static_cast<WidgetType>(gauge_config_->ScreenConfig_m[i].WidgetConfig_m[j].type);
-            widget_configuration.id = gauge_config_->ScreenConfig_m[i].WidgetConfig_m[j].id;
-            widget_configuration.position_grid.x = gauge_config_->ScreenConfig_m[i].WidgetConfig_m[j].position.x;
-            widget_configuration.position_grid.y = gauge_config_->ScreenConfig_m[i].WidgetConfig_m[j].position.y;
-            widget_configuration.size_grid.width = gauge_config_->ScreenConfig_m[i].WidgetConfig_m[j].size.width;
-            widget_configuration.size_grid.height = gauge_config_->ScreenConfig_m[i].WidgetConfig_m[j].size.height;
+            widget_configuration.type = static_cast<WidgetType>(ui_config_->ScreenConfig_m[i].WidgetConfig_m[j].type);
+            widget_configuration.id = ui_config_->ScreenConfig_m[i].WidgetConfig_m[j].id;
+            widget_configuration.position_grid.x = ui_config_->ScreenConfig_m[i].WidgetConfig_m[j].position.x;
+            widget_configuration.position_grid.y = ui_config_->ScreenConfig_m[i].WidgetConfig_m[j].position.y;
+            widget_configuration.size_grid.width = ui_config_->ScreenConfig_m[i].WidgetConfig_m[j].size.width;
+            widget_configuration.size_grid.height = ui_config_->ScreenConfig_m[i].WidgetConfig_m[j].size.height;
 
-            if(gauge_config_->ScreenConfig_m[i].WidgetConfig_m[j].properties_present)
-                PropertyValueTypeToValueType(widget_configuration.properties, gauge_config_->ScreenConfig_m[i].WidgetConfig_m[j].properties);
+            if(ui_config_->ScreenConfig_m[i].WidgetConfig_m[j].properties_present)
+                PropertyValueTypeToValueType(widget_configuration.properties, ui_config_->ScreenConfig_m[i].WidgetConfig_m[j].properties);
 
             screen_configuration.widget_configurations.push_back(widget_configuration);
         }

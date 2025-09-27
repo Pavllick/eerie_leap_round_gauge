@@ -8,9 +8,9 @@
 #include <vector>
 #include <variant>
 
-#define GAUGE_CONFIG_MAX_PROPERTIES_COUNT 40
-#define GAUGE_CONFIG_MAX_SCREEN_CONFIGURATIONS_COUNT 10
-#define GAUGE_CONFIG_MAX_WIDGET_CONFIGURATIONS_COUNT 20
+#define UI_CONFIG_MAX_PROPERTIES_COUNT 40
+#define UI_CONFIG_MAX_SCREEN_CONFIGURATIONS_COUNT 10
+#define UI_CONFIG_MAX_WIDGET_CONFIGURATIONS_COUNT 20
 
 struct map_tstrtstr {
 	struct zcbor_string tstrtstr_key;
@@ -85,7 +85,7 @@ struct ScreenConfig {
 	size_t WidgetConfig_m_count;
 };
 
-struct GaugeConfig {
+struct UiConfig {
 	uint32_t version;
 	uint32_t active_screen_index;
 	PropertiesConfig properties;

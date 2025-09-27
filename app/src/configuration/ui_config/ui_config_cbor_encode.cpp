@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <cstring>
 #include "zcbor_encode.h"
-#include "gauge_config_cbor_encode.h"
+#include "ui_config_cbor_encode.h"
 #include "zcbor_print.h"
 
 #define log_result(state, result, func) do { \
@@ -24,7 +24,7 @@ static bool encode_WidgetPositionConfig(zcbor_state_t *state, const struct Widge
 static bool encode_WidgetSizeConfig(zcbor_state_t *state, const struct WidgetSizeConfig *input);
 static bool encode_WidgetConfig(zcbor_state_t *state, const struct WidgetConfig *input);
 static bool encode_ScreenConfig(zcbor_state_t *state, const struct ScreenConfig *input);
-static bool encode_GaugeConfig(zcbor_state_t *state, const struct GaugeConfig *input);
+static bool encode_UiConfig(zcbor_state_t *state, const struct UiConfig *input);
 
 static bool encode_repeated_map_tstrtstr(
 		zcbor_state_t *state, const struct map_tstrtstr *input)
@@ -146,8 +146,8 @@ static bool encode_ScreenConfig(
 	return res;
 }
 
-static bool encode_GaugeConfig(
-		zcbor_state_t *state, const struct GaugeConfig *input)
+static bool encode_UiConfig(
+		zcbor_state_t *state, const struct UiConfig *input)
 {
 	zcbor_log("%s\r\n", __func__);
 
@@ -164,13 +164,13 @@ static bool encode_GaugeConfig(
 
 
 
-int cbor_encode_GaugeConfig(
+int cbor_encode_UiConfig(
 		uint8_t *payload, size_t payload_len,
-		const struct GaugeConfig *input,
+		const struct UiConfig *input,
 		size_t *payload_len_out)
 {
 	zcbor_state_t states[10];
 
 	return zcbor_entry_function(payload, payload_len, (void *)input, payload_len_out, states,
-		(zcbor_decoder_t *)encode_GaugeConfig, sizeof(states) / sizeof(zcbor_state_t), 1);
+		(zcbor_decoder_t *)encode_UiConfig, sizeof(states) / sizeof(zcbor_state_t), 1);
 }
