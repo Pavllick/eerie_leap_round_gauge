@@ -6,12 +6,12 @@
 #include <vector>
 
 #include "views/widgets/i_widget.h"
-#include "views/widgets/configuration/widget_type.h"
+#include "domain/ui_domain/models/widget_type.h"
 
 namespace eerie_leap::views::widgets {
 
 using namespace eerie_leap::views::widgets;
-using namespace eerie_leap::views::widgets::configuration;
+using namespace eerie_leap::domain::ui_domain::models;
 
 class WidgetFactory {
 public:

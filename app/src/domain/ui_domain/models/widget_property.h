@@ -4,7 +4,7 @@
 #include <array>
 #include <stdexcept>
 
-namespace eerie_leap::views::widgets::configuration {
+namespace eerie_leap::domain::ui_domain::models {
 
 using namespace std::string_view_literals;
 
@@ -48,4 +48,4 @@ public:
     }
 };
 
-} // namespace eerie_leap::views::widgets::configuration
+} // namespace eerie_leap::domain::ui_domain::models

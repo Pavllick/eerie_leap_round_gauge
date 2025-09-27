@@ -31,25 +31,23 @@
 #include "configuration/system_config/system_config.h"
 
 #include "domain/system_domain/configuration/system_configuration_manager.h"
-#include "controllers/configuration/gauge_configuration_controller.h"
+#include "domain/ui_domain/configuration/ui_configuration_manager.h"
 
-#include "views/configuration/gauge_configuration.h"
-#include "views/screens/configuration/screen_configuration.h"
-#include "views/screens/configuration/grid_settings.h"
-#include "views/widgets/configuration/widget_configuration.h"
-#include "views/widgets/configuration/widget_type.h"
-#include "views/widgets/configuration/widget_tag.h"
-#include "views/widgets/configuration/widget_size.h"
-#include "views/widgets/configuration/widget_position.h"
-#include "views/widgets/configuration/widget_property.h"
+#include "domain/ui_domain/models/ui_configuration.h"
+#include "domain/ui_domain/models/screen_configuration.h"
+#include "domain/ui_domain/models/grid_settings.h"
+#include "domain/ui_domain/models/widget_configuration.h"
+#include "domain/ui_domain/models/widget_type.h"
+#include "domain/ui_domain/models/widget_tag.h"
+#include "domain/ui_domain/models/widget_size.h"
+#include "domain/ui_domain/models/widget_position.h"
+#include "domain/ui_domain/models/widget_property.h"
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 
 using namespace eerie_leap::views::widgets;
 using namespace eerie_leap::views::widgets::indicators;
 
-using namespace eerie_leap::views::configuration;
-using namespace eerie_leap::views::screens::configuration;
-using namespace eerie_leap::views::widgets::configuration;
+using namespace eerie_leap::domain::ui_domain::models;
 
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::utilities::dev_tools;
@@ -63,22 +61,23 @@ using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::modbus;
 using namespace eerie_leap::subsys::gpio;
 
+using namespace eerie_leap::domain::system_domain::configuration;
 using namespace eerie_leap::domain::interface_domain;
 using namespace eerie_leap::domain::ui_domain;
+using namespace eerie_leap::domain::ui_domain::configuration;
+using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::domain::sensor_domain::models;
 using namespace eerie_leap::domain::sensor_domain::services;
 using namespace eerie_leap::configuration::services;
 
 using namespace eerie_leap::controllers;
-using namespace eerie_leap::controllers::configuration;
-using namespace eerie_leap::domain::system_domain::configuration;
 
 LOG_MODULE_REGISTER(main_logger);
 
 constexpr uint32_t SLEEP_TIME_MS = 2000;
 
 std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> SetupTestSensors();
-std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig(std::shared_ptr<GaugeConfigurationController> gauge_configuration_controller);
+std::shared_ptr<UiConfiguration> SetupTestGaugeConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager);
 
 int main() {
     DtConfigurator::Initialize();
@@ -101,30 +100,30 @@ int main() {
     reading_processor_service->Initialize();
 
     auto system_config_service = make_shared_ext<ConfigurationService<SystemConfig>>("system_config", fs_service);
-    auto system_configuration_controller = make_shared_ext<SystemConfigurationController>(system_config_service);
+    auto system_configuration_manager = make_shared_ext<SystemConfigurationManager>(system_config_service);
 
     auto gauge_config_service = make_shared_ext<ConfigurationService<GaugeConfig>>("gauge_config", fs_service);
-    auto gauge_configuration_controller = make_shared_ext<GaugeConfigurationController>(gauge_config_service);
+    auto ui_configuration_manager = make_shared_ext<UiConfigurationManager>(gauge_config_service);
 
     std::shared_ptr<Interface> interface = nullptr;
     if(DtModbus::Get().has_value()) {
-    auto modbus = make_shared_ext<Modbus>(
+        auto modbus = make_shared_ext<Modbus>(
             DtModbus::Get().value(),
             system_configuration_manager->Get()->interface_channel);
 
         interface = make_shared_ext<Interface>(modbus, system_configuration_manager, reading_processor_service);
-    if(interface->Initialize() != 0)
-        return -1;
+        if(interface->Initialize() != 0)
+            return -1;
     }
 
     // NOTE: This is a temporary solution.
     auto sensors = SetupTestSensors();
-    SetupTestGaugeConfig(gauge_configuration_controller);
+    SetupTestGaugeConfig(ui_configuration_manager);
 
     auto widget_factory = WidgetFactory::GetInstance();
 
     auto gague_controller = make_shared_ext<GagueController>(
-        gauge_configuration_controller,
+        ui_configuration_manager,
         sensors,
         reading_processor_service,
         widget_factory);
@@ -261,9 +260,9 @@ std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> SetupTestSensors() {
     return sensors_ptr;
 }
 
-std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig(std::shared_ptr<GaugeConfigurationController> gauge_configuration_controller) {
-    auto gauge_configuration = make_shared_ext<GaugeConfiguration>();
-    gauge_configuration->active_screen_index = 0;
+std::shared_ptr<UiConfiguration> SetupTestGaugeConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager) {
+    auto ui_configuration = make_shared_ext<UiConfiguration>();
+    ui_configuration->active_screen_index = 0;
 
     ScreenConfiguration screen_configuration {
         .id = 0,
@@ -294,21 +293,21 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig(std::shared_ptr<GaugeCo
                 }
             },
             WidgetConfiguration {
-            .type = WidgetType::IndicatorHorizontalChart,
+                .type = WidgetType::IndicatorHorizontalChart,
                 .id = 2,
                 .position_grid = WidgetPosition {
-            .x = 0,
+                    .x = 0,
                     .y = 0
-            },
+                },
                 .size_grid = WidgetSize {
-            .width = 3,
+                    .width = 3,
                     .height = 1
-            },
-            .properties = {
+                },
+                .properties = {
                     { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), true },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED), false },
-            { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
-            { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_POINT_COUNT), 35 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE), static_cast<int>(HorizontalChartIndicatorType::BAR) },
@@ -351,7 +350,7 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig(std::shared_ptr<GaugeCo
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
-            }
+                }
             },
             WidgetConfiguration {
                 .type = WidgetType::IndicatorArcFill,
@@ -389,13 +388,13 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig(std::shared_ptr<GaugeCo
                         static_cast<int>(WidgetTag::IconLoggingIndicator)
                     }}
                 }
-}
+            }
         }
     };
 
-    gauge_configuration->screen_configurations.push_back(screen_configuration);
+    ui_configuration->screen_configurations.push_back(screen_configuration);
 
-    gauge_configuration_controller->Update(gauge_configuration);
+    ui_configuration_manager->Update(ui_configuration);
 
-    return gauge_configuration;
+    return ui_configuration;
 }

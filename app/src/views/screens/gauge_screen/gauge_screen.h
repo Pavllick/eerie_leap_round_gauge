@@ -5,7 +5,7 @@
 
 #include "views/widgets/i_widget.h"
 #include "views/screens/i_screen.h"
-#include "views/screens/configuration/screen_configuration.h"
+#include "domain/ui_domain/models/screen_configuration.h"
 #include "views/widgets/widget_factory.h"
 #include "domain/sensor_domain/models/sensor.h"
 
@@ -13,7 +13,7 @@ namespace eerie_leap::views::screens {
 
 using namespace eerie_leap::domain::sensor_domain::models;
 using namespace eerie_leap::views::widgets;
-using namespace eerie_leap::views::screens::configuration;
+using namespace eerie_leap::domain::ui_domain::models;
 
 class GaugeScreen : public IScreen {
 private:

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace eerie_leap::views::screens::configuration {
+namespace eerie_leap::domain::ui_domain::models {
 
 struct GridSettings {
     bool snap_enabled;
@@ -11,4 +11,4 @@ struct GridSettings {
     uint32_t spacing_px;
 };
 
-} // namespace eerie_leap::views::screens::configuration
+} // namespace eerie_leap::domain::ui_domain::models

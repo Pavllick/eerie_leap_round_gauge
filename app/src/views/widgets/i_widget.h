@@ -2,16 +2,16 @@
 
 #include <lvgl.h>
 
-#include "views/widgets/configuration/widget_type.h"
-#include "views/widgets/configuration/widget_tag.h"
-#include "views/widgets/configuration/widget_property.h"
-#include "views/widgets/configuration/widget_position.h"
-#include "views/widgets/configuration/widget_size.h"
-#include "views/widgets/configuration/widget_configuration.h"
+#include "domain/ui_domain/models/widget_type.h"
+#include "domain/ui_domain/models/widget_tag.h"
+#include "domain/ui_domain/models/widget_property.h"
+#include "domain/ui_domain/models/widget_position.h"
+#include "domain/ui_domain/models/widget_size.h"
+#include "domain/ui_domain/models/widget_configuration.h"
 
 namespace eerie_leap::views::widgets {
 
-using namespace eerie_leap::views::widgets::configuration;
+using namespace eerie_leap::domain::ui_domain::models;
 
 class IWidget {
 public:

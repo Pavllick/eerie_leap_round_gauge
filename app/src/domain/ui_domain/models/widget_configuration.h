@@ -9,7 +9,7 @@
 #include "widget_position.h"
 #include "widget_size.h"
 
-namespace eerie_leap::views::widgets::configuration {
+namespace eerie_leap::domain::ui_domain::models {
 
 using namespace eerie_leap::utilities::type;
 
@@ -21,4 +21,4 @@ struct WidgetConfiguration {
     std::unordered_map<std::string, ConfigValue> properties;
 };
 
-} // namespace eerie_leap::views::widgets::configuration
+} // namespace eerie_leap::domain::ui_domain::models

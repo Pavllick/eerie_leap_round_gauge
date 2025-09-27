@@ -2,11 +2,11 @@
 
 #include <lvgl.h>
 
-#include "views/widgets/configuration/widget_position.h"
+#include "domain/ui_domain/models/widget_position.h"
 
 namespace eerie_leap::views::widgets::utilitites {
 
-using namespace eerie_leap::views::widgets::configuration;
+using namespace eerie_leap::domain::ui_domain::models;
 
 class PositioningHelpers {
 public:

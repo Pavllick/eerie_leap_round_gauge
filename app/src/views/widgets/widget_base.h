@@ -11,7 +11,7 @@
 namespace eerie_leap::views::widgets {
 
 using namespace eerie_leap::views::widgets::utilitites;
-using namespace eerie_leap::views::widgets::configuration;
+using namespace eerie_leap::domain::ui_domain::models;
 
 class WidgetBase : public IWidget {
 protected:

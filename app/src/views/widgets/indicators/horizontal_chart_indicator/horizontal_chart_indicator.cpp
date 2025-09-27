@@ -2,14 +2,14 @@
 #include <string>
 
 #include "utilities/type/config_value.h"
-#include "views/widgets/configuration/widget_property.h"
+#include "domain/ui_domain/models/widget_property.h"
 
 #include "horizontal_chart_indicator.h"
 
 namespace eerie_leap::views::widgets::indicators {
 
 using namespace eerie_leap::utilities::type;
-using namespace eerie_leap::views::widgets::configuration;
+using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::widgets::utilitites;
 
 HorizontalChartIndicator::HorizontalChartIndicator(uint32_t id) : IndicatorBase(id) { }

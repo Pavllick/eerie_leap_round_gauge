@@ -9,7 +9,7 @@
 namespace eerie_leap::views::widgets::basic {
 
 using namespace eerie_leap::views::widgets;
-using namespace eerie_leap::views::widgets::configuration;
+using namespace eerie_leap::domain::ui_domain::models;
 
 class IconWidget : public WidgetBase {
 private:

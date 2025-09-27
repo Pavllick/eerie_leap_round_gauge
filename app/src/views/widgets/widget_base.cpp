@@ -1,4 +1,4 @@
-#include "views/widgets/configuration/widget_property.h"
+#include "domain/ui_domain/models/widget_property.h"
 
 #include "widget_base.h"
 

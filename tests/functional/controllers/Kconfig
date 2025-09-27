@@ -31,3 +31,7 @@ config EERIE_LEAP_SW_VERSION_PATCH
 	int "Software version patch"
 	range 0 65535
 	default 0
+
+config EERIE_LEAP_UI_RENDERER_THREAD_STACK_SIZE
+	int "UI renderer thread stack size"
+	default 8192

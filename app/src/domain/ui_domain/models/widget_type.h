@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace eerie_leap::views::widgets::configuration {
+namespace eerie_leap::domain::ui_domain::models {
 
 enum class WidgetCategory : uint32_t {
     None = 0,
@@ -29,4 +29,4 @@ public:
     }
 };
 
-} // namespace eerie_leap::views::widgets::configuration
+} // namespace eerie_leap::domain::ui_domain::models

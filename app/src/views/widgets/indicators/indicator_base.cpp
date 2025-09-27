@@ -1,10 +1,10 @@
-#include "views/widgets/configuration/widget_property.h"
+#include "domain/ui_domain/models/widget_property.h"
 
 #include "indicator_base.h"
 
 namespace eerie_leap::views::widgets::indicators {
 
-using namespace eerie_leap::views::widgets::configuration;
+using namespace eerie_leap::domain::ui_domain::models;
 
 IndicatorBase::IndicatorBase(uint32_t id) : WidgetBase(id) {
     value_change_animation_ = CreateValueChangeAnimation();
