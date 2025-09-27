@@ -23,7 +23,6 @@ WidgetConfig = [
     id: uint,
     position: WidgetPositionConfig,
     size: WidgetSizeConfig,
-    is_animation_enabled: bool,
     ? properties: PropertiesConfig
 ]
 

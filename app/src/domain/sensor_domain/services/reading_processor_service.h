@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 #include <zephyr/kernel.h>
+#include <zephyr/sys/atomic.h>
 
 #include "domain/interface_domain/types/sensor_reading_dto.h"
 #include "reading_task.hpp"
@@ -22,6 +23,7 @@ private:
     k_sem processing_semaphore_;
     static constexpr k_timeout_t PROCESSING_TIMEOUT = K_MSEC(200);
 
+    atomic_t service_running_;
     std::unordered_map<uint32_t, std::shared_ptr<ReadingTask>> sensors_reading_tasks_;
 
     static void ProcessReadingWorkTask(k_work* work);
@@ -30,6 +32,8 @@ public:
     ReadingProcessorService();
 
     void Initialize();
+    void Start();
+    void Stop();
 
     int RegisterReadingHandler(uint32_t sensor_id_hash, ReadingHandler handler);
     int ProcessReading(SensorReadingDto reading);

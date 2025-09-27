@@ -29,8 +29,17 @@ void UpdateWidgetSize(std::unique_ptr<IWidget>& widget, GridSettings& grid_setti
 
     auto widget_config = widget->GetConfiguration();
 
-    uint32_t width = (screen_width / grid_settings.width) * widget_config.size_grid.width - grid_settings.spacing_px * 2;
-    uint32_t height = (screen_height / grid_settings.height) * widget_config.size_grid.height - grid_settings.spacing_px * 2;
+    uint32_t width = 0;
+    if(grid_settings.width == widget_config.size_grid.width)
+        width = screen_width;
+    else
+        width = (screen_width / grid_settings.width) * widget_config.size_grid.width - grid_settings.spacing_px * 2;
+
+    uint32_t height = 0;
+    if(grid_settings.height == widget_config.size_grid.height)
+        height = screen_height;
+    else
+        height = (screen_height / grid_settings.height) * widget_config.size_grid.height - grid_settings.spacing_px * 2;
 
     widget->SetSizePx({.width = width, .height = height});
 }

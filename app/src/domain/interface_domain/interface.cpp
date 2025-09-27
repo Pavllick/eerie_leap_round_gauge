@@ -18,6 +18,7 @@ Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<SystemConfi
 
     server_id_resolved_ = server_id_ != Modbus::DEFAULT_SERVER_ID;
     status_ = ComUserStatus::NOT_CONFIGURED;
+    status_update_handlers_ = std::make_shared<std::unordered_map<ComUserStatus, std::shared_ptr<std::vector<InterfaceStatusUpdateHandler>>>>();
 }
 
 int Interface::Initialize() {
@@ -97,9 +98,34 @@ int Interface::Set(ComRequestType com_request_type, uint16_t* data, size_t size_
             status_ = ComUserStatus::OK;
 
         return 0;
+    } else if(com_request_type == ComRequestType::SET_STATUS_UPDATE_OK) {
+        ComUserStatus status = *(ComUserStatus*)data;
+
+        if(status_update_handlers_->contains(status)) {
+            for(auto& handler : *status_update_handlers_->at(status))
+                handler(status, true);
+        }
+
+        return 0;
+    } else if(com_request_type == ComRequestType::SET_STATUS_UPDATE_FAIL) {
+        ComUserStatus status = *(ComUserStatus*)data;
+
+        if(status_update_handlers_->contains(status)) {
+            for(auto& handler : *status_update_handlers_->at(status))
+                handler(status, false);
+        }
+
+        return 0;
     }
 
     return -1;
+}
+
+void Interface::RegisterStatusUpdateHandler(ComUserStatus status, InterfaceStatusUpdateHandler handler) {
+    if(!status_update_handlers_->contains(status))
+        status_update_handlers_->emplace(status, std::make_shared<std::vector<InterfaceStatusUpdateHandler>>());
+
+    status_update_handlers_->at(status)->push_back(handler);
 }
 
 int Interface::ReadHoldingRegister(uint16_t addr, uint16_t *reg) {

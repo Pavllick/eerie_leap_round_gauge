@@ -35,8 +35,11 @@ int GagueController::Configure(GaugeConfiguration& config) {
         for(auto& widget : *screen->GetWidgets())
             RegisterIndicatorReadingHandler(widget);
 
+        screens_.insert({ screen_config.id, screen });
         main_view_->AddScreen(screen_config.id, std::move(screen));
     }
+
+    main_view_->SetActiveScreen(config.active_screen_index);
 
     return 0;
 }
@@ -64,14 +67,24 @@ int GagueController::RegisterIndicatorReadingHandler(std::shared_ptr<IWidget> wi
     return 0;
 }
 
-
 int GagueController::Render() {
     main_view_->Render();
 
     return 0;
 }
 
-std::unique_ptr<IScreen> GagueController::CreateScreen(ScreenConfiguration& config, std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> sensors) {
+int GagueController::UpdateWidgetProperty(const WidgetPropertyType property_type, const ConfigValue& value, WidgetTag tag, bool force_update) {
+    for(auto& [id, screen] : screens_) {
+        for(auto& widget : *screen->GetWidgets()) {
+            if(widget->HasTag(tag))
+                widget->UpdateProperty(property_type, value, force_update);
+        }
+    }
+
+    return 0;
+}
+
+std::shared_ptr<IScreen> GagueController::CreateScreen(ScreenConfiguration& config, std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> sensors) {
     auto screen = std::make_unique<GaugeScreen>(widget_factory_, sensors);
     screen->Configure(config);
 

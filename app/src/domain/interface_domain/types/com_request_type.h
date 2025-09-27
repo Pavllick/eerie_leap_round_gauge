@@ -12,6 +12,8 @@ enum class ComRequestType : uint16_t {
     SET_RESOLVE_SERVER_ID_GUID = 128,
     SET_READING = 129,
     SET_ACK = 130,
+    SET_STATUS_UPDATE_OK = 131,
+    SET_STATUS_UPDATE_FAIL = 132,
 };
 
 } // namespace eerie_leap::domain::interface_domain::types

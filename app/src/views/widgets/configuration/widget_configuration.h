@@ -18,7 +18,6 @@ struct WidgetConfiguration {
     uint32_t id;
     WidgetPosition position_grid;
     WidgetSize size_grid;
-    bool is_animation_enabled;
     std::unordered_map<std::string, ConfigValue> properties;
 };
 

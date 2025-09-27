@@ -12,8 +12,27 @@ LOG_MODULE_REGISTER(main_view_logger);
 
 MainView::MainView() {}
 
-void MainView::AddScreen(uint32_t id, std::unique_ptr<IScreen> screen) {
+void MainView::AddScreen(uint32_t id, std::shared_ptr<IScreen> screen) {
     screens_[id] = std::move(screen);
+}
+
+int MainView::SetActiveScreen(uint32_t id) {
+    if(screens_.find(id) == screens_.end())
+        return -1;
+
+    active_screen_id_ = id;
+    return 0;
+}
+
+std::shared_ptr<IScreen> MainView::GetScreen(uint32_t id) {
+    if(screens_.find(id) == screens_.end())
+        return nullptr;
+
+    return screens_.at(id);
+}
+
+std::shared_ptr<IScreen> MainView::GetActiveScreen() {
+    return GetScreen(active_screen_id_);
 }
 
 int MainView::Render() {

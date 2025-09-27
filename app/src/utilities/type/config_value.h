@@ -9,6 +9,7 @@
 namespace eerie_leap::utilities::type {
 
 using ConfigValue = std::variant<
+    std::monostate,
     int,
     double,
     std::string,

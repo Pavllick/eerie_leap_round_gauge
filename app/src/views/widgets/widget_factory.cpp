@@ -1,3 +1,6 @@
+#include "views/widgets/basic/icon_widget/icon_widget.h"
+#include "views/widgets/basic/arc_label_widget/arc_label_widget.h"
+
 #include "views/widgets/indicators/arc_fill_indicator/arc_fill_indicator.h"
 #include "views/widgets/indicators/digital_indicator/digital_indicator.h"
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
@@ -6,6 +9,7 @@
 
 namespace eerie_leap::views::widgets {
 
+using namespace eerie_leap::views::widgets::basic;
 using namespace eerie_leap::views::widgets::indicators;
 
 std::shared_ptr<WidgetFactory> WidgetFactory::instance_ = nullptr;
@@ -64,6 +68,9 @@ bool WidgetFactory::IsTypeRegistered(const WidgetType type) const {
 }
 
 void WidgetFactory::RegisterBuiltinWidgets() {
+    RegisterWidget<IconWidget>(WidgetType::BasicIcon);
+    RegisterWidget<ArcLabelWidget>(WidgetType::BasicArcLabel);
+
     RegisterWidget<ArcFillIndicator>(WidgetType::IndicatorArcFill);
     RegisterWidget<DigitalIndicator>(WidgetType::IndicatorDigital);
     RegisterWidget<HorizontalChartIndicator>(WidgetType::IndicatorHorizontalChart);

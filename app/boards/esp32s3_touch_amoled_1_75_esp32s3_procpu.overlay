@@ -46,10 +46,10 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 
-		intfs0_partition: partition@700000 {
-			label = "intfs0_storage";
-			reg = <0x700000 DT_SIZE_M(1)>; // 1MB at offset 7MB
-		};
+		intfs0_partition: partition@600000 {
+            label = "intfs0_storage";
+            reg = <0x600000 DT_SIZE_M(2)>; // 2MB at offset 6MB
+        };
 	};
 };
 

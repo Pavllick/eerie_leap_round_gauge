@@ -126,7 +126,6 @@ static bool encode_WidgetConfig(
 	&& ((zcbor_uint32_encode(state, (&(*input).id))))
 	&& ((encode_WidgetPositionConfig(state, (&(*input).position))))
 	&& ((encode_WidgetSizeConfig(state, (&(*input).size))))
-	&& ((zcbor_bool_encode(state, (&(*input).is_animation_enabled))))
 	&& (!(*input).properties_present || encode_PropertiesConfig(state, (&(*input).properties)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 0))));
 
 	log_result(state, res, __func__);

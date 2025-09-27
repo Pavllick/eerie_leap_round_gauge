@@ -9,6 +9,7 @@
 
 #include "types/com_request_type.h"
 #include "types/com_user_status.h"
+#include "interface_status_update_handler.h"
 
 namespace eerie_leap::domain::interface_domain {
 
@@ -28,6 +29,7 @@ private:
     bool server_id_resolved_;
     uint64_t device_id_;
     ComUserStatus status_;
+    std::shared_ptr<std::unordered_map<ComUserStatus, std::shared_ptr<std::vector<InterfaceStatusUpdateHandler>>>> status_update_handlers_;
 
     int Get(ComRequestType com_request_type, uint16_t* data, size_t size_bytes);
     int Set(ComRequestType com_request_type, uint16_t* data, size_t size_bytes);
@@ -47,6 +49,7 @@ public:
 
     void SetStatus(ComUserStatus status);
     ComUserStatus GetStatus() const;
+    void RegisterStatusUpdateHandler(ComUserStatus status, InterfaceStatusUpdateHandler handler);
 };
 
 } // namespace eerie_leap::domain::interface_domain

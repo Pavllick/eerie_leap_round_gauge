@@ -52,17 +52,21 @@ void ValueTypeToPropertyValueType(PropertiesConfig& properties_config, std::unor
             } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
                 prop.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_tstr_l_c;
 
+                prop.value = std::vector<zcbor_string>();
                 for (auto it = arg.begin(); it != arg.end(); ++it)
                     std::get<std::vector<zcbor_string>>(prop.value).push_back(CborHelpers::ToZcborString(&*it));
             } else if constexpr (std::is_same_v<T, std::unordered_map<std::string, std::string>>) {
                 prop.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_map_c;
 
+                prop.value = std::vector<map_tstrtstr>();
                 for (auto it = arg.begin(); it != arg.end(); ++it) {
                     std::get<std::vector<map_tstrtstr>>(prop.value).push_back({
                         .tstrtstr_key = CborHelpers::ToZcborString(&it->first),
                         .tstrtstr = CborHelpers::ToZcborString(&it->second)
                     });
                 }
+            } else {
+                throw std::runtime_error("Unsupported property value type");
             }
         }, value);
 
@@ -74,7 +78,6 @@ void ValueTypeToPropertyValueType(PropertiesConfig& properties_config, std::unor
 
 bool GaugeConfigurationController::Update(std::shared_ptr<GaugeConfiguration> gauge_configuration) {
     auto gauge_config = make_shared_ext<GaugeConfig>();
-    memset(gauge_config.get(), 0, sizeof(GaugeConfig));
 
     gauge_config->active_screen_index = gauge_configuration->active_screen_index;
 
@@ -106,7 +109,6 @@ bool GaugeConfigurationController::Update(std::shared_ptr<GaugeConfiguration> ga
             widget_config.position.y = gauge_configuration->screen_configurations[i].widget_configurations[j].position_grid.y;
             widget_config.size.width = gauge_configuration->screen_configurations[i].widget_configurations[j].size_grid.width;
             widget_config.size.height = gauge_configuration->screen_configurations[i].widget_configurations[j].size_grid.height;
-            widget_config.is_animation_enabled = gauge_configuration->screen_configurations[i].widget_configurations[j].is_animation_enabled;
 
             widget_config.properties_present = gauge_configuration->screen_configurations[i].widget_configurations[j].properties.size() > 0;
             if(gauge_configuration->screen_configurations[i].widget_configurations[j].properties.size() > 0) {
@@ -147,12 +149,15 @@ void PropertyValueTypeToValueType(std::unordered_map<std::string, ConfigValue>& 
             } else if constexpr (std::is_same_v<T, bool>) {
                 value = arg;
             } else if constexpr (std::is_same_v<T, std::vector<int32_t>>) {
+                value = std::vector<int>();
                 for (const auto& it : arg)
                     std::get<std::vector<int>>(value).push_back(it);
             } else if constexpr (std::is_same_v<T, std::vector<zcbor_string>>) {
+                value = std::vector<std::string>();
                 for (const auto& it : arg)
                     std::get<std::vector<std::string>>(value).push_back(CborHelpers::ToStdString(it));
             } else if constexpr (std::is_same_v<T, std::unordered_map<zcbor_string, zcbor_string>>) {
+                value = std::unordered_map<std::string, std::string>();
                 for (const auto& it : arg) {
                     std::get<std::unordered_map<std::string, std::string>>(value).insert({
                         CborHelpers::ToStdString(it.tstrtstr_key),
@@ -203,7 +208,6 @@ std::shared_ptr<GaugeConfiguration> GaugeConfigurationController::Get(bool force
             widget_configuration.position_grid.y = gauge_config_->ScreenConfig_m[i].WidgetConfig_m[j].position.y;
             widget_configuration.size_grid.width = gauge_config_->ScreenConfig_m[i].WidgetConfig_m[j].size.width;
             widget_configuration.size_grid.height = gauge_config_->ScreenConfig_m[i].WidgetConfig_m[j].size.height;
-            widget_configuration.is_animation_enabled = gauge_config_->ScreenConfig_m[i].WidgetConfig_m[j].is_animation_enabled;
 
             if(gauge_config_->ScreenConfig_m[i].WidgetConfig_m[j].properties_present)
                 PropertyValueTypeToValueType(widget_configuration.properties, gauge_config_->ScreenConfig_m[i].WidgetConfig_m[j].properties);

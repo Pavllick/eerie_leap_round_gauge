@@ -9,16 +9,24 @@ namespace eerie_leap::views::widgets::configuration {
 using namespace std::string_view_literals;
 
 enum class WidgetPropertyType : std::uint16_t {
-    MIN_VALUE,
-    MAX_VALUE,
-    SENSOR_ID,
-    CHART_POINT_COUNT,
-    CHART_TYPE
+    NONE = 0,
+    TAGS,                   // array of int (enum)
+    IS_VISIBLE,             // bool
+    IS_ANIMATED,            // bool
+    MIN_VALUE,              // float
+    MAX_VALUE,              // float
+    SENSOR_ID,              // string
+    CHART_POINT_COUNT,      // int
+    CHART_TYPE              // int (enum)
 };
 
 class WidgetProperty {
 private:
     static constexpr const std::array WidgetPropertyTypeNames = {
+        "NONE"sv,
+        "TAGS"sv,
+        "IS_VISIBLE"sv,
+        "IS_ANIMATED"sv,
         "MIN_VALUE"sv,
         "MAX_VALUE"sv,
         "SENSOR_ID"sv,

@@ -14,6 +14,7 @@
 #include "subsys/device_tree/dt_modbus.h"
 #include "subsys/device_tree/dt_gpio.h"
 
+#include "subsys/random/rng.h"
 #include "subsys/fs/services/fs_service.h"
 #include "subsys/modbus/modbus.h"
 #include "subsys/gpio/gpio_buttons.h"
@@ -24,7 +25,7 @@
 #include "domain/sensor_domain/services/reading_processor_service.h"
 
 #include "controllers/gague_controller.h"
-#include "controllers/gpio_controller.h"
+#include "controllers/logging_controller.h"
 
 #include "configuration/services/configuration_service.h"
 #include "configuration/system_config/system_config.h"
@@ -37,6 +38,7 @@
 #include "views/screens/configuration/grid_settings.h"
 #include "views/widgets/configuration/widget_configuration.h"
 #include "views/widgets/configuration/widget_type.h"
+#include "views/widgets/configuration/widget_tag.h"
 #include "views/widgets/configuration/widget_size.h"
 #include "views/widgets/configuration/widget_position.h"
 #include "views/widgets/configuration/widget_property.h"
@@ -55,6 +57,7 @@ using namespace eerie_leap::utilities::guid;
 
 using namespace eerie_leap::controllers;
 
+using namespace eerie_leap::subsys::random;
 using namespace eerie_leap::subsys::device_tree;
 using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::modbus;
@@ -78,6 +81,12 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig(std::shared_ptr<GaugeCo
 
 int main() {
     DtConfigurator::Initialize();
+
+    auto ui_renderer = make_shared_ext<UiRenderer>();
+    if(ui_renderer->Initialize() != 0)
+        return -1;
+
+    ui_renderer->Start();
 
     auto fs_service = make_shared_ext<FsService>(DtFs::GetInternalFsMp().value());
     if(!fs_service->Initialize()) {
@@ -120,13 +129,7 @@ int main() {
         widget_factory);
     gague_controller->Render();
 
-    auto ui_renderer = make_shared_ext<UiRenderer>();
-    if(ui_renderer->Initialize() != 0)
-        return -1;
-
-    ui_renderer->Start();
-
-    std::shared_ptr<GpioController> gpio_controller;
+    std::shared_ptr<LoggingController> logging_controller;
     do {
         if(interface == nullptr) {
             LOG_WRN("No interface configured.");
@@ -144,11 +147,27 @@ int main() {
             break;
         }
 
-        gpio_controller = make_shared_ext<GpioController>(gpio_buttons, interface);
-        gpio_controller->Initialize();
+        logging_controller = make_shared_ext<LoggingController>(gpio_buttons, interface, gague_controller);
+        logging_controller->Initialize();
     } while(false);
 
+    reading_processor_service->Start();
+
+#ifdef CONFIG_FLASH_SIMULATOR
+    SensorReadingDto reading;
+    reading.id = guid_generator->Generate();
+    reading.sensor_id_hash = 2348664336;
+    reading.timestamp_ms = std::chrono::milliseconds(static_cast<int64_t>(k_uptime_get()));
+    reading.value = 0;
+    reading.status = ReadingStatus::PROCESSED;
+#endif // CONFIG_FLASH_SIMULATOR
+
 	while (true) {
+    #ifdef CONFIG_FLASH_SIMULATOR
+        reading.value = (Rng::Get32() / static_cast<float>(UINT32_MAX)) * 100;
+        reading_processor_service->ProcessReading(reading);
+    #endif // CONFIG_FLASH_SIMULATOR
+
         k_msleep(SLEEP_TIME_MS);
 
         // SystemInfo::print_heap_info();
@@ -255,24 +274,6 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig(std::shared_ptr<GaugeCo
         },
         .widget_configurations = {
             WidgetConfiguration {
-                .type = WidgetType::IndicatorArcFill,
-                .id = 0,
-                .position_grid = WidgetPosition {
-                    .x = 0,
-                    .y = 0
-                },
-                .size_grid = WidgetSize {
-                    .width = 3,
-                    .height = 3
-                },
-                .is_animation_enabled = true,
-                .properties = {
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" }
-                }
-            },
-            WidgetConfiguration {
                 .type = WidgetType::IndicatorDigital,
                 .id = 1,
                 .position_grid = WidgetPosition {
@@ -283,8 +284,9 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig(std::shared_ptr<GaugeCo
                     .width = 1,
                     .height = 1
                 },
-                .is_animation_enabled = true,
                 .properties = {
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), true },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED), true },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" }
@@ -301,18 +303,19 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig(std::shared_ptr<GaugeCo
             .width = 3,
                     .height = 1
             },
-                .is_animation_enabled = false,
             .properties = {
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), true },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED), false },
             { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
             { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_POINT_COUNT), 35 },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE), static_cast<std::uint16_t>(HorizontalChartIndicatorType::LINE) }
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE), static_cast<int>(HorizontalChartIndicatorType::BAR) },
                 }
             },
             WidgetConfiguration {
                 .type = WidgetType::IndicatorHorizontalChart,
-                .id = 2,
+                .id = 3,
                 .position_grid = WidgetPosition {
                     .x = 0,
                     .y = 1
@@ -321,17 +324,18 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig(std::shared_ptr<GaugeCo
                     .width = 3,
                     .height = 1
                 },
-                .is_animation_enabled = true,
                 .properties = {
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), true },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED), true },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE), static_cast<std::uint16_t>(HorizontalChartIndicatorType::LINE) }
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE), static_cast<int>(HorizontalChartIndicatorType::LINE) }
                 }
             },
             WidgetConfiguration {
                 .type = WidgetType::IndicatorHorizontalChart,
-                .id = 2,
+                .id = 4,
                 .position_grid = WidgetPosition {
                     .x = 0,
                     .y = 2
@@ -340,12 +344,50 @@ std::shared_ptr<GaugeConfiguration> SetupTestGaugeConfig(std::shared_ptr<GaugeCo
                     .width = 3,
                     .height = 1
                 },
-                .is_animation_enabled = true,
                 .properties = {
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), true },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED), true },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
             }
+            },
+            WidgetConfiguration {
+                .type = WidgetType::IndicatorArcFill,
+                .id = 0,
+                .position_grid = WidgetPosition {
+                    .x = 0,
+                    .y = 0
+                },
+                .size_grid = WidgetSize {
+                    .width = 3,
+                    .height = 3
+                },
+                .properties = {
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), true },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED), true },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" }
+                }
+            },
+            WidgetConfiguration {
+                .type = WidgetType::BasicIcon,
+                .id = 5,
+                .position_grid = WidgetPosition {
+                    .x = 0,
+                    .y = 0
+                },
+                .size_grid = WidgetSize {
+                    .width = 3,
+                    .height = 3
+                },
+                .properties = {
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), false },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::TAGS), std::vector<int> {
+                        static_cast<int>(WidgetTag::IconLoggingIndicator)
+                    }}
+                }
 }
         }
     };

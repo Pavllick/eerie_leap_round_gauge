@@ -17,7 +17,7 @@ Z_KERNEL_STACK_DEFINE_IN(ReadingProcessorService::stack_area_, ReadingProcessorS
 K_KERNEL_STACK_MEMBER(ReadingProcessorService::stack_area_, ReadingProcessorService::k_stack_size_);
 #endif
 
-ReadingProcessorService::ReadingProcessorService() {
+ReadingProcessorService::ReadingProcessorService() : service_running_(ATOMIC_INIT(0)) {
     k_sem_init(&processing_semaphore_, 1, 1);
 };
 
@@ -30,6 +30,16 @@ void ReadingProcessorService::Initialize() {
     k_thread_name_set(&work_q.thread, "reading_processor");
 
     LOG_INF("Reading processor service initialized.");
+}
+
+void ReadingProcessorService::Start() {
+    atomic_set(&service_running_, 1);
+    LOG_INF("Reading processor service started.");
+}
+
+void ReadingProcessorService::Stop() {
+    atomic_set(&service_running_, 0);
+    LOG_INF("Reading processor service stopped.");
 }
 
 void ReadingProcessorService::ProcessReadingWorkTask(k_work* work) {
@@ -70,6 +80,9 @@ int ReadingProcessorService::RegisterReadingHandler(uint32_t sensor_id_hash, Rea
 }
 
 int ReadingProcessorService::ProcessReading(SensorReadingDto reading) {
+    if(atomic_get(&service_running_) == 0)
+        return -1;
+
     auto task = sensors_reading_tasks_.find(reading.sensor_id_hash);
     if(task == sensors_reading_tasks_.end())
         return -1;

@@ -243,7 +243,6 @@ static bool decode_WidgetConfig(
 	&& ((zcbor_uint32_decode(state, (&(*result).id))))
 	&& ((decode_WidgetPositionConfig(state, (&(*result).position))))
 	&& ((decode_WidgetSizeConfig(state, (&(*result).size))))
-	&& ((zcbor_bool_decode(state, (&(*result).is_animation_enabled))))
 	&& ((*result).properties_present = ((decode_PropertiesConfig(state, (&(*result).properties)))), 1)) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
 
 	log_result(state, res, __func__);

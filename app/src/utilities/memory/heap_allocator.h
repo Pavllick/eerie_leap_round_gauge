@@ -9,7 +9,6 @@
 #include <zephyr/logging/log.h>
 
 #ifdef CONFIG_SHARED_MULTI_HEAP
-#include <zephyr/sys/printk.h>
 #include <soc/soc_memory_layout.h>
 #include <zephyr/multi_heap/shared_multi_heap.h>
 #endif

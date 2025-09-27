@@ -18,6 +18,7 @@ struct map_tstrtstr {
 };
 
 using PropertyValueType = std::variant<
+    std::monostate,
 	int32_t,
     double,
     zcbor_string,
@@ -73,7 +74,6 @@ struct WidgetConfig {
 	uint32_t id;
 	WidgetPositionConfig position;
 	WidgetSizeConfig size;
-	bool is_animation_enabled;
 	PropertiesConfig properties;
 	bool properties_present;
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <unordered_set>
 
 #include <lvgl.h>
 
@@ -13,11 +14,9 @@ using namespace eerie_leap::views::widgets::utilitites;
 using namespace eerie_leap::views::widgets::configuration;
 
 class WidgetBase : public IWidget {
-private:
-    bool is_animation_enabled_;
-
 protected:
     uint32_t id_;
+    std::unordered_set<WidgetTag> tags_;
 
     WidgetConfiguration configuration_;
     WidgetPosition position_px_;
@@ -26,14 +25,20 @@ protected:
     std::shared_ptr<Frame> container_;
     lv_obj_t* lv_obj_;
 
+    void UpdateTags(std::vector<int> tag_values);
+    int SetVisibility(bool is_visible);
+
 public:
     WidgetBase(uint32_t id);
 
     uint32_t GetId() const override;
-    bool IsAnimationEnabled() const override;
+    bool HasTag(WidgetTag tag) const override;
+    bool IsAnimated() const override;
+    bool IsVisible() const override;
 
     void Configure(const WidgetConfiguration& config) override;
     WidgetConfiguration GetConfiguration() const override;
+    bool UpdateProperty(const WidgetPropertyType property_type, const ConfigValue& value, bool force_update = false) override;
 
     WidgetPosition GetPositionPx() const override;
     void SetPositionPx(const WidgetPosition& pos) override;

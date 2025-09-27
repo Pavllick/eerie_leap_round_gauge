@@ -6,16 +6,20 @@ namespace eerie_leap::views::widgets::configuration {
 
 enum class WidgetCategory : uint32_t {
     None = 0,
-    Indicator = 1 << 16,
-    Control = 2 << 16
+    Basic = 1 << 16,
+    Indicator = 2 << 16,
+    Control = 3 << 16
 };
 
 enum class WidgetType : uint32_t {
     None = 0,
 
-    IndicatorArcFill = static_cast<uint32_t>(WidgetCategory::Indicator) | 1,
-    IndicatorDigital = static_cast<uint32_t>(WidgetCategory::Indicator) | 2,
-    IndicatorHorizontalChart = static_cast<uint32_t>(WidgetCategory::Indicator) | 3
+    BasicIcon = static_cast<uint32_t>(WidgetCategory::Basic) | 1,
+    BasicArcLabel = static_cast<uint32_t>(WidgetCategory::Basic) | 2,
+
+    IndicatorArcFill = static_cast<uint32_t>(WidgetCategory::Indicator) | 101,
+    IndicatorDigital = static_cast<uint32_t>(WidgetCategory::Indicator) | 102,
+    IndicatorHorizontalChart = static_cast<uint32_t>(WidgetCategory::Indicator) | 103
 };
 
 class WidgetTypeHelpers {

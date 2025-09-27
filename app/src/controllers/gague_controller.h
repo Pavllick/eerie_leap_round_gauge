@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 #include "domain/sensor_domain/models/sensor.h"
 #include "domain/sensor_domain/services/reading_processor_service.h"
@@ -13,6 +14,7 @@
 
 #include "views/main_view.h"
 #include "views/widgets/widget_factory.h"
+#include "views/widgets/configuration/widget_tag.h"
 
 namespace eerie_leap::controllers {
 
@@ -27,6 +29,7 @@ using namespace eerie_leap::views::screens::configuration;
 
 using namespace eerie_leap::views;
 using namespace eerie_leap::views::widgets;
+using namespace eerie_leap::views::widgets::configuration;
 
 class GagueController {
 private:
@@ -37,10 +40,12 @@ private:
     std::shared_ptr<MainView> main_view_;
     GaugeConfiguration configuration_;
 
+    std::unordered_map<uint32_t, std::shared_ptr<IScreen>> screens_;
+
     int Configure(GaugeConfiguration& config);
 
     int RegisterIndicatorReadingHandler(std::shared_ptr<IWidget> widget);
-    std::unique_ptr<IScreen> CreateScreen(ScreenConfiguration& config, std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> sensors);
+    std::shared_ptr<IScreen> CreateScreen(ScreenConfiguration& config, std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> sensors);
     std::shared_ptr<Sensor> GetSensor(uint32_t id);
 
 public:
@@ -49,6 +54,8 @@ public:
         std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> sensors,
         std::shared_ptr<ReadingProcessorService> reading_processor_service,
         std::shared_ptr<WidgetFactory> widget_factory);
+
+    int UpdateWidgetProperty(const WidgetPropertyType property_type, const ConfigValue& value, WidgetTag tag, bool force_update = false);
 
     int Render();
 };
