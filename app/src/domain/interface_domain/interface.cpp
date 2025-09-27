@@ -9,9 +9,9 @@ namespace eerie_leap::domain::interface_domain {
 
 LOG_MODULE_REGISTER(interface_logger);
 
-Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<SystemConfigurationController> system_configuration_controller, std::shared_ptr<ReadingProcessorService> reading_processor_service)
+Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<SystemConfigurationManager> system_configuration_manager, std::shared_ptr<ReadingProcessorService> reading_processor_service)
     : modbus_(modbus),
-    system_configuration_controller_(std::move(system_configuration_controller)),
+    system_configuration_manager_(std::move(system_configuration_manager)),
     reading_processor_service_(std::move(reading_processor_service)),
     server_id_(modbus->GetServerId()),
     server_id_counter_(0) {
@@ -22,7 +22,7 @@ Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<SystemConfi
 }
 
 int Interface::Initialize() {
-    device_id_ = system_configuration_controller_->Get()->device_id;
+    device_id_ = system_configuration_manager_->Get()->device_id;
 
     ModbusCallbacks callbacks = {
         .holding_regs_rd = [this](uint16_t addr, uint16_t *reg, uint16_t num_regs) -> int {
@@ -77,7 +77,7 @@ int Interface::Set(ComRequestType com_request_type, uint16_t* data, size_t size_
         uint64_t device_id = *(uint64_t*)data;
 
         if(device_id == device_id_) {
-            if(!system_configuration_controller_->UpdateInterfaceChannel(modbus_->GetServerId()))
+            if(!system_configuration_manager_->UpdateInterfaceChannel(modbus_->GetServerId()))
                 return -1;
 
             server_id_resolved_ = true;

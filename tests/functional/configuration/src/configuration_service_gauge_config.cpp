@@ -588,7 +588,6 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_Save_successfully_sav
                 .width = 100,
                 .height = 100
             },
-            .is_animation_enabled = true,
             .properties = {
                 .PropertyValueType_m = {{
                     .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[0]),
@@ -612,7 +611,6 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_Save_successfully_sav
                 .width = 100,
                 .height = 100
             },
-            .is_animation_enabled = true,
             .properties = {
                 .PropertyValueType_m = {{
                     .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[0]),
@@ -685,7 +683,6 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_Save_successfully_sav
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].position.y, 0);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].size.width, 100);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].size.height, 100);
-    zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].is_animation_enabled, true);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].properties_present, true);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].properties.PropertyValueType_m_count, 1);
     zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].properties.PropertyValueType_m[0].PropertyValueType_m_key), keys[0]);
@@ -698,7 +695,6 @@ ZTEST(configuration_service_gauge_config, test_GaugeConfig_Save_successfully_sav
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].position.y, 0);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].size.width, 100);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].size.height, 100);
-    zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].is_animation_enabled, true);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].properties_present, true);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].properties.PropertyValueType_m_count, 4);
     zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].properties.PropertyValueType_m[0].PropertyValueType_m_key), keys[0]);

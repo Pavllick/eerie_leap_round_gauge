@@ -30,7 +30,7 @@
 #include "configuration/services/configuration_service.h"
 #include "configuration/system_config/system_config.h"
 
-#include "controllers/configuration/system_configuration_controller.h"
+#include "domain/system_domain/configuration/system_configuration_manager.h"
 #include "controllers/configuration/gauge_configuration_controller.h"
 
 #include "views/configuration/gauge_configuration.h"
@@ -71,6 +71,7 @@ using namespace eerie_leap::configuration::services;
 
 using namespace eerie_leap::controllers;
 using namespace eerie_leap::controllers::configuration;
+using namespace eerie_leap::domain::system_domain::configuration;
 
 LOG_MODULE_REGISTER(main_logger);
 
@@ -109,9 +110,9 @@ int main() {
     if(DtModbus::Get().has_value()) {
     auto modbus = make_shared_ext<Modbus>(
             DtModbus::Get().value(),
-        system_configuration_controller->Get()->interface_channel);
+            system_configuration_manager->Get()->interface_channel);
 
-        interface = make_shared_ext<Interface>(modbus, system_configuration_controller, reading_processor_service);
+        interface = make_shared_ext<Interface>(modbus, system_configuration_manager, reading_processor_service);
     if(interface->Initialize() != 0)
         return -1;
     }

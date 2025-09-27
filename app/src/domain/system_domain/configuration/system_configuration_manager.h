@@ -7,13 +7,13 @@
 #include "configuration/services/configuration_service.h"
 #include "domain/system_domain/system_configuration.h"
 
-namespace eerie_leap::controllers::configuration {
+namespace eerie_leap::domain::system_domain::configuration {
 
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::configuration::services;
 using namespace eerie_leap::domain::system_domain;
 
-class SystemConfigurationController {
+class SystemConfigurationManager{
 private:
     std::shared_ptr<ConfigurationService<SystemConfig>> system_configuration_service_;
     std::shared_ptr<ExtVector> system_config_raw_;
@@ -25,7 +25,7 @@ private:
     bool CreateDefaultSystemConfiguration();
 
 public:
-    explicit SystemConfigurationController(std::shared_ptr<ConfigurationService<SystemConfig>> system_configuration_service);
+    explicit SystemConfigurationManager(std::shared_ptr<ConfigurationService<SystemConfig>> system_configuration_service);
 
     bool UpdateInterfaceChannel(uint16_t interface_channel);
     bool UpdateBuildNumber(uint32_t build_number);
@@ -34,4 +34,4 @@ public:
     std::shared_ptr<SystemConfiguration> Get(bool force_load = false);
 };
 
-} // namespace eerie_leap::controllers::configuration
+} // eerie_leap::domain::system_domain::configuration

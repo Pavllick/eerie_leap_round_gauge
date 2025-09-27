@@ -44,7 +44,6 @@ std::shared_ptr<GaugeConfiguration> gauge_configuration_controller_test_SetupTes
                     .width = 3,
                     .height = 3
                 },
-                .is_animation_enabled = true,
                 .properties = {
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
@@ -62,7 +61,6 @@ std::shared_ptr<GaugeConfiguration> gauge_configuration_controller_test_SetupTes
                     .width = 1,
                     .height = 1
                 },
-                .is_animation_enabled = true,
                 .properties = {
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
@@ -80,7 +78,6 @@ std::shared_ptr<GaugeConfiguration> gauge_configuration_controller_test_SetupTes
                     .width = 3,
                     .height = 1
                 },
-                .is_animation_enabled = false,
                 .properties = {
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
@@ -142,7 +139,6 @@ ZTEST(gauge_configuration_controller, test_GaugeConfigurationController_Save_con
             zassert_equal(saved_gauge_configuration.screen_configurations[i].widget_configurations[j].position_grid.y, gauge_config->screen_configurations[i].widget_configurations[j].position_grid.y);
             zassert_equal(saved_gauge_configuration.screen_configurations[i].widget_configurations[j].size_grid.width, gauge_config->screen_configurations[i].widget_configurations[j].size_grid.width);
             zassert_equal(saved_gauge_configuration.screen_configurations[i].widget_configurations[i].size_grid.height, gauge_config->screen_configurations[i].widget_configurations[i].size_grid.height);
-            zassert_equal(saved_gauge_configuration.screen_configurations[i].widget_configurations[i].is_animation_enabled, gauge_config->screen_configurations[i].widget_configurations[i].is_animation_enabled);
             zassert_equal(saved_gauge_configuration.screen_configurations[i].widget_configurations[i].properties.size(), gauge_config->screen_configurations[i].widget_configurations[i].properties.size());
 
             for (auto& property : gauge_config->screen_configurations[i].widget_configurations[j].properties) {
