@@ -10,8 +10,8 @@
 
 namespace eerie_leap::views::widgets {
 
-using namespace eerie_leap::views::widgets::utilitites;
 using namespace eerie_leap::domain::ui_domain::models;
+using namespace eerie_leap::views::widgets::utilitites;
 
 class WidgetBase : public IWidget {
 protected:

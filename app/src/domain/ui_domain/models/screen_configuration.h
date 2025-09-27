@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "widget_configuration.h"
-#include "domain/ui_domain/models/grid_settings.h"
+#include "grid_settings.h"
 
 namespace eerie_leap::domain::ui_domain::models {
 

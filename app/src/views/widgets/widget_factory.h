@@ -5,13 +5,14 @@
 #include <unordered_map>
 #include <vector>
 
-#include "views/widgets/i_widget.h"
 #include "domain/ui_domain/models/widget_type.h"
+
+#include "views/widgets/i_widget.h"
 
 namespace eerie_leap::views::widgets {
 
-using namespace eerie_leap::views::widgets;
 using namespace eerie_leap::domain::ui_domain::models;
+using namespace eerie_leap::views::widgets;
 
 class WidgetFactory {
 public:

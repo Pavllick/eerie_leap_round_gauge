@@ -4,11 +4,13 @@
 
 #include "configuration/gauge_config/gauge_config.h"
 #include "configuration/services/configuration_service.h"
+
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
+#include "domain/ui_domain/models/widget_property.h"
 
 #include "subsys/device_tree/dt_fs.h"
 #include "subsys/fs/services/fs_service.h"
-#include "domain/ui_domain/models/widget_property.h"
+
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 
 using namespace eerie_leap::configuration::services;

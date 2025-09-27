@@ -47,8 +47,6 @@
 using namespace eerie_leap::views::widgets;
 using namespace eerie_leap::views::widgets::indicators;
 
-using namespace eerie_leap::domain::ui_domain::models;
-
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::utilities::dev_tools;
 using namespace eerie_leap::utilities::guid;

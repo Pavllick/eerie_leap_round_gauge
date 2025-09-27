@@ -3,7 +3,7 @@
 #include <vector>
 #include <unordered_map>
 
-#include "domain/ui_domain/models/screen_configuration.h"
+#include "screen_configuration.h"
 
 namespace eerie_leap::domain::ui_domain::models {
 

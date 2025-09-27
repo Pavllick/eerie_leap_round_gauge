@@ -3,17 +3,18 @@
 #include <memory>
 #include <vector>
 
+#include "domain/ui_domain/models/screen_configuration.h"
+#include "domain/sensor_domain/models/sensor.h"
+
 #include "views/widgets/i_widget.h"
 #include "views/screens/i_screen.h"
-#include "domain/ui_domain/models/screen_configuration.h"
 #include "views/widgets/widget_factory.h"
-#include "domain/sensor_domain/models/sensor.h"
 
 namespace eerie_leap::views::screens {
 
 using namespace eerie_leap::domain::sensor_domain::models;
-using namespace eerie_leap::views::widgets;
 using namespace eerie_leap::domain::ui_domain::models;
+using namespace eerie_leap::views::widgets;
 
 class GaugeScreen : public IScreen {
 private:

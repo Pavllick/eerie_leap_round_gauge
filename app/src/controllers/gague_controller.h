@@ -7,13 +7,12 @@
 #include "domain/sensor_domain/models/sensor.h"
 #include "domain/sensor_domain/services/reading_processor_service.h"
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
-
 #include "domain/ui_domain/models/ui_configuration.h"
 #include "domain/ui_domain/models/screen_configuration.h"
+#include "domain/ui_domain/models/widget_tag.h"
 
 #include "views/main_view.h"
 #include "views/widgets/widget_factory.h"
-#include "domain/ui_domain/models/widget_tag.h"
 
 namespace eerie_leap::controllers {
 
