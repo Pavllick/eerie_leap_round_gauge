@@ -28,6 +28,7 @@ std::shared_ptr<UiConfiguration> ui_configuration_manager_test_SetupTestUiConfig
 
     ScreenConfiguration screen_configuration {
         .id = 8,
+        .type = ScreenType::Gauge,
         .grid = GridSettings {
             .snap_enabled = true,
             .width = 3,
@@ -129,6 +130,7 @@ ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_and_Load
 
     for (std::size_t i = 0; i < ui_config->screen_configurations.size(); i++) {
         zassert_equal(saved_ui_configuration.screen_configurations[i].id, ui_config->screen_configurations[i].id);
+        zassert_equal(saved_ui_configuration.screen_configurations[i].type, ui_config->screen_configurations[i].type);
         zassert_equal(saved_ui_configuration.screen_configurations[i].grid.snap_enabled, ui_config->screen_configurations[i].grid.snap_enabled);
         zassert_equal(saved_ui_configuration.screen_configurations[i].grid.width, ui_config->screen_configurations[i].grid.width);
         zassert_equal(saved_ui_configuration.screen_configurations[i].grid.height, ui_config->screen_configurations[i].grid.height);

@@ -93,6 +93,7 @@ bool UiConfigurationManager::Update(std::shared_ptr<UiConfiguration> ui_configur
         ScreenConfig screen_config;
 
         screen_config.id = ui_configuration->screen_configurations[i].id;
+        screen_config.type = static_cast<uint32_t>(ui_configuration->screen_configurations[i].type);
         screen_config.grid.snap_enabled = ui_configuration->screen_configurations[i].grid.snap_enabled;
         screen_config.grid.width = ui_configuration->screen_configurations[i].grid.width;
         screen_config.grid.height = ui_configuration->screen_configurations[i].grid.height;
@@ -194,6 +195,7 @@ std::shared_ptr<UiConfiguration> UiConfigurationManager::Get(bool force_load) {
     for(int i = 0; i < ui_config_->ScreenConfig_m_count; i++) {
         ScreenConfiguration screen_configuration;
         screen_configuration.id = ui_config_->ScreenConfig_m[i].id;
+        screen_configuration.type = static_cast<ScreenType>(ui_config_->ScreenConfig_m[i].type);
 
         screen_configuration.grid.snap_enabled = ui_config_->ScreenConfig_m[i].grid.snap_enabled;
         screen_configuration.grid.width = ui_config_->ScreenConfig_m[i].grid.width;

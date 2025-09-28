@@ -7,6 +7,7 @@ UiConfig = [
 
 ScreenConfig = [
     id: uint,
+    type: uint,
     grid: GridSettingsConfig,
     widget_configurations: [* WidgetConfig]
 ]

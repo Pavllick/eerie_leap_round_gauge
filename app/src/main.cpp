@@ -264,6 +264,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
 
     ScreenConfiguration screen_configuration {
         .id = 0,
+        .type = ScreenType::Gauge,
         .grid = GridSettings {
             .snap_enabled = true,
             .width = 3,

@@ -137,7 +137,9 @@ static bool encode_ScreenConfig(
 {
 	zcbor_log("%s\r\n", __func__);
 
-	bool res = (((zcbor_list_start_encode(state, 0) && ((((zcbor_uint32_encode(state, (&(*input).id))))
+	bool res = (((zcbor_list_start_encode(state, 0) && ((
+       ((zcbor_uint32_encode(state, (&(*input).id))))
+    && ((zcbor_uint32_encode(state, (&(*input).type))))
 	&& ((encode_GridSettingsConfig(state, (&(*input).grid))))
 	&& ((zcbor_list_start_encode(state, 0) && ((zcbor_multi_encode((*input).WidgetConfig_m_count, (zcbor_encoder_t *)encode_WidgetConfig, state, input->WidgetConfig_m.data(), sizeof(struct WidgetConfig))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 0)))
 	) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 0))));

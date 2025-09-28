@@ -571,6 +571,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_Save_successfully_saved_and
     ui_config->ScreenConfig_m_count = 1;
     ui_config->ScreenConfig_m.push_back({
         .id = 1,
+        .type = 2,
         .grid = {
             .snap_enabled = true,
             .width = 100,
@@ -671,6 +672,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_Save_successfully_saved_and
 
     zassert_equal(loaded_config.value().config->ScreenConfig_m_count, 1);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].id, 1);
+    zassert_equal(loaded_config.value().config->ScreenConfig_m[0].type, 2);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].grid.snap_enabled, true);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].grid.width, 100);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].grid.height, 100);

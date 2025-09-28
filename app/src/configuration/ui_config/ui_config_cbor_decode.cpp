@@ -256,7 +256,9 @@ static bool decode_ScreenConfig(
 
 	auto buffer = make_shared_ext<ExtVector>(sizeof(WidgetConfig) * UI_CONFIG_MAX_WIDGET_CONFIGURATIONS_COUNT);
 
-	bool res = (((zcbor_list_start_decode(state) && ((((zcbor_uint32_decode(state, (&(*result).id))))
+	bool res = (((zcbor_list_start_decode(state) && ((
+       ((zcbor_uint32_decode(state, (&(*result).id))))
+    && ((zcbor_uint32_decode(state, (&(*result).type))))
 	&& ((decode_GridSettingsConfig(state, (&(*result).grid))))
 	&& ((zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, UI_CONFIG_MAX_WIDGET_CONFIGURATIONS_COUNT, &(*result).WidgetConfig_m_count, (zcbor_decoder_t *)decode_WidgetConfig, state, buffer->data(), sizeof(struct WidgetConfig))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
 

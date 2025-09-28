@@ -80,6 +80,7 @@ struct WidgetConfig {
 
 struct ScreenConfig {
 	uint32_t id;
+    uint32_t type;
 	GridSettingsConfig grid;
 	std::vector<WidgetConfig> WidgetConfig_m;
 	size_t WidgetConfig_m_count;
