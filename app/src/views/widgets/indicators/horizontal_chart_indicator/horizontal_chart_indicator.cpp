@@ -10,9 +10,10 @@ namespace eerie_leap::views::widgets::indicators {
 
 using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::views::widgets::utilitites;
+using namespace eerie_leap::views::utilitites;
 
-HorizontalChartIndicator::HorizontalChartIndicator(uint32_t id) : IndicatorBase(id) { }
+HorizontalChartIndicator::HorizontalChartIndicator(uint32_t id, std::shared_ptr<Frame> parent)
+    : IndicatorBase(id, parent) { }
 
 int HorizontalChartIndicator::Render() {
     lv_obj_ = Create(container_->GetObject(), static_cast<int32_t>(range_start_), static_cast<int32_t>(range_end_), point_count_, chart_type_);

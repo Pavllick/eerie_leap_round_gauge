@@ -21,7 +21,7 @@ private:
     // int center_y_;
 
 public:
-    explicit IconWidget(uint32_t id);
+    explicit IconWidget(uint32_t id, std::shared_ptr<Frame> parent);
     WidgetType GetType() const override { return WidgetType::BasicIcon; }
 
     int Render() override;

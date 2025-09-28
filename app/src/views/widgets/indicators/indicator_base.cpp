@@ -6,7 +6,9 @@ namespace eerie_leap::views::widgets::indicators {
 
 using namespace eerie_leap::domain::ui_domain::models;
 
-IndicatorBase::IndicatorBase(uint32_t id) : WidgetBase(id) {
+IndicatorBase::IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent)
+    : WidgetBase(id, parent) {
+
     value_change_animation_ = CreateValueChangeAnimation();
 }
 

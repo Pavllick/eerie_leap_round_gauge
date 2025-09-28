@@ -12,7 +12,7 @@ private:
     static lv_obj_t* Create(lv_obj_t* parent);
 
 public:
-    explicit DigitalIndicator(uint32_t id);
+    explicit DigitalIndicator(uint32_t id, std::shared_ptr<Frame> parent);
     WidgetType GetType() const override { return WidgetType::IndicatorDigital; }
 
     int Render() override;

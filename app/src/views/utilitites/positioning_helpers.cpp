@@ -3,7 +3,7 @@
 
 #include "positioning_helpers.h"
 
-namespace eerie_leap::views::widgets::utilitites {
+namespace eerie_leap::views::utilitites {
 
 WidgetPosition PositioningHelpers::GetPointOnCircle(int center_x, int center_y, int radius_px, float angle_deg) {
     float angle_radians = angle_deg * std::numbers::pi / 180.0f;
@@ -23,4 +23,4 @@ void PositioningHelpers::PlaceObjectOnCircle(lv_obj_t* obj, int center_x, int ce
     lv_obj_set_y(obj, pos.y);
 }
 
-} // namespace eerie_leap::views::widgets::utilitites
+} // namespace eerie_leap::views::utilitites

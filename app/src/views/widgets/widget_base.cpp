@@ -4,10 +4,11 @@
 
 namespace eerie_leap::views::widgets {
 
-WidgetBase::WidgetBase(uint32_t id) : id_(id) {
-    auto container = std::make_shared<Frame>();
-    container->Build();
-    container_ = std::move(container);
+WidgetBase::WidgetBase(uint32_t id, std::shared_ptr<Frame> parent)
+    : id_(id), parent_(parent) {
+
+    container_ = std::make_shared<Frame>();
+    container_->Build(parent->GetObject());
 }
 
 uint32_t WidgetBase::GetId() const {

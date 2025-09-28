@@ -13,7 +13,7 @@ private:
     static lv_obj_t* Create(lv_obj_t* parent, int32_t range_start, int32_t range_end);
 
 public:
-    explicit ArcFillIndicator(uint32_t id);
+    explicit ArcFillIndicator(uint32_t id, std::shared_ptr<Frame> parent);
     WidgetType GetType() const override { return WidgetType::IndicatorArcFill; }
 
     int Render() override;

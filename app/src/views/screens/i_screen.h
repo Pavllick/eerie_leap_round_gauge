@@ -14,8 +14,9 @@ using namespace eerie_leap::views::widgets;
 class IScreen {
 public:
     virtual int Render() = 0;
-    virtual void Configure(ScreenConfiguration& config) = 0;
-    virtual std::shared_ptr<std::vector<std::shared_ptr<IWidget>>> GetWidgets() const = 0;
+    virtual void Configure(const ScreenConfiguration& config) = 0;
+    virtual ScreenConfiguration GetConfiguration() const = 0;
+    virtual std::shared_ptr<std::vector<std::unique_ptr<IWidget>>> GetWidgets() const = 0;
     virtual ~IScreen() = default;
 };
 

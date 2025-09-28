@@ -15,7 +15,7 @@ using namespace eerie_leap::views::widgets::indicators;
 std::shared_ptr<WidgetFactory> WidgetFactory::instance_ = nullptr;
 
 WidgetFactory::WidgetFactory() {
-    RegisterBuiltinWidgets();
+    RegisterTypes();
 }
 
 std::shared_ptr<WidgetFactory> WidgetFactory::GetInstance() {
@@ -27,27 +27,27 @@ std::shared_ptr<WidgetFactory> WidgetFactory::GetInstance() {
     return instance_;
 }
 
+template<typename T>
+void WidgetFactory::RegisterWidget(const WidgetType type) {
+    creators_[type] = [](const uint32_t id, std::shared_ptr<Frame> parent) -> std::unique_ptr<IWidget> {
+        return std::make_unique<T>(id, parent);
+    };
+}
+
 void WidgetFactory::RegisterWidget(const WidgetType type, WidgetCreator creator) {
     creators_[type] = std::move(creator);
 }
 
-template<typename T>
-void WidgetFactory::RegisterWidget(const WidgetType type) {
-    creators_[type] = [](const uint32_t id) -> std::unique_ptr<IWidget> {
-        return std::make_unique<T>(id);
-    };
-}
-
-std::unique_ptr<IWidget> WidgetFactory::CreateWidget(const WidgetType type, const uint32_t id) {
+std::unique_ptr<IWidget> WidgetFactory::CreateWidget(const WidgetType type, const uint32_t id, std::shared_ptr<Frame> parent) {
     auto it = creators_.find(type);
     if (it == creators_.end())
         throw std::runtime_error("Unknown widget type");
 
-    return it->second(id);
+    return it->second(id, parent);
 }
 
-std::unique_ptr<IWidget> WidgetFactory::CreateWidget(const WidgetConfiguration& config) {
-    auto widget = CreateWidget(config.type, config.id);
+std::unique_ptr<IWidget> WidgetFactory::CreateWidget(const WidgetConfiguration& config, std::shared_ptr<Frame> parent) {
+    auto widget = CreateWidget(config.type, config.id, parent);
     widget->Configure(config);
 
     return widget;
@@ -63,11 +63,7 @@ std::vector<WidgetType> WidgetFactory::GetAvailableTypes() const {
     return types;
 }
 
-bool WidgetFactory::IsTypeRegistered(const WidgetType type) const {
-    return creators_.contains(type);
-}
-
-void WidgetFactory::RegisterBuiltinWidgets() {
+void WidgetFactory::RegisterTypes() {
     RegisterWidget<IconWidget>(WidgetType::BasicIcon);
     RegisterWidget<ArcLabelWidget>(WidgetType::BasicArcLabel);
 

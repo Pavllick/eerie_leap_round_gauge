@@ -7,7 +7,7 @@
 #include "subsys/device_tree/dt_gpio.h"
 #include "subsys/gpio/gpio_buttons.h"
 #include "domain/interface_domain/interface.h"
-#include "controllers/gague_controller.h"
+#include "controllers/ui_controller.h"
 
 namespace eerie_leap::controllers {
 
@@ -19,12 +19,12 @@ class LoggingController {
 private:
     std::shared_ptr<GpioButtons> gpio_buttons_;
     std::shared_ptr<Interface> interface_;
-    std::shared_ptr<GagueController> gague_controller_;
+    std::shared_ptr<UiController> ui_controller_;
 
     bool is_logging_in_progress_;
 
 public:
-    LoggingController(std::shared_ptr<GpioButtons> gpio_buttons, std::shared_ptr<Interface> interface, std::shared_ptr<GagueController> gague_controller);
+    LoggingController(std::shared_ptr<GpioButtons> gpio_buttons, std::shared_ptr<Interface> interface, std::shared_ptr<UiController> ui_controller);
 
     int Initialize();
 };

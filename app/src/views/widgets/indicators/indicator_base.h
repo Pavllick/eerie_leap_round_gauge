@@ -25,7 +25,7 @@ protected:
     void ValueChangeAnimation(lv_anim_t anim, int32_t range, int32_t start_value, int32_t end_value);
 
 public:
-    IndicatorBase(uint32_t id);
+    IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent);
 
     void Update(float value) override;
 

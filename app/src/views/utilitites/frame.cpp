@@ -2,7 +2,7 @@
 
 #include "frame.h"
 
-namespace eerie_leap::views::widgets::utilitites {
+namespace eerie_leap::views::utilitites {
 
 Frame::Frame() : frame_(nullptr) { }
 
@@ -155,4 +155,4 @@ Frame Frame::AlignCenter() {
 
 lv_obj_t* Frame::GetObject() { return frame_; }
 
-} // namespace eerie_leap::views::widgets::utilitites
+} // namespace eerie_leap::views::utilitites

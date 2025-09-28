@@ -4,7 +4,7 @@
 
 #include <lvgl.h>
 
-namespace eerie_leap::views::widgets::utilitites {
+namespace eerie_leap::views::utilitites {
 
 class Frame {
 private:
@@ -35,4 +35,4 @@ public:
     lv_obj_t* GetObject();
 };
 
-} // namespace eerie_leap::views::widgets::utilitites
+} // namespace eerie_leap::views::utilitites

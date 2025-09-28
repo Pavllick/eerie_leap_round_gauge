@@ -5,13 +5,13 @@
 
 #include <lvgl.h>
 
-#include "views/widgets/utilitites/frame.h"
+#include "views/utilitites/frame.h"
 #include "views/widgets/i_widget.h"
 
 namespace eerie_leap::views::widgets {
 
 using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::views::widgets::utilitites;
+using namespace eerie_leap::views::utilitites;
 
 class WidgetBase : public IWidget {
 protected:
@@ -22,6 +22,7 @@ protected:
     WidgetPosition position_px_;
     WidgetSize size_px_;
 
+    std::shared_ptr<Frame> parent_;
     std::shared_ptr<Frame> container_;
     lv_obj_t* lv_obj_;
 
@@ -29,7 +30,7 @@ protected:
     int SetVisibility(bool is_visible);
 
 public:
-    WidgetBase(uint32_t id);
+    WidgetBase(uint32_t id, std::shared_ptr<Frame> parent);
 
     uint32_t GetId() const override;
     bool HasTag(WidgetTag tag) const override;

@@ -24,7 +24,8 @@
 #include "domain/sensor_domain/models/sensor.h"
 #include "domain/sensor_domain/services/reading_processor_service.h"
 
-#include "controllers/gague_controller.h"
+#include "controllers/ui_controller.h"
+#include "controllers/gague_screen_controller.h"
 #include "controllers/logging_controller.h"
 
 #include "configuration/services/configuration_service.h"
@@ -115,17 +116,12 @@ int main() {
     }
 
     // NOTE: This is a temporary solution.
-    auto sensors = SetupTestSensors();
+    // auto sensors = SetupTestSensors();
     SetupTestUiConfig(ui_configuration_manager);
 
-    auto widget_factory = WidgetFactory::GetInstance();
-
-    auto gague_controller = make_shared_ext<GagueController>(
-        ui_configuration_manager,
-        sensors,
-        reading_processor_service,
-        widget_factory);
-    gague_controller->Render();
+    auto gague_screen_controller = make_shared_ext<GagueScreenController>(reading_processor_service);
+    auto ui_controller = make_shared_ext<UiController>(ui_configuration_manager, gague_screen_controller);
+    ui_controller->Render();
 
     std::shared_ptr<LoggingController> logging_controller;
     do {
@@ -145,7 +141,7 @@ int main() {
             break;
         }
 
-        logging_controller = make_shared_ext<LoggingController>(gpio_buttons, interface, gague_controller);
+        logging_controller = make_shared_ext<LoggingController>(gpio_buttons, interface, ui_controller);
         logging_controller->Initialize();
     } while(false);
 

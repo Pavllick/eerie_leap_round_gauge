@@ -6,9 +6,10 @@ namespace eerie_leap::views::widgets::indicators {
 
 using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::views::widgets::utilitites;
+using namespace eerie_leap::views::utilitites;
 
-DigitalIndicator::DigitalIndicator(uint32_t id) : IndicatorBase(id) { }
+DigitalIndicator::DigitalIndicator(uint32_t id, std::shared_ptr<Frame> parent)
+    : IndicatorBase(id, parent) { }
 
 int DigitalIndicator::Render() {
     lv_obj_ = Create(container_->GetObject());

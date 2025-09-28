@@ -29,7 +29,7 @@ private:
         float start_angle, float end_angle_offset, int radius, int center_x, int center_y);
 
 public:
-    explicit ArcLabelWidget(uint32_t id);
+    explicit ArcLabelWidget(uint32_t id, std::shared_ptr<Frame> parent);
     WidgetType GetType() const override { return WidgetType::BasicArcLabel; }
 
     int Render() override;

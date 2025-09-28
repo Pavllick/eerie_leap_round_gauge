@@ -1,4 +1,4 @@
-#include "views/widgets/utilitites/positioning_helpers.h"
+#include "views/utilitites/positioning_helpers.h"
 
 #include "icon_widget.h"
 
@@ -6,9 +6,10 @@ namespace eerie_leap::views::widgets::basic {
 
 using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::views::widgets::utilitites;
+using namespace eerie_leap::views::utilitites;
 
-IconWidget::IconWidget(uint32_t id) : WidgetBase(id) { }
+IconWidget::IconWidget(uint32_t id, std::shared_ptr<Frame> parent)
+    : WidgetBase(id, parent) { }
 
 int IconWidget::Render() {
     lv_obj_ = Create(container_->GetObject());

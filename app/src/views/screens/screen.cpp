@@ -1,28 +1,53 @@
 #include <stdexcept>
 
-#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <lvgl.h>
 
-#include "gauge_screen.h"
+#include "views/widgets/widget_factory.h"
+
+#include "screen.h"
 
 namespace eerie_leap::views::screens {
 
-LOG_MODULE_REGISTER(gauge_screen_logger);
+LOG_MODULE_REGISTER(screen_logger);
 
-GaugeScreen::GaugeScreen(std::shared_ptr<WidgetFactory> widget_factory, std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> sensors)
-    : widget_factory_(std::move(widget_factory)), sensors_(std::move(sensors)) {
-        widgets_ = std::make_shared<std::vector<std::shared_ptr<IWidget>>>();
-    }
+Screen::Screen(uint32_t id) : id_(id) {
+    widgets_ = std::make_shared<std::vector<std::unique_ptr<IWidget>>>();
 
-int GaugeScreen::Render() {
+    container_ = std::make_shared<Frame>();
+    container_->Build();
+}
+
+int Screen::Render() {
     for(auto& widget : *widgets_)
         widget->Render();
 
     return 0;
 }
 
-void UpdateWidgetSize(std::unique_ptr<IWidget>& widget, GridSettings& grid_settings) {
+void Screen::Configure(const ScreenConfiguration& config) {
+    configuration_ = config;
+
+    widgets_->clear();
+
+    for(auto& widget_config : configuration_.widget_configurations) {
+        auto widget = WidgetFactory::GetInstance()->CreateWidget(widget_config, container_);
+        UpdateWidgetSize(widget, configuration_.grid);
+        UpdateWidgetPosition(widget, configuration_.grid);
+
+        widgets_->push_back(std::move(widget));
+    }
+}
+
+ScreenConfiguration Screen::GetConfiguration() const {
+    return configuration_;
+}
+
+std::shared_ptr<std::vector<std::unique_ptr<IWidget>>> Screen::GetWidgets() const {
+    return widgets_;
+}
+
+void Screen::UpdateWidgetSize(std::unique_ptr<IWidget>& widget, GridSettings& grid_settings) {
     lv_obj_t *active_screen = lv_screen_active();
     int32_t screen_width = lv_obj_get_width(active_screen);
     int32_t screen_height = lv_obj_get_height(active_screen);
@@ -44,7 +69,7 @@ void UpdateWidgetSize(std::unique_ptr<IWidget>& widget, GridSettings& grid_setti
     widget->SetSizePx({.width = width, .height = height});
 }
 
-void UpdateWidgetPosition(std::unique_ptr<IWidget>& widget, GridSettings& grid_settings) {
+void Screen::UpdateWidgetPosition(std::unique_ptr<IWidget>& widget, GridSettings& grid_settings) {
     lv_obj_t *active_screen = lv_screen_active();
     int32_t screen_width = lv_obj_get_width(active_screen);
     int32_t screen_height = lv_obj_get_height(active_screen);
@@ -63,24 +88,6 @@ void UpdateWidgetPosition(std::unique_ptr<IWidget>& widget, GridSettings& grid_s
     y = std::abs(y);
 
     widget->SetPositionPx({.x = x, .y = y});
-}
-
-void GaugeScreen::Configure(ScreenConfiguration& config) {
-    configuration_ = config;
-
-    widgets_->clear();
-
-    for(auto& widget_config : configuration_.widget_configurations) {
-        auto widget = widget_factory_->CreateWidget(widget_config);
-        UpdateWidgetSize(widget, configuration_.grid);
-        UpdateWidgetPosition(widget, configuration_.grid);
-
-        widgets_->push_back(std::move(widget));
-    }
-}
-
-std::shared_ptr<std::vector<std::shared_ptr<IWidget>>> GaugeScreen::GetWidgets() const {
-    return widgets_;
 }
 
 } // namespace eerie_leap::views::screens
