@@ -22,10 +22,10 @@
 #include "domain/interface_domain/interface.h"
 #include "domain/ui_domain/ui_renderer.h"
 #include "domain/sensor_domain/models/sensor.h"
-#include "domain/sensor_domain/services/reading_processor_service.h"
+#include "domain/interface_domain/processors/reading_processor.h"
+#include "domain/interface_domain/processors/status_processor.h"
 
 #include "controllers/ui_controller.h"
-#include "controllers/gague_screen_controller.h"
 #include "controllers/logging_controller.h"
 
 #include "configuration/services/configuration_service.h"
@@ -39,11 +39,12 @@
 #include "domain/ui_domain/models/grid_settings.h"
 #include "domain/ui_domain/models/widget_configuration.h"
 #include "domain/ui_domain/models/widget_type.h"
-#include "domain/ui_domain/models/widget_tag.h"
 #include "domain/ui_domain/models/widget_size.h"
 #include "domain/ui_domain/models/widget_position.h"
 #include "domain/ui_domain/models/widget_property.h"
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
+
+#include "subsys/event_bus/event_bus.h"
 
 using namespace eerie_leap::views::widgets;
 using namespace eerie_leap::views::widgets::indicators;
@@ -62,18 +63,18 @@ using namespace eerie_leap::subsys::gpio;
 
 using namespace eerie_leap::domain::system_domain::configuration;
 using namespace eerie_leap::domain::interface_domain;
+using namespace eerie_leap::domain::interface_domain::processors;
 using namespace eerie_leap::domain::ui_domain;
 using namespace eerie_leap::domain::ui_domain::configuration;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::domain::sensor_domain::models;
-using namespace eerie_leap::domain::sensor_domain::services;
 using namespace eerie_leap::configuration::services;
 
 using namespace eerie_leap::controllers;
 
 LOG_MODULE_REGISTER(main_logger);
 
-constexpr uint32_t SLEEP_TIME_MS = 2000;
+constexpr uint32_t SLEEP_TIME_MS = 200;
 
 std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> SetupTestSensors();
 std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager);
@@ -95,8 +96,8 @@ int main() {
 
     auto guid_generator = make_shared_ext<GuidGenerator>();
 
-    auto reading_processor_service = make_shared_ext<ReadingProcessorService>();
-    reading_processor_service->Initialize();
+    auto reading_processor = make_shared_ext<ReadingProcessor>();
+    auto status_processor = make_shared_ext<StatusProcessor>();
 
     auto system_config_service = make_shared_ext<ConfigurationService<SystemConfig>>("system_config", fs_service);
     auto system_configuration_manager = make_shared_ext<SystemConfigurationManager>(system_config_service);
@@ -110,17 +111,19 @@ int main() {
             DtModbus::Get().value(),
             system_configuration_manager->Get()->interface_channel);
 
-        interface = make_shared_ext<Interface>(modbus, system_configuration_manager, reading_processor_service);
+        interface = make_shared_ext<Interface>(modbus, system_configuration_manager, reading_processor);
         if(interface->Initialize() != 0)
             return -1;
+
+        interface->RegisterProcessor<SensorReadingDto>(reading_processor);
+        interface->RegisterProcessor<UserStatus>(status_processor);
     }
 
     // NOTE: This is a temporary solution.
     // auto sensors = SetupTestSensors();
     SetupTestUiConfig(ui_configuration_manager);
 
-    auto gague_screen_controller = make_shared_ext<GagueScreenController>(reading_processor_service);
-    auto ui_controller = make_shared_ext<UiController>(ui_configuration_manager, gague_screen_controller);
+    auto ui_controller = make_shared_ext<UiController>(ui_configuration_manager);
     ui_controller->Render();
 
     std::shared_ptr<LoggingController> logging_controller;
@@ -141,11 +144,11 @@ int main() {
             break;
         }
 
-        logging_controller = make_shared_ext<LoggingController>(gpio_buttons, interface, ui_controller);
+        logging_controller = make_shared_ext<LoggingController>(gpio_buttons, interface);
         logging_controller->Initialize();
     } while(false);
 
-    reading_processor_service->Start();
+    reading_processor->Start();
 
 #ifdef CONFIG_FLASH_SIMULATOR
     SensorReadingDto reading;
@@ -159,7 +162,7 @@ int main() {
 	while (true) {
     #ifdef CONFIG_FLASH_SIMULATOR
         reading.value = (Rng::Get32() / static_cast<float>(UINT32_MAX)) * 100;
-        reading_processor_service->ProcessReading(reading);
+        reading_processor->Process(reading);
     #endif // CONFIG_FLASH_SIMULATOR
 
         k_msleep(SLEEP_TIME_MS);
@@ -379,9 +382,8 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
                 },
                 .properties = {
                     { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), false },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::TAGS), std::vector<int> {
-                        static_cast<int>(WidgetTag::IconLoggingIndicator)
-                    }}
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::LABEL), "log" },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::UI_EVENT_TYPE), static_cast<int>(UiEventType::LOGGING_STATUS_UPDATED) }
                 }
             }
         }

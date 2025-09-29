@@ -33,7 +33,6 @@ public:
     WidgetType GetType() const override { return WidgetType::BasicArcLabel; }
 
     int Render() override;
-    void Configure(const WidgetConfiguration& config) override;
     void UpdateText(const std::string& value, float end_angle_offset = -1);
 };
 

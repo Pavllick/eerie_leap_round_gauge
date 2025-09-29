@@ -19,6 +19,7 @@ int IconWidget::Render() {
 
 // TODO: Make parameters configurable
 lv_obj_t* IconWidget::Create(lv_obj_t* parent) {
+    // TODO: config width to account for label length
     int32_t width = 48;
     int32_t height = 26;
 
@@ -39,7 +40,7 @@ lv_obj_t* IconWidget::Create(lv_obj_t* parent) {
     lv_obj_set_width(ui_label, LV_SIZE_CONTENT);
     lv_obj_set_height(ui_label, LV_SIZE_CONTENT);
     lv_obj_set_align(ui_label, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_label, "log");
+    lv_label_set_text(ui_label, label.c_str());
     lv_obj_set_style_text_color(ui_label, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_label, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -51,6 +52,33 @@ lv_obj_t* IconWidget::Create(lv_obj_t* parent) {
 
 void IconWidget::Configure(const WidgetConfiguration& config) {
     WidgetBase::Configure(config);
+
+    label = GetConfigValue<std::string>(
+        configuration_.properties,
+        WidgetProperty::GetTypeName(WidgetPropertyType::LABEL),
+        "");
+
+    auto event_type_raw = GetConfigValue<int>(
+        configuration_.properties,
+        WidgetProperty::GetTypeName(WidgetPropertyType::UI_EVENT_TYPE),
+        0);
+
+    auto event_type = static_cast<UiEventType>(event_type_raw);
+
+    if(event_type != UiEventType::NONE) {
+        auto logging_subscription = UiEventBus::GetInstance().Subscribe(
+            event_type,
+            [this](const UiEvent& event) {
+                if (auto it = event.payload.find(UiPayloadType::VALUE); it != event.payload.end()) {
+                    if (auto* value = std::get_if<bool>(&it->second))
+                        SetVisibility(*value);
+                }
+            }
+        );
+
+        if(logging_subscription)
+            subscriptions_.push_back(std::move(*logging_subscription));
+    }
 }
 
 } // namespace eerie_leap::views::widgets::basic

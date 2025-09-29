@@ -54,6 +54,11 @@ public:
     std::expected<SubscriptionHandle<EventTypeEnum>, std::string>
     Subscribe(EventTypeEnum type, FilterType filter, EventHandler<EventTypeEnum, PayloadTypeEnum> handler);
 
+    std::expected<SubscriptionHandle<EventTypeEnum>, std::string>
+    Subscribe(EventTypeEnum type, EventHandler<EventTypeEnum, PayloadTypeEnum> handler) {
+        return Subscribe(type, AcceptAllFilter<EventTypeEnum, PayloadTypeEnum>{ }, std::move(handler));
+    }
+
     bool Unsubscribe(SubscriptionHandle<EventTypeEnum>& handle);
 
     virtual void Publish(const Event<EventTypeEnum, PayloadTypeEnum>& event);

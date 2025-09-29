@@ -13,4 +13,9 @@ enum class ComUserStatus : uint16_t {
     STOP_LOGGING = 4,
 };
 
+struct UserStatus {
+    ComUserStatus status;
+    bool is_ok;
+};
+
 } // namespace eerie_leap::domain::interface_domain::types

@@ -14,6 +14,7 @@ using namespace eerie_leap::views::widgets;
 class IconWidget : public WidgetBase {
 private:
     lv_obj_t* Create(lv_obj_t* parent);
+    std::string label;
 
     // float start_angle_;
     // int radius_;

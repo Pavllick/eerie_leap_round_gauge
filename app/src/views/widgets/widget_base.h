@@ -5,18 +5,19 @@
 
 #include <lvgl.h>
 
+#include "domain/ui_domain/event_bus/ui_event_bus.h"
 #include "views/utilitites/frame.h"
 #include "views/widgets/i_widget.h"
 
 namespace eerie_leap::views::widgets {
 
+using namespace eerie_leap::domain::ui_domain::event_bus;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 
 class WidgetBase : public IWidget {
 protected:
     uint32_t id_;
-    std::unordered_set<WidgetTag> tags_;
 
     WidgetConfiguration configuration_;
     WidgetPosition position_px_;
@@ -26,20 +27,20 @@ protected:
     std::shared_ptr<Frame> container_;
     lv_obj_t* lv_obj_;
 
-    void UpdateTags(std::vector<int> tag_values);
+    std::vector<UiSubscriptionHandle> subscriptions_;
+
     int SetVisibility(bool is_visible);
 
 public:
     WidgetBase(uint32_t id, std::shared_ptr<Frame> parent);
+    ~WidgetBase() override;
 
     uint32_t GetId() const override;
-    bool HasTag(WidgetTag tag) const override;
     bool IsAnimated() const override;
     bool IsVisible() const override;
 
     void Configure(const WidgetConfiguration& config) override;
     WidgetConfiguration GetConfiguration() const override;
-    bool UpdateProperty(const WidgetPropertyType property_type, const ConfigValue& value, bool force_update = false) override;
 
     WidgetPosition GetPositionPx() const override;
     void SetPositionPx(const WidgetPosition& pos) override;

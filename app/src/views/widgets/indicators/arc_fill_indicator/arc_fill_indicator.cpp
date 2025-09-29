@@ -45,8 +45,4 @@ void ArcFillIndicator::UpdateIndicator(int32_t value) {
     value_ = static_cast<float>(value);
 }
 
-void ArcFillIndicator::Configure(const WidgetConfiguration& config) {
-    IndicatorBase::Configure(config);
-}
-
 } // namespace eerie_leap::views::widgets::indicators

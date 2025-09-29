@@ -1,24 +1,25 @@
 #include <zephyr/logging/log.h>
 
-#include "domain/sensor_domain/services/reading_processor_service.h"
-
+#include "domain/ui_domain/event_bus/ui_event_bus.h"
 #include "types/sensor_reading_dto.h"
+
 #include "interface.h"
 
 namespace eerie_leap::domain::interface_domain {
 
+using namespace eerie_leap::domain::ui_domain::event_bus;
+
 LOG_MODULE_REGISTER(interface_logger);
 
-Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<SystemConfigurationManager> system_configuration_manager, std::shared_ptr<ReadingProcessorService> reading_processor_service)
+Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<SystemConfigurationManager> system_configuration_manager, std::shared_ptr<ReadingProcessor> reading_processor)
     : modbus_(modbus),
     system_configuration_manager_(std::move(system_configuration_manager)),
-    reading_processor_service_(std::move(reading_processor_service)),
+    reading_processor_(std::move(reading_processor)),
     server_id_(modbus->GetServerId()),
     server_id_counter_(0) {
 
     server_id_resolved_ = server_id_ != Modbus::DEFAULT_SERVER_ID;
     status_ = ComUserStatus::NOT_CONFIGURED;
-    status_update_handlers_ = std::make_shared<std::unordered_map<ComUserStatus, std::shared_ptr<std::vector<InterfaceStatusUpdateHandler>>>>();
 }
 
 int Interface::Initialize() {
@@ -89,31 +90,34 @@ int Interface::Set(ComRequestType com_request_type, uint16_t* data, size_t size_
         return ServerIdResolveNext();
     } else if(com_request_type == ComRequestType::SET_READING) {
         SensorReadingDto reading = *(SensorReadingDto*)data;
-        reading_processor_service_->ProcessReading(reading);
+        Process<SensorReadingDto>(&reading);
 
         return 0;
     } else if(com_request_type == ComRequestType::SET_ACK) {
         ComUserStatus ack_status = *(ComUserStatus*)data;
+
         if(ack_status == status_)
             status_ = ComUserStatus::OK;
 
         return 0;
     } else if(com_request_type == ComRequestType::SET_STATUS_UPDATE_OK) {
         ComUserStatus status = *(ComUserStatus*)data;
+        UserStatus user_status {
+            .status = *(ComUserStatus*)data,
+            .is_ok = true
+        };
 
-        if(status_update_handlers_->contains(status)) {
-            for(auto& handler : *status_update_handlers_->at(status))
-                handler(status, true);
-        }
+        Process<UserStatus>(&user_status);
 
         return 0;
     } else if(com_request_type == ComRequestType::SET_STATUS_UPDATE_FAIL) {
         ComUserStatus status = *(ComUserStatus*)data;
+        UserStatus user_status {
+            .status = *(ComUserStatus*)data,
+            .is_ok = false
+        };
 
-        if(status_update_handlers_->contains(status)) {
-            for(auto& handler : *status_update_handlers_->at(status))
-                handler(status, false);
-        }
+        Process<UserStatus>(&user_status);
 
         return 0;
     }
@@ -121,11 +125,13 @@ int Interface::Set(ComRequestType com_request_type, uint16_t* data, size_t size_
     return -1;
 }
 
-void Interface::RegisterStatusUpdateHandler(ComUserStatus status, InterfaceStatusUpdateHandler handler) {
-    if(!status_update_handlers_->contains(status))
-        status_update_handlers_->emplace(status, std::make_shared<std::vector<InterfaceStatusUpdateHandler>>());
+template<typename T>
+int Interface::Process(T* value) {
+    auto it = processors_.find(std::type_index(typeid(T)));
+    if (it != processors_.end())
+        return it->second(value);
 
-    status_update_handlers_->at(status)->push_back(handler);
+    return -1;
 }
 
 int Interface::ReadHoldingRegister(uint16_t addr, uint16_t *reg) {

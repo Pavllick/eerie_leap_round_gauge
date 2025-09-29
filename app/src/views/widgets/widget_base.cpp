@@ -1,3 +1,4 @@
+#include "domain/ui_domain/event_bus/ui_event_bus.h"
 #include "domain/ui_domain/models/widget_property.h"
 
 #include "widget_base.h"
@@ -11,47 +12,23 @@ WidgetBase::WidgetBase(uint32_t id, std::shared_ptr<Frame> parent)
     container_->Build(parent->GetObject());
 }
 
-uint32_t WidgetBase::GetId() const {
-    return id_;
+WidgetBase::~WidgetBase() {
+    for(auto& subscription : subscriptions_)
+        UiEventBus::GetInstance().Unsubscribe(subscription);
 }
 
-bool WidgetBase::HasTag(WidgetTag tag) const {
-    return tags_.contains(tag);
+uint32_t WidgetBase::GetId() const {
+    return id_;
 }
 
 void WidgetBase::Configure(const WidgetConfiguration& config) {
     configuration_ = config;
 
     SetVisibility(IsVisible());
-
-    UpdateTags(GetConfigValue<std::vector<int>>(
-        configuration_.properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::TAGS),
-        {}));
 }
 
 WidgetConfiguration WidgetBase::GetConfiguration() const {
     return configuration_;
-}
-
-bool WidgetBase::UpdateProperty(const WidgetPropertyType property_type, const ConfigValue& value, bool force_update) {
-    auto property_name = WidgetProperty::GetTypeName(property_type);
-
-    if(!force_update && !configuration_.properties.contains(property_name))
-        return false;
-
-    configuration_.properties[property_name] = value;
-
-    if(property_type == WidgetPropertyType::IS_VISIBLE)
-        SetVisibility(std::get<bool>(value));
-
-    return true;
-}
-
-void WidgetBase::UpdateTags(std::vector<int> tag_values) {
-    tags_.clear();
-    for(auto tag_value : tag_values)
-        tags_.insert(static_cast<WidgetTag>(tag_value));
 }
 
 int WidgetBase::SetVisibility(bool is_visible) {

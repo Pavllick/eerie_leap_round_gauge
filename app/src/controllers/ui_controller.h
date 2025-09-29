@@ -7,9 +7,6 @@
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
 #include "domain/ui_domain/models/ui_configuration.h"
 #include "domain/ui_domain/models/screen_configuration.h"
-#include "domain/ui_domain/models/widget_tag.h"
-
-#include "controllers/gague_screen_controller.h"
 
 #include "views/main_view.h"
 #include "views/screens/i_screen.h"
@@ -27,7 +24,6 @@ using namespace eerie_leap::views::widgets;
 class UiController {
 private:
     std::shared_ptr<UiConfigurationManager> ui_configuration_manager_;
-    std::shared_ptr<GagueScreenController> gague_screen_controller_;
 
     std::shared_ptr<MainView> main_view_;
     UiConfiguration configuration_;
@@ -39,10 +35,7 @@ private:
     std::shared_ptr<IScreen> CreateScreen(ScreenConfiguration& config);
 
 public:
-    UiController(std::shared_ptr<UiConfigurationManager> ui_configuration_manager,
-        std::shared_ptr<GagueScreenController> gague_screen_controller);
-
-    int UpdateWidgetPropertyByTag(const WidgetPropertyType property_type, const ConfigValue& value, WidgetTag tag, bool force_update = false);
+    UiController(std::shared_ptr<UiConfigurationManager> ui_configuration_manager);
 
     int Render();
 };

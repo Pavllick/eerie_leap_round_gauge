@@ -10,33 +10,39 @@ using namespace std::string_view_literals;
 
 enum class WidgetPropertyType : std::uint16_t {
     NONE = 0,
-    TAGS,                   // array of int (enum)
     IS_VISIBLE,             // bool
     IS_ANIMATED,            // bool
     MIN_VALUE,              // float
     MAX_VALUE,              // float
     SENSOR_ID,              // string
     CHART_POINT_COUNT,      // int
-    CHART_TYPE              // int (enum)
+    CHART_TYPE,             // int (enum)
+    UI_EVENT_TYPE,          // UiEventType
+    LABEL,                  // string
 };
 
 class WidgetProperty {
 private:
     static constexpr const std::array WidgetPropertyTypeNames = {
         "NONE"sv,
-        "TAGS"sv,
         "IS_VISIBLE"sv,
         "IS_ANIMATED"sv,
         "MIN_VALUE"sv,
         "MAX_VALUE"sv,
         "SENSOR_ID"sv,
         "CHART_POINT_COUNT"sv,
-        "CHART_TYPE"sv
+        "CHART_TYPE"sv,
+        "UI_EVENT_TYPE"sv,
+        "LABEL"sv,
     };
 
 public:
     static const char* GetTypeName(WidgetPropertyType type) {
-        return WidgetPropertyTypeNames[static_cast<std::uint16_t>(type)].data();
+        int index = static_cast<int>(type);
+        if(WidgetPropertyTypeNames.size() <= index)
+            throw std::runtime_error("Invalid WidgetPropertyType name conversion.");
+
+        return WidgetPropertyTypeNames[index].data();
     }
 
     static WidgetPropertyType GetType(const std::string& name) {

@@ -96,8 +96,4 @@ lv_obj_t* ArcLabelWidget::Create(lv_obj_t* parent) {
     return parent;
 }
 
-void ArcLabelWidget::Configure(const WidgetConfiguration& config) {
-    WidgetBase::Configure(config);
-}
-
 } // namespace eerie_leap::views::widgets::basic

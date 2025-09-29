@@ -17,7 +17,6 @@ public:
     WidgetType GetType() const override { return WidgetType::IndicatorArcFill; }
 
     int Render() override;
-    void Configure(const WidgetConfiguration& config) override;
 };
 
 } // namespace eerie_leap::views::widgets::indicators

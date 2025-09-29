@@ -1,10 +1,16 @@
+#include <variant>
+
+#include "domain/ui_domain/event_bus/ui_event_bus.h"
 #include "domain/ui_domain/models/widget_property.h"
+#include "views/widgets/event_bus_filters/sensor_filter.h"
 
 #include "indicator_base.h"
 
 namespace eerie_leap::views::widgets::indicators {
 
+using namespace eerie_leap::domain::ui_domain::event_bus;
 using namespace eerie_leap::domain::ui_domain::models;
+using namespace eerie_leap::views::widgets::event_bus_filters;
 
 IndicatorBase::IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent)
     : WidgetBase(id, parent) {
@@ -60,8 +66,24 @@ void IndicatorBase::Configure(const WidgetConfiguration& config) {
         config.properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID),
         "");
-    if(!sensor_id_str.empty())
+    if(!sensor_id_str.empty()) {
         sensor_id_ = std::stoul(sensor_id_str);
+
+        auto result = UiEventBus::GetInstance().Subscribe(
+            UiEventType::SENSOR_DATA_UPDATED,
+            SensorFilter { sensor_id_.value() },
+            [this](const UiEvent& event) {
+                if (auto it = event.payload.find(UiPayloadType::VALUE); it != event.payload.end()) {
+                    if (auto* value = std::get_if<float>(&it->second)) {
+                        this->Update(*value);
+                    }
+                }
+            }
+        );
+
+        if(result)
+            subscriptions_.push_back(std::move(*result));
+    }
 
     range_start_ = GetConfigValue<int>(
         config.properties,
