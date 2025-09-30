@@ -11,7 +11,7 @@ using namespace eerie_leap::views::utilitites;
 IconWidget::IconWidget(uint32_t id, std::shared_ptr<Frame> parent)
     : WidgetBase(id, parent) { }
 
-int IconWidget::Render() {
+int IconWidget::DoRender() {
     lv_obj_ = Create(container_->GetObject());
 
     return 0;

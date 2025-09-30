@@ -9,7 +9,6 @@
 namespace eerie_leap::views::widgets::basic {
 
 using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::views::widgets;
 
 class ArcLabelWidget : public WidgetBase {
 private:
@@ -25,6 +24,7 @@ private:
     int center_x_;
     int center_y_;
 
+    int DoRender() override;
     void CreateArcLabel(lv_obj_t* parent, const std::string& text, const lv_font_t* font,
         float start_angle, float end_angle_offset, int radius, int center_x, int center_y);
 
@@ -32,7 +32,6 @@ public:
     explicit ArcLabelWidget(uint32_t id, std::shared_ptr<Frame> parent);
     WidgetType GetType() const override { return WidgetType::BasicArcLabel; }
 
-    int Render() override;
     void UpdateText(const std::string& value, float end_angle_offset = -1);
 };
 

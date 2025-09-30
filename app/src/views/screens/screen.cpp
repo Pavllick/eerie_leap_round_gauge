@@ -18,7 +18,7 @@ Screen::Screen(uint32_t id) : id_(id) {
     container_->Build();
 }
 
-int Screen::Render() {
+int Screen::DoRender() {
     for(auto& widget : *widgets_)
         widget->Render();
 

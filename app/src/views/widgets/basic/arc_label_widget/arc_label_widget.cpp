@@ -17,7 +17,7 @@ using namespace eerie_leap::views::utilitites;
 ArcLabelWidget::ArcLabelWidget(uint32_t id, std::shared_ptr<Frame> parent)
     : WidgetBase(id, parent), text_("") { }
 
-int ArcLabelWidget::Render() {
+int ArcLabelWidget::DoRender() {
     lv_obj_ = Create(container_->GetObject());
 
     return 0;

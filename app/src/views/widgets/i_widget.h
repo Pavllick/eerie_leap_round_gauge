@@ -2,6 +2,7 @@
 
 #include <lvgl.h>
 
+#include "views/i_renderable.h"
 #include "domain/ui_domain/models/widget_type.h"
 #include "domain/ui_domain/models/widget_property.h"
 #include "domain/ui_domain/models/widget_position.h"
@@ -11,12 +12,12 @@
 namespace eerie_leap::views::widgets {
 
 using namespace eerie_leap::domain::ui_domain::models;
+using namespace eerie_leap::views;
 
-class IWidget {
+class IWidget : public IRenderable {
 public:
     virtual ~IWidget() = default;
 
-    virtual int Render() = 0;
     virtual WidgetType GetType() const = 0;
     virtual uint32_t GetId() const = 0;
     virtual bool IsVisible() const = 0;

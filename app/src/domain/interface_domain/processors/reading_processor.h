@@ -18,9 +18,6 @@ private:
 public:
     ReadingProcessor();
 
-    void Start();
-    void Stop();
-
     int Process(SensorReadingDto reading) override;
 };
 

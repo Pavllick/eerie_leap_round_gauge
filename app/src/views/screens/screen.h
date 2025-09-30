@@ -15,7 +15,7 @@ using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::widgets;
 
-class Screen : public IScreen {
+class Screen : public IScreen, public IRenderable {
 protected:
     uint32_t id_;
     std::shared_ptr<Frame> container_;
@@ -26,10 +26,11 @@ protected:
     void UpdateWidgetSize(std::unique_ptr<IWidget>& widget, GridSettings& grid_settings);
     void UpdateWidgetPosition(std::unique_ptr<IWidget>& widget, GridSettings& grid_settings);
 
+    int DoRender() override;
+
 public:
     Screen(uint32_t id);
 
-    int Render() override;
     void Configure(const ScreenConfiguration& config) override;
     ScreenConfiguration GetConfiguration() const override;
 

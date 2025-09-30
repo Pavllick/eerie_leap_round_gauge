@@ -21,11 +21,12 @@ private:
     // int center_x_;
     // int center_y_;
 
+    int DoRender() override;
+
 public:
     explicit IconWidget(uint32_t id, std::shared_ptr<Frame> parent);
     WidgetType GetType() const override { return WidgetType::BasicIcon; }
 
-    int Render() override;
     void Configure(const WidgetConfiguration& config) override;
 };
 

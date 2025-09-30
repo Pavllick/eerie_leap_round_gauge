@@ -148,8 +148,6 @@ int main() {
         logging_controller->Initialize();
     } while(false);
 
-    reading_processor->Start();
-
 #ifdef CONFIG_FLASH_SIMULATOR
     SensorReadingDto reading;
     reading.id = guid_generator->Generate();

@@ -13,7 +13,7 @@ using namespace eerie_leap::views::utilitites;
 ArcFillIndicator::ArcFillIndicator(uint32_t id, std::shared_ptr<Frame> parent)
     : IndicatorBase(id, parent) { }
 
-int ArcFillIndicator::Render() {
+int ArcFillIndicator::DoRender() {
     lv_obj_ = Create(container_->GetObject(), static_cast<int32_t>(range_start_), static_cast<int32_t>(range_end_));
 
     return 0;

@@ -11,7 +11,7 @@ using namespace eerie_leap::views::utilitites;
 DigitalIndicator::DigitalIndicator(uint32_t id, std::shared_ptr<Frame> parent)
     : IndicatorBase(id, parent) { }
 
-int DigitalIndicator::Render() {
+int DigitalIndicator::DoRender() {
     lv_obj_ = Create(container_->GetObject());
 
     return 0;

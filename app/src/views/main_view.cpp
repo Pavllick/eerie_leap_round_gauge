@@ -35,7 +35,7 @@ std::shared_ptr<IScreen> MainView::GetActiveScreen() {
     return GetScreen(active_screen_id_);
 }
 
-int MainView::Render() {
+int MainView::DoRender() {
     RenderBackground();
 
     for(auto& screen : screens_)

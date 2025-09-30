@@ -44,6 +44,9 @@ void IndicatorBase::ValueChangeAnimation(lv_anim_t anim, int32_t range, int32_t 
 }
 
 void IndicatorBase::Update(float value) {
+    if(!IsReady())
+        return;
+
     if(IsAnimated()) {
         ValueChangeAnimation(
             value_change_animation_,
