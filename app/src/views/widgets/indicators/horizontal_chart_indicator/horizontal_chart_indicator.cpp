@@ -16,7 +16,10 @@ HorizontalChartIndicator::HorizontalChartIndicator(uint32_t id, std::shared_ptr<
     : IndicatorBase(id, parent) { }
 
 int HorizontalChartIndicator::DoRender() {
-    lv_obj_ = Create(container_->GetObject(), static_cast<int32_t>(range_start_), static_cast<int32_t>(range_end_), point_count_, chart_type_);
+    auto lv_obj = Create(container_->GetObject(), static_cast<int32_t>(range_start_), static_cast<int32_t>(range_end_), point_count_, chart_type_);
+    auto child = std::make_shared<Frame>(
+        Frame::Create(lv_obj).Build());
+    container_->SetChild(child);
 
     return 0;
 }
@@ -59,7 +62,7 @@ lv_obj_t* HorizontalChartIndicator::Create(lv_obj_t* parent, int32_t range_start
 }
 
 void HorizontalChartIndicator::UpdateIndicator(int32_t value) {
-    lv_obj_t * chart = lv_obj_;
+    lv_obj_t * chart = container_->GetChild()->GetObject();
     lv_chart_series_t * ser = lv_chart_get_series_next(chart, NULL);
 
     lv_chart_set_next_value(chart, ser, value);

@@ -18,12 +18,12 @@ ArcLabelWidget::ArcLabelWidget(uint32_t id, std::shared_ptr<Frame> parent)
     : WidgetBase(id, parent), text_("") { }
 
 int ArcLabelWidget::DoRender() {
-    lv_obj_ = Create(container_->GetObject());
+    Create();
 
     return 0;
 }
 
-void ArcLabelWidget::CreateArcLabel(lv_obj_t* parent, const std::string& text, const lv_font_t* font,
+void ArcLabelWidget::CreateArcLabel(const std::string& text, const lv_font_t* font,
     float start_angle, float end_angle_offset, int radius, int center_x, int center_y) {
 
     text_ = text;
@@ -34,15 +34,16 @@ void ArcLabelWidget::CreateArcLabel(lv_obj_t* parent, const std::string& text, c
     center_x_ = center_x;
     center_y_ = center_y;
 
-    UpdateText(text_);
+    auto child = UpdateText(text_);
+    container_->SetChild(child);
 }
 
-void ArcLabelWidget::UpdateText(const std::string& text, float end_angle_offset) {
+std::shared_ptr<Frame> ArcLabelWidget::UpdateText(const std::string& text, float end_angle_offset) {
     text_ = text;
     if(end_angle_offset != -1)
         end_angle_ = start_angle_ + end_angle_offset;
 
-    auto parent = container_->GetObject();
+    auto wrapper = Frame::CreateWrapped(container_->GetObject());
     float angle_range = end_angle_ - start_angle_;
     char_objects_.clear();
 
@@ -65,7 +66,7 @@ void ArcLabelWidget::UpdateText(const std::string& text, float end_angle_offset)
             t_angle += 1800;
         }
 
-        lv_obj_t* label = lv_label_create(parent);
+        lv_obj_t* label = lv_label_create(wrapper.GetObject());
         lv_obj_set_style_text_font(label, font_, LV_PART_MAIN);
         lv_label_set_text(label, std::string(1, c).c_str());
         lv_obj_set_style_text_color(label, lv_color_hex(0xC8C8C8), LV_PART_MAIN);
@@ -78,12 +79,13 @@ void ArcLabelWidget::UpdateText(const std::string& text, float end_angle_offset)
         PositioningHelpers::PlaceObjectOnCircle(label, center_x_, center_y_, radius_, angle);
         angle += angle_step;
     }
+
+    return std::make_shared<Frame>(wrapper);
 }
 
 // TODO: Make parameters configurable
-lv_obj_t* ArcLabelWidget::Create(lv_obj_t* parent) {
+void ArcLabelWidget::Create() {
     CreateArcLabel(
-        parent,                 // Parent object
         "test",                 // Text to display
         &lv_font_montserrat_16, // Font to use
         70.0f,                 // Start angle (degrees)
@@ -92,8 +94,6 @@ lv_obj_t* ArcLabelWidget::Create(lv_obj_t* parent) {
         160,                    // Center X coordinate
         120                     // Center Y coordinate
     );
-
-    return parent;
 }
 
 } // namespace eerie_leap::views::widgets::basic

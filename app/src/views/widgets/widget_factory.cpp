@@ -12,19 +12,13 @@ namespace eerie_leap::views::widgets {
 using namespace eerie_leap::views::widgets::basic;
 using namespace eerie_leap::views::widgets::indicators;
 
-std::shared_ptr<WidgetFactory> WidgetFactory::instance_ = nullptr;
-
 WidgetFactory::WidgetFactory() {
     RegisterTypes();
 }
 
-std::shared_ptr<WidgetFactory> WidgetFactory::GetInstance() {
-    if (!instance_) {
-        WidgetFactory factory;
-        instance_ = std::make_shared<WidgetFactory>(factory);
-    }
-
-    return instance_;
+WidgetFactory& WidgetFactory::GetInstance() {
+    static WidgetFactory instance;
+    return instance;
 }
 
 template<typename T>

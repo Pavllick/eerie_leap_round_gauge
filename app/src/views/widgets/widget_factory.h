@@ -22,14 +22,13 @@ public:
 
 private:
     std::unordered_map<WidgetType, WidgetCreator> creators_;
-    static std::shared_ptr<WidgetFactory> instance_;
 
     WidgetFactory();
 
     void RegisterTypes();
 
 public:
-    static std::shared_ptr<WidgetFactory> GetInstance();
+    static WidgetFactory& GetInstance();
 
     template<typename T>
     void RegisterWidget(const WidgetType type);

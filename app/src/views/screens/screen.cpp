@@ -14,8 +14,10 @@ LOG_MODULE_REGISTER(screen_logger);
 Screen::Screen(uint32_t id) : id_(id) {
     widgets_ = std::make_shared<std::vector<std::unique_ptr<IWidget>>>();
 
-    container_ = std::make_shared<Frame>();
-    container_->Build();
+    container_ = std::make_shared<Frame>(Frame::CreateWrapped()
+        .SetWidth(100, false)
+        .SetHeight(100, false)
+        .Build());
 }
 
 int Screen::DoRender() {
@@ -31,7 +33,7 @@ void Screen::Configure(const ScreenConfiguration& config) {
     widgets_->clear();
 
     for(auto& widget_config : configuration_.widget_configurations) {
-        auto widget = WidgetFactory::GetInstance()->CreateWidget(widget_config, container_);
+        auto widget = WidgetFactory::GetInstance().CreateWidget(widget_config, container_);
         UpdateWidgetSize(widget, configuration_.grid);
         UpdateWidgetPosition(widget, configuration_.grid);
 

@@ -8,8 +8,10 @@ namespace eerie_leap::views::widgets {
 WidgetBase::WidgetBase(uint32_t id, std::shared_ptr<Frame> parent)
     : id_(id), parent_(parent) {
 
-    container_ = std::make_shared<Frame>();
-    container_->Build(parent->GetObject());
+    container_ = std::make_shared<Frame>(Frame::CreateWrapped(parent->GetObject())
+        .SetWidth(100, false)
+        .SetHeight(100, false)
+        .Build());
 }
 
 WidgetBase::~WidgetBase() {

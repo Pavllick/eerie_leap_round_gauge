@@ -12,7 +12,10 @@ IconWidget::IconWidget(uint32_t id, std::shared_ptr<Frame> parent)
     : WidgetBase(id, parent) { }
 
 int IconWidget::DoRender() {
-    lv_obj_ = Create(container_->GetObject());
+    auto lv_obj = Create(container_->GetObject());
+    auto child = std::make_shared<Frame>(
+        Frame::Create(lv_obj).Build());
+    container_->SetChild(child);
 
     return 0;
 }
@@ -47,7 +50,7 @@ lv_obj_t* IconWidget::Create(lv_obj_t* parent) {
 
     PositioningHelpers::PlaceObjectOnCircle(ui_panel, 0, 0, 233 - height / 2 - 2, 90.0f + 34.0f);
 
-    return parent;
+    return ui_panel;
 }
 
 void IconWidget::Configure(const WidgetConfiguration& config) {

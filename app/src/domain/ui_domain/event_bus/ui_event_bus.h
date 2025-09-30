@@ -20,7 +20,6 @@ private:
 public:
     static UiEventBus& GetInstance() {
         static UiEventBus bus;
-
         return bus;
     }
 };

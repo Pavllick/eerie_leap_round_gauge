@@ -9,7 +9,7 @@ namespace eerie_leap::views::widgets::indicators {
 class DigitalIndicator : public IndicatorBase {
 private:
     void UpdateIndicator(int32_t value) override;
-    static lv_obj_t* Create(lv_obj_t* parent);
+    static lv_obj_t* Create(std::shared_ptr<Frame> parent);
 
     int DoRender() override;
 

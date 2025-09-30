@@ -14,7 +14,10 @@ ArcFillIndicator::ArcFillIndicator(uint32_t id, std::shared_ptr<Frame> parent)
     : IndicatorBase(id, parent) { }
 
 int ArcFillIndicator::DoRender() {
-    lv_obj_ = Create(container_->GetObject(), static_cast<int32_t>(range_start_), static_cast<int32_t>(range_end_));
+    auto lv_obj = Create(container_->GetObject(), static_cast<int32_t>(range_start_), static_cast<int32_t>(range_end_));
+    auto child = std::make_shared<Frame>(
+        Frame::Create(lv_obj).Build());
+    container_->SetChild(child);
 
     return 0;
 }
@@ -41,7 +44,7 @@ lv_obj_t* ArcFillIndicator::Create(lv_obj_t* parent, int32_t range_start, int32_
 }
 
 void ArcFillIndicator::UpdateIndicator(int32_t value) {
-    lv_arc_set_value(lv_obj_, value);
+    lv_arc_set_value(container_->GetChild()->GetObject(), value);
     value_ = static_cast<float>(value);
 }
 

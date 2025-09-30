@@ -8,15 +8,19 @@ namespace eerie_leap::views::utilitites {
 
 class Frame {
 private:
-    lv_obj_t* frame_;
+    lv_obj_t* lv_object_;
+    std::shared_ptr<Frame> child_;
 
-    static lv_obj_t* Create(lv_obj_t* parent);
+    Frame();
+
     static void ValidateFrame(lv_obj_t* frame);
 
 public:
-    Frame();
+    static Frame Create(lv_obj_t* parent);
+    static Frame CreateWrapped(lv_obj_t* parent = nullptr);
 
-    Frame Build(lv_obj_t* parent = nullptr);
+    Frame Build();
+    Frame CleanStyles();
     Frame AddObject(std::shared_ptr<Frame> frame);
     Frame SetWidth(int32_t width, bool is_px);
     Frame SetHeight(int32_t height, bool is_px);
@@ -33,6 +37,9 @@ public:
     Frame AlignCenter();
 
     lv_obj_t* GetObject();
+    lv_obj_t* GetParent();
+    void SetChild(std::shared_ptr<Frame> child);
+    std::shared_ptr<Frame> GetChild();
 };
 
 } // namespace eerie_leap::views::utilitites

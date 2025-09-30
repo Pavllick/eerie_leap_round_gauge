@@ -25,7 +25,6 @@ protected:
 
     std::shared_ptr<Frame> parent_;
     std::shared_ptr<Frame> container_;
-    lv_obj_t* lv_obj_;
 
     std::vector<UiSubscriptionHandle> subscriptions_;
 

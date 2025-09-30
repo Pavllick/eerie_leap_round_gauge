@@ -12,13 +12,16 @@ DigitalIndicator::DigitalIndicator(uint32_t id, std::shared_ptr<Frame> parent)
     : IndicatorBase(id, parent) { }
 
 int DigitalIndicator::DoRender() {
-    lv_obj_ = Create(container_->GetObject());
+    auto lv_obj = Create(container_);
+    auto child = std::make_shared<Frame>(
+        Frame::Create(lv_obj).Build());
+    container_->SetChild(child);
 
     return 0;
 }
 
-lv_obj_t* DigitalIndicator::Create(lv_obj_t* parent) {
-    auto ui_label = lv_label_create(parent);
+lv_obj_t* DigitalIndicator::Create(std::shared_ptr<Frame> parent) {
+    auto ui_label = lv_label_create(parent->GetObject());
 
     lv_obj_set_width(ui_label, LV_SIZE_CONTENT);
     lv_obj_set_height(ui_label, LV_SIZE_CONTENT);
@@ -40,7 +43,7 @@ lv_obj_t* DigitalIndicator::Create(lv_obj_t* parent) {
 }
 
 void DigitalIndicator::UpdateIndicator(int32_t value) {
-    lv_label_set_text(lv_obj_, std::to_string(value).c_str());
+    lv_label_set_text(container_->GetChild()->GetObject(), std::to_string(value).c_str());
     value_ = static_cast<float>(value);
 }
 
