@@ -5,24 +5,27 @@
 
 #include <lvgl.h>
 
-#include "views/i_renderable.h"
+#include "views/renderable_base.h"
 #include "views/screens/i_screen.h"
 
 namespace eerie_leap::views {
 
 using namespace eerie_leap::views::screens;
 
-class MainView : public IRenderable {
+class MainView : public RenderableBase {
 private:
+    std::shared_ptr<Frame> container_;
     std::unordered_map<uint32_t, std::shared_ptr<IScreen>> screens_;
     uint32_t active_screen_id_;
 
     int DoRender() override;
+    int ApplyTheme() override;
     void RenderBackground();
 
 public:
     MainView();
 
+    std::shared_ptr<Frame> GetContainer() const;
     void AddScreen(uint32_t id, std::shared_ptr<IScreen> screen);
     int SetActiveScreen(uint32_t id);
     std::shared_ptr<IScreen> GetScreen(uint32_t id);

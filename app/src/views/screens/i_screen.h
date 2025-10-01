@@ -13,7 +13,7 @@ using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views;
 using namespace eerie_leap::views::widgets;
 
-class IScreen : public IRenderable {
+class IScreen : public virtual IRenderable {
 public:
     virtual void Configure(const ScreenConfiguration& config) = 0;
     virtual ScreenConfiguration GetConfiguration() const = 0;

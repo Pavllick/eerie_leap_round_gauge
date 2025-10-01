@@ -6,6 +6,7 @@
 #include <lvgl.h>
 
 #include "domain/ui_domain/event_bus/ui_event_bus.h"
+#include "views/renderable_base.h"
 #include "views/utilitites/frame.h"
 #include "views/widgets/i_widget.h"
 
@@ -13,9 +14,10 @@ namespace eerie_leap::views::widgets {
 
 using namespace eerie_leap::domain::ui_domain::event_bus;
 using namespace eerie_leap::domain::ui_domain::models;
+using namespace eerie_leap::views;
 using namespace eerie_leap::views::utilitites;
 
-class WidgetBase : public IWidget {
+class WidgetBase : public IWidget, public RenderableBase {
 protected:
     uint32_t id_;
 
@@ -24,7 +26,6 @@ protected:
     WidgetSize size_px_;
 
     std::shared_ptr<Frame> parent_;
-    std::shared_ptr<Frame> container_;
 
     std::vector<UiSubscriptionHandle> subscriptions_;
 

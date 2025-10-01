@@ -20,6 +20,10 @@ int DigitalIndicator::DoRender() {
     return 0;
 }
 
+int DigitalIndicator::ApplyTheme() {
+    return 0;
+}
+
 lv_obj_t* DigitalIndicator::Create(std::shared_ptr<Frame> parent) {
     auto ui_label = lv_label_create(parent->GetObject());
 

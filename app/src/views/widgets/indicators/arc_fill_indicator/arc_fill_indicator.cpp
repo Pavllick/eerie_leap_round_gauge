@@ -22,6 +22,10 @@ int ArcFillIndicator::DoRender() {
     return 0;
 }
 
+int ArcFillIndicator::ApplyTheme() {
+    return 0;
+}
+
 lv_obj_t* ArcFillIndicator::Create(lv_obj_t* parent, int32_t range_start, int32_t range_end) {
     lv_obj_t* ui_arc = lv_arc_create(parent);
 

@@ -24,6 +24,10 @@ int HorizontalChartIndicator::DoRender() {
     return 0;
 }
 
+int HorizontalChartIndicator::ApplyTheme() {
+    return 0;
+}
+
 lv_obj_t* HorizontalChartIndicator::Create(lv_obj_t* parent, int32_t range_start, int32_t range_end, int32_t point_count, HorizontalChartIndicatorType type) {
     lv_obj_t * chart = lv_chart_create(parent);
     lv_obj_remove_style_all(chart);

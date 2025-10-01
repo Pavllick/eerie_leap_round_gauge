@@ -14,7 +14,7 @@ namespace eerie_leap::views::widgets {
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views;
 
-class IWidget : public IRenderable {
+class IWidget : public virtual IRenderable {
 public:
     virtual ~IWidget() = default;
 

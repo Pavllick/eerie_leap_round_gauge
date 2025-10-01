@@ -25,6 +25,7 @@ private:
     int center_y_;
 
     int DoRender() override;
+    int ApplyTheme() override;
     void CreateArcLabel(const std::string& text, const lv_font_t* font,
         float start_angle, float end_angle_offset, int radius, int center_x, int center_y);
 

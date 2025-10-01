@@ -20,6 +20,10 @@ int IconWidget::DoRender() {
     return 0;
 }
 
+int IconWidget::ApplyTheme() {
+    return 0;
+}
+
 // TODO: Make parameters configurable
 lv_obj_t* IconWidget::Create(lv_obj_t* parent) {
     // TODO: config width to account for label length

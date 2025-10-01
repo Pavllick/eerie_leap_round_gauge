@@ -22,6 +22,7 @@ private:
     // int center_y_;
 
     int DoRender() override;
+    int ApplyTheme() override;
 
 public:
     explicit IconWidget(uint32_t id, std::shared_ptr<Frame> parent);

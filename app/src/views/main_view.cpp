@@ -10,7 +10,16 @@ namespace eerie_leap::views {
 
 LOG_MODULE_REGISTER(main_view_logger);
 
-MainView::MainView() {}
+MainView::MainView() {
+    container_ = std::make_shared<Frame>(Frame::CreateWrapped()
+        .SetWidth(100, false)
+        .SetHeight(100, false)
+        .Build());
+}
+
+std::shared_ptr<Frame> MainView::GetContainer() const {
+    return container_;
+}
 
 void MainView::AddScreen(uint32_t id, std::shared_ptr<IScreen> screen) {
     screens_[id] = std::move(screen);
@@ -44,6 +53,10 @@ int MainView::DoRender() {
     return 0;
 }
 
+int MainView::ApplyTheme() {
+    return 0;
+}
+
 void RenderCenterCrossHelperGuides(lv_obj_t* screen) {
     lv_obj_t * panel1 = lv_obj_create(screen);
     lv_obj_set_width(panel1, 2);
@@ -63,7 +76,7 @@ void RenderCenterCrossHelperGuides(lv_obj_t* screen) {
 }
 
 void MainView::RenderBackground() {
-    lv_obj_t * screen = lv_screen_active();
+    lv_obj_t* screen = container_->GetObject();
     lv_obj_set_style_bg_color(screen, lv_color_hex(0xFFFFFF), 0);
     lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
 

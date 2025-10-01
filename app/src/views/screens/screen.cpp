@@ -11,10 +11,10 @@ namespace eerie_leap::views::screens {
 
 LOG_MODULE_REGISTER(screen_logger);
 
-Screen::Screen(uint32_t id) : id_(id) {
+Screen::Screen(uint32_t id, std::shared_ptr<Frame> parent) : id_(id), parent_(parent) {
     widgets_ = std::make_shared<std::vector<std::unique_ptr<IWidget>>>();
 
-    container_ = std::make_shared<Frame>(Frame::CreateWrapped()
+    container_ = std::make_shared<Frame>(Frame::CreateWrapped(parent->GetObject())
         .SetWidth(100, false)
         .SetHeight(100, false)
         .Build());
@@ -24,6 +24,10 @@ int Screen::DoRender() {
     for(auto& widget : *widgets_)
         widget->Render();
 
+    return 0;
+}
+
+int Screen::ApplyTheme() {
     return 0;
 }
 

@@ -36,7 +36,7 @@ int UiController::Render() {
 }
 
 std::shared_ptr<IScreen> UiController::CreateScreen(ScreenConfiguration& config) {
-    auto screen = std::make_unique<Screen>(config.id);
+    auto screen = std::make_unique<Screen>(config.id, main_view_->GetContainer());
     screen->Configure(config);
 
     return screen;
