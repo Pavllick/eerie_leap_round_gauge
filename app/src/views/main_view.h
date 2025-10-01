@@ -14,13 +14,11 @@ using namespace eerie_leap::views::screens;
 
 class MainView : public RenderableBase {
 private:
-    std::shared_ptr<Frame> container_;
     std::unordered_map<uint32_t, std::shared_ptr<IScreen>> screens_;
     uint32_t active_screen_id_;
 
     int DoRender() override;
     int ApplyTheme() override;
-    void RenderBackground();
 
 public:
     MainView();

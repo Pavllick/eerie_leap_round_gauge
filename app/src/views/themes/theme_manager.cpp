@@ -6,10 +6,8 @@
 
 namespace eerie_leap::views::themes {
 
-static DefaultTheme default_theme_;
-
 ThemeManager::ThemeManager()
-    : current_theme_(&default_theme_) {
+    : current_theme_(std::make_shared<DefaultTheme>()) {
 }
 
 ThemeManager& ThemeManager::GetInstance() {
@@ -28,36 +26,21 @@ const std::shared_ptr<ITheme>& ThemeManager::GetCurrentTheme() const {
     return current_theme_;
 }
 
-void ThemeManager::RegisterObserver(std::shared_ptr<IThemeObserver> observer) {
-    if(!observer)
-        return;
-
-    observers_.push_back(observer);
+void ThemeManager::RegisterObserver(IThemeObserver* observer) {
+    if(observer != nullptr)
+        observers_.push_back(observer);
 }
 
 void ThemeManager::UnregisterObserver(IThemeObserver* observer) {
-    if(!observer)
-        return;
-
     observers_.erase(
-        std::remove_if(observers_.begin(), observers_.end(),
-            [observer](const std::weak_ptr<IThemeObserver>& w) {
-                auto s = w.lock();
-                return !s || s.get() == observer;
-            }),
+        std::remove(observers_.begin(), observers_.end(), observer),
         observers_.end()
     );
 }
 
 void ThemeManager::NotifyObservers() {
-    for (auto it = observers_.begin(); it != observers_.end(); ) {
-        if (auto observer = it->lock()) {
-            observer->OnThemeChanged();
-            ++it;
-        } else {
-            it = observers_.erase(it);
-        }
-    }
+    for(auto* observer : observers_)
+        observer->OnThemeChanged();
 }
 
 } // namespace eerie_leap::views::themes

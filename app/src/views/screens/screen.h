@@ -20,7 +20,6 @@ using namespace eerie_leap::views::widgets;
 class Screen : public RenderableBase, public IScreen {
 protected:
     uint32_t id_;
-    std::shared_ptr<Frame> container_;
     std::shared_ptr<Frame> parent_;
 
     std::shared_ptr<std::vector<std::unique_ptr<IWidget>>> widgets_;

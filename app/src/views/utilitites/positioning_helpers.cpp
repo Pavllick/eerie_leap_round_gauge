@@ -1,6 +1,8 @@
 #include <cmath>
 #include <numbers>
 
+#include <zephyr/kernel.h>
+
 #include "positioning_helpers.h"
 
 namespace eerie_leap::views::utilitites {
@@ -18,7 +20,12 @@ void PositioningHelpers::PlaceObjectOnCircle(lv_obj_t* obj, int center_x, int ce
 
     int angle = 2700 - (3600 - static_cast<int>(angle_deg * 10));
 
-    lv_obj_set_style_transform_angle(obj, angle, 0);
+    // NOTE: lv_obj_set_style_transform_rotation causes native_sim to segfault
+    // if delay is not added
+#ifdef CONFIG_BOARD_NATIVE_SIM
+    k_sleep(K_TICKS(1));
+#endif // CONFIG_BOARD_NATIVE_SIM
+    lv_obj_set_style_transform_rotation(obj, angle, 0);
     lv_obj_set_x(obj, pos.x);
     lv_obj_set_y(obj, pos.y);
 }

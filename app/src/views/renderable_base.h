@@ -1,13 +1,16 @@
 #pragma once
 
 #include <memory>
+#include <zephyr/kernel.h>
 
 #include "views/utilitites/frame.h"
 #include "views/i_renderable.h"
+#include "views/themes/theme_manager.h"
 
 namespace eerie_leap::views {
 
 using namespace eerie_leap::views::utilitites;
+using namespace eerie_leap::views::themes;
 
 class RenderableBase : public virtual IRenderable {
 protected:
@@ -15,14 +18,19 @@ protected:
     bool is_ready_ = false;
 
     void OnThemeChanged() override {
-        if (container_->GetChild() != nullptr && is_ready_) {
+        if (container_->GetObject() != nullptr && is_ready_) {
             ApplyTheme();
-            lv_obj_invalidate(container_->GetChild()->GetObject());
+            lv_obj_invalidate(container_->GetObject());
         }
     }
 
 public:
+    RenderableBase() {
+        ThemeManager::GetInstance().RegisterObserver(this);
+    }
+
     virtual ~RenderableBase() {
+        ThemeManager::GetInstance().UnregisterObserver(this);
         is_ready_= false;
     }
 

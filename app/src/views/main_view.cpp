@@ -4,9 +4,13 @@
 #include <zephyr/logging/log.h>
 #include <lvgl.h>
 
+#include "views/themes/theme_manager.h"
+
 #include "main_view.h"
 
 namespace eerie_leap::views {
+
+using namespace eerie_leap::views::themes;
 
 LOG_MODULE_REGISTER(main_view_logger);
 
@@ -45,8 +49,6 @@ std::shared_ptr<IScreen> MainView::GetActiveScreen() {
 }
 
 int MainView::DoRender() {
-    RenderBackground();
-
     for(auto& screen : screens_)
         screen.second->Render();
 
@@ -54,6 +56,13 @@ int MainView::DoRender() {
 }
 
 int MainView::ApplyTheme() {
+    printk("MainView::ApplyTheme\n");
+
+    lv_obj_set_style_bg_color(container_->GetObject(), ThemeManager::GetInstance().GetCurrentTheme()->GetBackgroundColor().ToLvColor(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(container_->GetObject(), ThemeManager::GetInstance().GetCurrentTheme()->GetBackgroundColor().ToLvOpa(), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_refr_now(lv_display_get_default());
+
     return 0;
 }
 
@@ -73,16 +82,6 @@ void RenderCenterCrossHelperGuides(lv_obj_t* screen) {
     lv_obj_remove_flag(panel2, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_border_color(panel2, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_opa(panel2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-}
-
-void MainView::RenderBackground() {
-    lv_obj_t* screen = container_->GetObject();
-    lv_obj_set_style_bg_color(screen, lv_color_hex(0xFFFFFF), 0);
-    lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
-
-    // RenderCenterCrossHelperGuides(screen);
-
-    lv_refr_now(lv_display_get_default());
 }
 
 } // namespace eerie_leap::views

@@ -11,15 +11,27 @@ public:
     }
 
     Color GetSecondaryColor() const override {
+        return Color(0xF56060); // Red
+    }
+
+    Color GetInactiveColor() const override {
         return Color(0x909090); // Light gray
     }
 
     Color GetBackgroundColor() const override {
-        return Color(0x121212); // Almost black
+        return Color(0x000000); // Almost black
     }
 
     Color GetSurfaceColor() const override {
         return Color(0x1E1E1E); // Dark gray
+    }
+
+    Color GetAccentColor() const override {
+        return Color(0xF56060); // Red
+    }
+
+    Color GetErrorColor() const override {
+        return Color(0xEF5350); // Light red
     }
 
     Color GetTextColor() const override {
@@ -27,28 +39,16 @@ public:
     }
 
     Color GetTextSecondaryColor() const override {
-        return Color(0x909090); // Medium gray
+        return Color(0xFFFFFF); // White
     }
 
-    Color GetAccentColor() const override {
-        return Color(0xFFB74D); // Light orange
+    Font GetPrimaryFont() const override {
+        return Font("Montserrat", &lv_font_montserrat_20);
     }
 
-    Color GetErrorColor() const override {
-        return Color(0xEF5350); // Light red
+    Font GetSecondaryFont() const override {
+        return Font("Montserrat", &lv_font_montserrat_20);
     }
-
-    // Spacing GetDefaultSpacing() const override {
-    //     return Spacing{8, 8, 1};
-    // }
-
-    // Typography GetTypography() const override {
-    //     return Typography{14, 18, 12};
-    // }
-
-    // uint8_t GetBorderRadius() const override {
-    //     return 4;
-    // }
 };
 
 } // namespace eerie_leap::views::themes
