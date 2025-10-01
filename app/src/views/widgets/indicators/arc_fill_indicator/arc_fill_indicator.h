@@ -8,9 +8,11 @@ namespace eerie_leap::views::widgets::indicators {
 
 class ArcFillIndicator : public IndicatorBase {
 private:
+    lv_obj_t* lv_arc_;
+
     void UpdateIndicator(int32_t value) override;
 
-    static lv_obj_t* Create(lv_obj_t* parent, int32_t range_start, int32_t range_end);
+    lv_obj_t* Create(lv_obj_t* parent, int32_t range_start, int32_t range_end);
 
     int DoRender() override;
     int ApplyTheme() override;

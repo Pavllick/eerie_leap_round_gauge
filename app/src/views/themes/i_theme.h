@@ -20,8 +20,6 @@ public:
     virtual Color GetAccentColor() const = 0;
     virtual Color GetErrorColor() const = 0;
 
-    virtual Color GetTextColor() const = 0;
-    virtual Color GetTextSecondaryColor() const = 0;
     virtual Font GetPrimaryFont() const = 0;
     virtual Font GetSecondaryFont() const = 0;
 };

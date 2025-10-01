@@ -45,6 +45,8 @@
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 
 #include "subsys/event_bus/event_bus.h"
+#include "views/themes/theme_manager.h"
+#include "views/themes/dark_theme.h"
 
 using namespace eerie_leap::views::widgets;
 using namespace eerie_leap::views::widgets::indicators;
@@ -71,6 +73,7 @@ using namespace eerie_leap::domain::sensor_domain::models;
 using namespace eerie_leap::configuration::services;
 
 using namespace eerie_leap::controllers;
+using namespace eerie_leap::views::themes;
 
 LOG_MODULE_REGISTER(main_logger);
 
@@ -81,6 +84,9 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
 
 int main() {
     DtConfigurator::Initialize();
+
+    auto dark_theme = make_shared_ext<DarkTheme>();
+    ThemeManager::GetInstance().SetTheme(dark_theme);
 
     auto ui_renderer = make_shared_ext<UiRenderer>();
     if(ui_renderer->Initialize() != 0)
@@ -148,20 +154,20 @@ int main() {
         logging_controller->Initialize();
     } while(false);
 
-#ifdef CONFIG_FLASH_SIMULATOR
+#ifdef CONFIG_BOARD_NATIVE_SIM
     SensorReadingDto reading;
     reading.id = guid_generator->Generate();
     reading.sensor_id_hash = 2348664336;
     reading.timestamp_ms = std::chrono::milliseconds(static_cast<int64_t>(k_uptime_get()));
     reading.value = 0;
     reading.status = ReadingStatus::PROCESSED;
-#endif // CONFIG_FLASH_SIMULATOR
+#endif // CONFIG_BOARD_NATIVE_SIM
 
 	while (true) {
-    #ifdef CONFIG_FLASH_SIMULATOR
+    #ifdef CONFIG_BOARD_NATIVE_SIM
         reading.value = (Rng::Get32() / static_cast<float>(UINT32_MAX)) * 100;
         reading_processor->Process(reading);
-    #endif // CONFIG_FLASH_SIMULATOR
+    #endif // CONFIG_BOARD_NATIVE_SIM
 
         k_msleep(SLEEP_TIME_MS);
 
@@ -379,7 +385,8 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
                     .height = 3
                 },
                 .properties = {
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), false },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), true },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE), false },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::LABEL), "log" },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::UI_EVENT_TYPE), static_cast<int>(UiEventType::LOGGING_STATUS_UPDATED) }
                 }

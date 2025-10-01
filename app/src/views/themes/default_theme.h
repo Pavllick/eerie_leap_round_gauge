@@ -7,11 +7,11 @@ namespace eerie_leap::views::themes {
 class DefaultTheme : public ITheme {
 public:
     Color GetPrimaryColor() const override {
-        return Color(0x2196F3); // Blue
+        return Color(0x0F0F0F); // Dark gray
     }
 
     Color GetSecondaryColor() const override {
-        return Color(0xF56060); // Red
+        return Color(0x1BBE5F); // Green
     }
 
     Color GetInactiveColor() const override {
@@ -32,14 +32,6 @@ public:
 
     Color GetErrorColor() const override {
         return Color(0xF44336); // Red
-    }
-
-    Color GetTextColor() const override {
-        return Color(0x212121); // Dark gray
-    }
-
-    Color GetTextSecondaryColor() const override {
-        return Color(0xFFFFFF); // White
     }
 
     Font GetPrimaryFont() const override {

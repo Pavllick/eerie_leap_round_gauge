@@ -16,11 +16,11 @@ public:
     const uint8_t b;
     const uint8_t a;
 
-    constexpr Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255)
+    Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255)
         : r(r), g(g), b(b), a(a),
         lv_color_(lv_color_make(r, g, b)) { }
 
-    constexpr Color(uint32_t rgb, uint8_t a = 255)
+    Color(uint32_t rgb, uint8_t a = 255)
         : r(rgb >> 16), g(rgb >> 8), b(rgb), a(a),
         lv_color_(lv_color_hex(rgb)) { }
 

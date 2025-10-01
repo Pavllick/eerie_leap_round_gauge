@@ -1,6 +1,5 @@
 #include <string>
 
-#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <lvgl.h>
 
@@ -56,8 +55,6 @@ int MainView::DoRender() {
 }
 
 int MainView::ApplyTheme() {
-    printk("MainView::ApplyTheme\n");
-
     lv_obj_set_style_bg_color(container_->GetObject(), ThemeManager::GetInstance().GetCurrentTheme()->GetBackgroundColor().ToLvColor(), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(container_->GetObject(), ThemeManager::GetInstance().GetCurrentTheme()->GetBackgroundColor().ToLvOpa(), LV_PART_MAIN | LV_STATE_DEFAULT);
 

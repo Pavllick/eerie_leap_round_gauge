@@ -11,6 +11,7 @@ using namespace std::string_view_literals;
 enum class WidgetPropertyType : std::uint16_t {
     NONE = 0,
     IS_VISIBLE,             // bool
+    IS_ACTIVE,              // bool
     IS_ANIMATED,            // bool
     MIN_VALUE,              // float
     MAX_VALUE,              // float
@@ -26,6 +27,7 @@ private:
     static constexpr const std::array WidgetPropertyTypeNames = {
         "NONE"sv,
         "IS_VISIBLE"sv,
+        "IS_ACTIVE"sv,
         "IS_ANIMATED"sv,
         "MIN_VALUE"sv,
         "MAX_VALUE"sv,

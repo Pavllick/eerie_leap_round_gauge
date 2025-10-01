@@ -15,6 +15,10 @@ class IconWidget : public WidgetBase {
 private:
     lv_obj_t* Create(lv_obj_t* parent);
     std::string label;
+    bool is_active_;
+
+    lv_obj_t* ui_icon_;
+    lv_obj_t* ui_label_;
 
     // float start_angle_;
     // int radius_;

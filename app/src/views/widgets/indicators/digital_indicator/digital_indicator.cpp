@@ -1,5 +1,7 @@
 #include <string>
 
+#include "views/themes/theme_manager.h"
+
 #include "digital_indicator.h"
 
 namespace eerie_leap::views::widgets::indicators {
@@ -7,6 +9,7 @@ namespace eerie_leap::views::widgets::indicators {
 using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
+using namespace eerie_leap::views::themes;
 
 DigitalIndicator::DigitalIndicator(uint32_t id, std::shared_ptr<Frame> parent)
     : IndicatorBase(id, parent) { }
@@ -21,6 +24,10 @@ int DigitalIndicator::DoRender() {
 }
 
 int DigitalIndicator::ApplyTheme() {
+    auto theme = ThemeManager::GetInstance().GetCurrentTheme();
+    lv_obj_set_style_text_color(container_->GetObject(), theme->GetPrimaryColor().ToLvColor(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(container_->GetObject(), theme->GetPrimaryColor().ToLvOpa(), LV_PART_MAIN | LV_STATE_DEFAULT);
+
     return 0;
 }
 
