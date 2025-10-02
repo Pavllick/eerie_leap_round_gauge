@@ -375,7 +375,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
                 }
             },
             WidgetConfiguration {
-                .type = WidgetType::BasicIcon,
+                .type = WidgetType::BasicArcLabelIcon,
                 .id = 5,
                 .position_grid = WidgetPosition {
                     .x = 0,
@@ -388,6 +388,10 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
                 .properties = {
                     { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), true },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE), false },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X), 0 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y), 0 },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_ANGLE), -56.0F },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::EDGE_OFFSET), 2 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::LABEL), "log" },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::UI_EVENT_TYPE), static_cast<int>(UiEventType::LOGGING_STATUS_UPDATED) }
                 }

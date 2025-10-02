@@ -21,6 +21,10 @@ enum class WidgetPropertyType : std::uint16_t {
     UI_EVENT_TYPE,          // UiEventType
     LABEL,                  // string
     VALUE_PRECISION,        // int
+    EDGE_OFFSET,            // int
+    POSITION_X,             // int
+    POSITION_Y,             // int
+    POSITION_ANGLE,         // float
 };
 
 class WidgetProperty {
@@ -38,6 +42,10 @@ private:
         "UI_EVENT_TYPE"sv,
         "LABEL"sv,
         "VALUE_PRECISION"sv,
+        "EDGE_OFFSET"sv,
+        "POSITION_X"sv,
+        "POSITION_Y"sv,
+        "POSITION_ANGLE"sv,
     };
 
 public:

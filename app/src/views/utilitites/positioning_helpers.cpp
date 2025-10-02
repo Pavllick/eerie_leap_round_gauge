@@ -8,17 +8,18 @@
 namespace eerie_leap::views::utilitites {
 
 WidgetPosition PositioningHelpers::GetPointOnCircle(int center_x, int center_y, int radius_px, float angle_deg) {
-    float angle_radians = angle_deg * std::numbers::pi / 180.0f;
+    float angle_radians = angle_deg * std::numbers::pi / 180.0F;
     int x = center_x + (radius_px * cos(angle_radians));
     int y = center_y + (radius_px * sin(angle_radians));
 
-    return {x, y};
+    return { .x = x, .y = y };
 }
 
 void PositioningHelpers::PlaceObjectOnCircle(lv_obj_t* obj, int center_x, int center_y, int radius_px, float angle_deg) {
-    WidgetPosition pos = GetPointOnCircle(center_x, center_y, radius_px, angle_deg);
+    float angle_deg_normalized = 180.0F + angle_deg;
+    WidgetPosition pos = GetPointOnCircle(center_x, center_y, radius_px, angle_deg_normalized);
 
-    int angle = 2700 - (3600 - static_cast<int>(angle_deg * 10));
+    int angle = static_cast<int>(angle_deg_normalized * 10) - 900;
 
     // NOTE: lv_obj_set_style_transform_rotation causes native_sim to segfault
     // if delay is not added

@@ -35,7 +35,7 @@ public:
     }
 
     Font GetPrimaryFont() const override {
-        return Font("Montserrat", &lv_font_montserrat_20, 20);
+        return Font("Montserrat", &lv_font_rubik_medium_20, 20);
     }
 
     Font GetSecondaryFont() const override {
