@@ -56,6 +56,10 @@ config EERIE_LEAP_MODBUS_BAUD_RATE
 	int "Modbus baud rate"
 	default 115200
 
+config EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS
+	int "Floating point significant digits"
+	default 4
+
 module = APP
 module-str = APP
 source "subsys/logging/Kconfig.template.log_config"

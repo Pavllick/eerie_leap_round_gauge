@@ -279,11 +279,11 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
                 .type = WidgetType::IndicatorDigital,
                 .id = 1,
                 .position_grid = WidgetPosition {
-                    .x = 1,
+                    .x = 0,
                     .y = 1
                 },
                 .size_grid = WidgetSize {
-                    .width = 1,
+                    .width = 3,
                     .height = 1
                 },
                 .properties = {
@@ -291,7 +291,8 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
                     { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED), true },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" }
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
+                    // { WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_PRECISION), 2 }
                 }
             },
             WidgetConfiguration {

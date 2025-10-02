@@ -20,7 +20,7 @@ IndicatorBase::IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent)
 
 void IndicatorBase::UpdateIndicatorCallback(void* obj, int32_t value) {
     auto* indicator = static_cast<IndicatorBase*>(obj);
-    indicator->UpdateIndicator(value);
+    indicator->UpdateIndicator(static_cast<float>(value) / (10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS));
 }
 
 lv_anim_t IndicatorBase::CreateValueChangeAnimation() {
@@ -33,13 +33,15 @@ lv_anim_t IndicatorBase::CreateValueChangeAnimation() {
     return anim;
 }
 
-void IndicatorBase::ValueChangeAnimation(lv_anim_t anim, int32_t range, int32_t start_value, int32_t end_value) {
+void IndicatorBase::ValueChangeAnimation(lv_anim_t anim, float range, float start_value, float end_value) {
     uint32_t duration = 4000;
     uint32_t unit_duration = duration / range;
     uint32_t change_duration = unit_duration * abs(end_value - start_value);
 
     lv_anim_set_duration(&anim, change_duration);
-    lv_anim_set_values(&anim, start_value, end_value);
+    lv_anim_set_values(&anim,
+        static_cast<int32_t>(start_value * 10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS),
+        static_cast<int32_t>(end_value * 10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS));
     lv_anim_start(&anim);
 }
 
@@ -50,11 +52,11 @@ void IndicatorBase::Update(float value) {
     if(IsAnimated()) {
         ValueChangeAnimation(
             value_change_animation_,
-            static_cast<int32_t>(range_end_ - range_start_),
-            static_cast<int32_t>(value_),
-            static_cast<int32_t>(value));
+            range_end_ - range_start_,
+            value_,
+            value);
     } else {
-        UpdateIndicator(static_cast<int32_t>(value));
+        UpdateIndicator(value);
     }
 }
 

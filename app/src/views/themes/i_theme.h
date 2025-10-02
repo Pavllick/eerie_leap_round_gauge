@@ -2,6 +2,7 @@
 
 #include "views/themes/types/color.h"
 #include "views/themes/types/font.h"
+#include "views/assets/fonts/fonts_register.h"
 
 namespace eerie_leap::views::themes {
 
@@ -22,6 +23,7 @@ public:
 
     virtual Font GetPrimaryFont() const = 0;
     virtual Font GetSecondaryFont() const = 0;
+    virtual Font GetPrimaryFontLarge() const = 0;
 };
 
 } // namespace eerie_leap::views::themes

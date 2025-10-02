@@ -13,7 +13,7 @@ private:
 public:
     const std::string name;
 
-    constexpr Font(std::string name, const lv_font_t* font)
+    constexpr Font(std::string name, const lv_font_t* font, uint32_t size)
         : lv_font_(font), name(std::move(name)) { }
 
     [[nodiscard]] const lv_font_t* ToLvFont() const {

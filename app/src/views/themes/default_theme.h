@@ -4,6 +4,8 @@
 
 namespace eerie_leap::views::themes {
 
+// using namespace eerie_leap::views::assets::fonts;
+
 class DefaultTheme : public ITheme {
 public:
     Color GetPrimaryColor() const override {
@@ -35,11 +37,15 @@ public:
     }
 
     Font GetPrimaryFont() const override {
-        return Font("Montserrat", &lv_font_montserrat_20);
+        return Font("Montserrat", &lv_font_montserrat_20, 20);
     }
 
     Font GetSecondaryFont() const override {
-        return Font("Montserrat", &lv_font_montserrat_20);
+        return Font("Montserrat", &lv_font_montserrat_20, 20);
+    }
+
+    Font GetPrimaryFontLarge() const override {
+        return Font("Inconsolata", &lv_font_inconsolata_bold_120, 120);
     }
 };
 

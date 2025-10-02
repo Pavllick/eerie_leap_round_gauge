@@ -20,8 +20,8 @@ public:
     static Frame CreateWrapped(lv_obj_t* parent = nullptr);
 
     Frame Build();
+    Frame Invalidate();
     Frame CleanStyles();
-    Frame AddObject(std::shared_ptr<Frame> frame);
     Frame SetWidth(int32_t width, bool is_px);
     Frame SetHeight(int32_t height, bool is_px);
     Frame SetXOffset(int32_t offset, bool is_px);

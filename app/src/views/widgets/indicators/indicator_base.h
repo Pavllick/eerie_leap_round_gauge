@@ -20,9 +20,9 @@ protected:
     float range_end_;
     float value_;
 
-    virtual void UpdateIndicator(int32_t value) = 0;
+    virtual void UpdateIndicator(float value) = 0;
     lv_anim_t CreateValueChangeAnimation();
-    void ValueChangeAnimation(lv_anim_t anim, int32_t range, int32_t start_value, int32_t end_value);
+    void ValueChangeAnimation(lv_anim_t anim, float range, float start_value, float end_value);
 
 public:
     IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent);

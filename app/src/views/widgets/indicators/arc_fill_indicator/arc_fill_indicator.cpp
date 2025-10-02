@@ -51,9 +51,9 @@ lv_obj_t* ArcFillIndicator::Create(lv_obj_t* parent, int32_t range_start, int32_
     return lv_arc_;
 }
 
-void ArcFillIndicator::UpdateIndicator(int32_t value) {
-    lv_arc_set_value(lv_arc_, value);
-    value_ = static_cast<float>(value);
+void ArcFillIndicator::UpdateIndicator(float value) {
+    lv_arc_set_value(lv_arc_, static_cast<int32_t>(value));
+    value_ = value;
 }
 
 } // namespace eerie_leap::views::widgets::indicators

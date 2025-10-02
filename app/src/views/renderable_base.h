@@ -20,7 +20,7 @@ protected:
     void OnThemeChanged() override {
         if (container_->GetObject() != nullptr && is_ready_) {
             ApplyTheme();
-            lv_obj_invalidate(container_->GetObject());
+            container_->Invalidate();
         }
     }
 
@@ -38,6 +38,8 @@ public:
         int res = DoRender();
         if(res == 0)
             res = ApplyTheme();
+
+        container_->Invalidate();
 
         is_ready_ = res == 0;
 

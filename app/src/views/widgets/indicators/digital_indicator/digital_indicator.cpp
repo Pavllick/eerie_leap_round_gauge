@@ -1,5 +1,3 @@
-#include <string>
-
 #include "views/themes/theme_manager.h"
 
 #include "digital_indicator.h"
@@ -25,37 +23,44 @@ int DigitalIndicator::DoRender() {
 
 int DigitalIndicator::ApplyTheme() {
     auto theme = ThemeManager::GetInstance().GetCurrentTheme();
-    lv_obj_set_style_text_color(container_->GetObject(), theme->GetPrimaryColor().ToLvColor(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(container_->GetObject(), theme->GetPrimaryColor().ToLvOpa(), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_set_style_text_font(lv_label_, theme->GetPrimaryFontLarge().ToLvFont(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(lv_label_, theme->GetPrimaryColor().ToLvColor(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(lv_label_, theme->GetPrimaryColor().ToLvOpa(), LV_PART_MAIN | LV_STATE_DEFAULT);
 
     return 0;
 }
 
 lv_obj_t* DigitalIndicator::Create(std::shared_ptr<Frame> parent) {
-    auto ui_label = lv_label_create(parent->GetObject());
+    lv_label_ = lv_label_create(parent->GetObject());
 
-    lv_obj_set_width(ui_label, LV_SIZE_CONTENT);
-    lv_obj_set_height(ui_label, LV_SIZE_CONTENT);
-    lv_obj_set_align(ui_label, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_label, "0");
-    lv_obj_set_style_text_font(ui_label, &lv_font_unscii_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_width(lv_label_, LV_SIZE_CONTENT);
+    lv_obj_set_height(lv_label_, LV_SIZE_CONTENT);
+    lv_label_set_text(lv_label_, "0");
 
-    // Scaling and alignment
-    lv_obj_center(ui_label);
-    lv_obj_set_align(ui_label, LV_ALIGN_CENTER);
-    lv_obj_set_style_text_align(ui_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_width(ui_label, 32);
-    lv_obj_set_height(ui_label, 16);
-    lv_obj_set_style_transform_pivot_x(ui_label, 16, 0);
-    lv_obj_set_style_transform_pivot_y(ui_label, 8, 0);
-    lv_obj_set_style_transform_scale(ui_label, 1300, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // Alignment
+    lv_obj_center(lv_label_);
+    lv_obj_set_align(lv_label_, LV_ALIGN_CENTER);
+    lv_obj_set_style_text_align(lv_label_, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    return ui_label;
+    return lv_label_;
 }
 
-void DigitalIndicator::UpdateIndicator(int32_t value) {
-    lv_label_set_text(container_->GetChild()->GetObject(), std::to_string(value).c_str());
-    value_ = static_cast<float>(value);
+void DigitalIndicator::UpdateIndicator(float value) {
+    char value_str[8];
+    snprintf(value_str, sizeof(value_str), "%.*f", value_precision_, value);
+
+    lv_label_set_text(lv_label_, value_str);
+    value_ = value;
+}
+
+void DigitalIndicator::Configure(const WidgetConfiguration& config) {
+    IndicatorBase::Configure(config);
+
+    value_precision_ = GetConfigValue<int>(
+        config.properties,
+        WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_PRECISION),
+        0);
 }
 
 } // namespace eerie_leap::views::widgets::indicators

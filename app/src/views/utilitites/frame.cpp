@@ -29,19 +29,18 @@ void Frame::ValidateFrame(lv_obj_t* frame) {
         throw std::runtime_error("Frame not created");
 }
 
-Frame Frame::CleanStyles() {
+Frame Frame::Invalidate() {
     ValidateFrame(lv_object_);
 
-    lv_obj_remove_style_all(lv_object_);
     lv_obj_invalidate(lv_object_);
 
     return *this;
 }
 
-Frame Frame::AddObject(std::shared_ptr<Frame> frame) {
+Frame Frame::CleanStyles() {
     ValidateFrame(lv_object_);
 
-    lv_obj_set_parent(frame->GetObject(), lv_object_);
+    lv_obj_remove_style_all(lv_object_);
     lv_obj_invalidate(lv_object_);
 
     return *this;

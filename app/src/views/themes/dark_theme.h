@@ -19,7 +19,7 @@ public:
     }
 
     Color GetBackgroundColor() const override {
-        return Color(0x000000); // Almost black
+        return Color(0x000000); // Black
     }
 
     Color GetSurfaceColor() const override {
@@ -35,11 +35,15 @@ public:
     }
 
     Font GetPrimaryFont() const override {
-        return Font("Montserrat", &lv_font_montserrat_20);
+        return Font("Montserrat", &lv_font_montserrat_20, 20);
     }
 
     Font GetSecondaryFont() const override {
-        return Font("Montserrat", &lv_font_montserrat_20);
+        return Font("Montserrat", &lv_font_montserrat_20, 20);
+    }
+
+    Font GetPrimaryFontLarge() const override {
+        return Font("Inconsolata", &lv_font_inconsolata_bold_120, 120);
     }
 };
 

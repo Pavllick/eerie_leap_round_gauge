@@ -10,7 +10,7 @@ class ArcFillIndicator : public IndicatorBase {
 private:
     lv_obj_t* lv_arc_;
 
-    void UpdateIndicator(int32_t value) override;
+    void UpdateIndicator(float value) override;
 
     lv_obj_t* Create(lv_obj_t* parent, int32_t range_start, int32_t range_end);
 

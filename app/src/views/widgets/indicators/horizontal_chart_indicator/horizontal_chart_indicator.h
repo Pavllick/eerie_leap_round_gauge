@@ -17,7 +17,7 @@ private:
     HorizontalChartIndicatorType chart_type_;
     lv_obj_t* lv_chart_;
 
-    void UpdateIndicator(int32_t value) override;
+    void UpdateIndicator(float value) override;
     lv_obj_t* Create(lv_obj_t* parent, int32_t range_start, int32_t range_end, int32_t point_count, HorizontalChartIndicatorType type);
 
     int DoRender() override;

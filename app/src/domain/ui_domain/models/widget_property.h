@@ -20,6 +20,7 @@ enum class WidgetPropertyType : std::uint16_t {
     CHART_TYPE,             // int (enum)
     UI_EVENT_TYPE,          // UiEventType
     LABEL,                  // string
+    VALUE_PRECISION,        // int
 };
 
 class WidgetProperty {
@@ -36,6 +37,7 @@ private:
         "CHART_TYPE"sv,
         "UI_EVENT_TYPE"sv,
         "LABEL"sv,
+        "VALUE_PRECISION"sv,
     };
 
 public:
