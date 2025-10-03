@@ -337,25 +337,25 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
                     { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE), static_cast<int>(HorizontalChartIndicatorType::Line) }
                 }
             },
-            WidgetConfiguration {
-                .type = WidgetType::IndicatorHorizontalChart,
-                .id = 4,
-                .position_grid = WidgetPosition {
-                    .x = 0,
-                    .y = 2
-                },
-                .size_grid = WidgetSize {
-                    .width = 3,
-                    .height = 1
-                },
-                .properties = {
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), true },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED), true },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
-                }
-            },
+            // WidgetConfiguration {
+            //     .type = WidgetType::IndicatorHorizontalChart,
+            //     .id = 4,
+            //     .position_grid = WidgetPosition {
+            //         .x = 0,
+            //         .y = 2
+            //     },
+            //     .size_grid = WidgetSize {
+            //         .width = 3,
+            //         .height = 1
+            //     },
+            //     .properties = {
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), true },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED), true },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
+            //     }
+            // },
             WidgetConfiguration {
                 .type = WidgetType::IndicatorArcFill,
                 .id = 0,
@@ -387,17 +387,40 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
                     .height = 3
                 },
                 .properties = {
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE), static_cast<int>(IconType::Label) },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE), static_cast<int>(IconType::Dot) },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), true },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE), false },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED), true },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X), 0 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y), 0 },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_ANGLE), -56.0F },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::EDGE_OFFSET), 2 },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::LABEL), "log" },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_ANGLE), 90.0F },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::EDGE_OFFSET), 6 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::UI_EVENT_TYPE), static_cast<int>(UiEventType::LoggingStatusUpdated) }
                 }
-            }
+            },
+            // WidgetConfiguration {
+            //     .type = WidgetType::BasicArcIcon,
+            //     .id = 6,
+            //     .position_grid = WidgetPosition {
+            //         .x = 0,
+            //         .y = 0
+            //     },
+            //     .size_grid = WidgetSize {
+            //         .width = 3,
+            //         .height = 3
+            //     },
+            //     .properties = {
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE), static_cast<int>(IconType::Label) },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), true },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE), false },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X), 0 },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y), 0 },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_ANGLE), -56.0F },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::EDGE_OFFSET), 2 },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::LABEL), "log" },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::UI_EVENT_TYPE), static_cast<int>(UiEventType::LoggingStatusUpdated) }
+            //     }
+            // }
         }
     };
 

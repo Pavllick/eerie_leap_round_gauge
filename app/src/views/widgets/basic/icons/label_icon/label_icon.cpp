@@ -1,8 +1,6 @@
 #include "domain/ui_domain/models/widget_property.h"
 #include "views/themes/theme_manager.h"
 
-#include <zephyr/kernel.h>
-
 #include "label_icon.h"
 
 namespace eerie_leap::views::widgets::basic::icons {

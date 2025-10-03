@@ -20,6 +20,7 @@ protected:
     std::shared_ptr<Frame> parent_;
     WidgetConfiguration configuration_;
     bool is_active_;
+    bool is_animated_;
 
 public:
     explicit IconBase(std::shared_ptr<Frame> parent);

@@ -1,3 +1,4 @@
+#include "views/widgets/basic/icons/dot_icon/dot_icon.h"
 #include "views/widgets/basic/icons/label_icon/label_icon.h"
 
 #include "icon_factory.h"
@@ -48,6 +49,7 @@ std::vector<IconType> IconFactory::GetAvailableTypes() const {
 }
 
 void IconFactory::RegisterTypes() {
+    Register<DotIcon>(IconType::Dot);
     Register<LabelIcon>(IconType::Label);
 }
 
