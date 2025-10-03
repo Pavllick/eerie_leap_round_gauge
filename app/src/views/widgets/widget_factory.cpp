@@ -1,5 +1,5 @@
-#include "views/widgets/basic/label_widget/label_icon_widget.h"
-#include "views/widgets/basic/arc_label_widget/arc_label_icon_widget.h"
+#include "views/widgets/basic/icon_widget/icon_widget.h"
+#include "views/widgets/basic/arc_icon_widget/arc_icon_widget.h"
 
 #include "views/widgets/indicators/arc_fill_indicator/arc_fill_indicator.h"
 #include "views/widgets/indicators/digital_indicator/digital_indicator.h"
@@ -58,8 +58,8 @@ std::vector<WidgetType> WidgetFactory::GetAvailableTypes() const {
 }
 
 void WidgetFactory::RegisterTypes() {
-    RegisterWidget<LabelIconWidget>(WidgetType::BasicLabelIcon);
-    RegisterWidget<ArcLabelIconWidget>(WidgetType::BasicArcLabelIcon);
+    RegisterWidget<IconWidget>(WidgetType::BasicIcon);
+    RegisterWidget<ArcIconWidget>(WidgetType::BasicArcIcon);
 
     RegisterWidget<ArcFillIndicator>(WidgetType::IndicatorArcFill);
     RegisterWidget<DigitalIndicator>(WidgetType::IndicatorDigital);

@@ -14,11 +14,11 @@ StatusProcessor::StatusProcessor() { }
 
 void StatusProcessor::SubmitToEventBus(const UserStatus& status) {
     UiEventPayload payload;
-    payload[UiPayloadType::IS_STATUS_OK] = status.is_ok;
-    payload[UiPayloadType::COM_USER_STATUS] = static_cast<uint32_t>(status.status);
+    payload[UiPayloadType::IsStatusOk] = status.is_ok;
+    payload[UiPayloadType::ComUserStatus] = static_cast<uint32_t>(status.status);
 
     UiEvent event {
-        .type = UiEventType::STATUS_UPDATED,
+        .type = UiEventType::StatusUpdated,
         .payload = payload
     };
 

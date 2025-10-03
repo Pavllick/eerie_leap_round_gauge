@@ -41,11 +41,11 @@ lv_obj_t* HorizontalChartIndicator::Create(lv_obj_t* parent, int32_t range_start
 
     lv_chart_type_t chart_type = LV_CHART_TYPE_NONE;
     switch(type) {
-        case HorizontalChartIndicatorType::BAR:
+        case HorizontalChartIndicatorType::Bar:
             chart_type = LV_CHART_TYPE_BAR;
             lv_obj_set_style_pad_column(lv_chart_, 2, LV_PART_MAIN);
             break;
-        case HorizontalChartIndicatorType::LINE:
+        case HorizontalChartIndicatorType::Line:
             chart_type = LV_CHART_TYPE_LINE;
             lv_obj_set_style_line_width(lv_chart_, 6, LV_PART_ITEMS);
             break;
@@ -90,7 +90,7 @@ void HorizontalChartIndicator::Configure(const WidgetConfiguration& config) {
     chart_type_ = static_cast<HorizontalChartIndicatorType>(GetConfigValue<int>(
         config.properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE),
-        static_cast<std::uint16_t>(HorizontalChartIndicatorType::BAR)));
+        static_cast<std::uint16_t>(HorizontalChartIndicatorType::Bar)));
 }
 
 } // namespace eerie_leap::views::widgets::indicators

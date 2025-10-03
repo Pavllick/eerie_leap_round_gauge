@@ -20,10 +20,10 @@ int LoggingController::Initialize() {
     });
 
     auto start_logging_subscription = UiEventBus::GetInstance().Subscribe(
-        UiEventType::STATUS_UPDATED,
+        UiEventType::StatusUpdated,
         UserStatusFilter { ComUserStatus::START_LOGGING },
         [this](const UiEvent& event) {
-            if (auto it = event.payload.find(UiPayloadType::IS_STATUS_OK); it != event.payload.end()) {
+            if (auto it = event.payload.find(UiPayloadType::IsStatusOk); it != event.payload.end()) {
                 if (auto* value = std::get_if<bool>(&it->second)) {
                     if(*value) {
                         is_logging_in_progress_ = true;
@@ -38,10 +38,10 @@ int LoggingController::Initialize() {
         subscriptions_.push_back(std::move(*start_logging_subscription));
 
     auto stop_logging_subscription = UiEventBus::GetInstance().Subscribe(
-        UiEventType::STATUS_UPDATED,
+        UiEventType::StatusUpdated,
         UserStatusFilter { ComUserStatus::STOP_LOGGING },
         [this](const UiEvent& event) {
-            if (auto it = event.payload.find(UiPayloadType::IS_STATUS_OK); it != event.payload.end()) {
+            if (auto it = event.payload.find(UiPayloadType::IsStatusOk); it != event.payload.end()) {
                 if (auto* value = std::get_if<bool>(&it->second)) {
                     if(*value) {
                         is_logging_in_progress_ = false;
@@ -60,10 +60,10 @@ int LoggingController::Initialize() {
 
 void LoggingController::PublishLoggingState(bool is_logging) {
     UiEventPayload payload;
-    payload[UiPayloadType::VALUE] = is_logging;
+    payload[UiPayloadType::Value] = is_logging;
 
     UiEvent event {
-        .type = UiEventType::LOGGING_STATUS_UPDATED,
+        .type = UiEventType::LoggingStatusUpdated,
         .payload = payload
     };
 

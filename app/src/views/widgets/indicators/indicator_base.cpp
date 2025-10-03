@@ -75,10 +75,10 @@ void IndicatorBase::Configure(const WidgetConfiguration& config) {
         sensor_id_ = std::stoul(sensor_id_str);
 
         auto result = UiEventBus::GetInstance().Subscribe(
-            UiEventType::SENSOR_DATA_UPDATED,
+            UiEventType::SensorDataUpdated,
             SensorFilter { sensor_id_.value() },
             [this](const UiEvent& event) {
-                if (auto it = event.payload.find(UiPayloadType::VALUE); it != event.payload.end()) {
+                if (auto it = event.payload.find(UiPayloadType::Value); it != event.payload.end()) {
                     if (auto* value = std::get_if<float>(&it->second)) {
                         this->Update(*value);
                     }

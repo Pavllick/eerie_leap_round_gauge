@@ -25,6 +25,7 @@ enum class WidgetPropertyType : std::uint16_t {
     POSITION_X,             // int
     POSITION_Y,             // int
     POSITION_ANGLE,         // float
+    ICON_TYPE,              // int (enum)
 };
 
 class WidgetProperty {
@@ -46,6 +47,7 @@ private:
         "POSITION_X"sv,
         "POSITION_Y"sv,
         "POSITION_ANGLE"sv,
+        "ICON_TYPE"sv,
     };
 
 public:

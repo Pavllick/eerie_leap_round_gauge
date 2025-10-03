@@ -1,7 +1,7 @@
 #include "views/utilitites/positioning_helpers.h"
 #include "views/themes/theme_manager.h"
 
-#include "arc_label_icon_widget.h"
+#include "arc_icon_widget.h"
 
 namespace eerie_leap::views::widgets::basic {
 
@@ -10,18 +10,18 @@ using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::themes;
 
-ArcLabelIconWidget::ArcLabelIconWidget(uint32_t id, std::shared_ptr<Frame> parent)
-    : LabelIconWidget(id, parent) { }
+ArcIconWidget::ArcIconWidget(uint32_t id, std::shared_ptr<Frame> parent)
+    : IconWidget(id, parent) { }
 
-int ArcLabelIconWidget::ApplyTheme() {
-    LabelIconWidget::ApplyTheme();
-    lv_obj_update_layout(lv_icon_);
+int ArcIconWidget::ApplyTheme() {
+    IconWidget::ApplyTheme();
+    lv_obj_update_layout(container_->GetObject());
 
     int radius = lv_obj_get_height(container_->GetObject()) / 2;
-    lv_coord_t icon_height = lv_obj_get_height(lv_icon_);
+    lv_coord_t icon_height = lv_obj_get_height(icon_->GetContainer()->GetObject());
 
     PositioningHelpers::PlaceObjectOnCircle(
-        lv_icon_,
+        icon_->GetContainer()->GetObject(),
         position_x_,
         position_y_,
         radius - icon_height / 2 - edge_offset_px_,
@@ -30,8 +30,8 @@ int ArcLabelIconWidget::ApplyTheme() {
     return 0;
 }
 
-void ArcLabelIconWidget::Configure(const WidgetConfiguration& config) {
-    LabelIconWidget::Configure(config);
+void ArcIconWidget::Configure(const WidgetConfiguration& config) {
+    IconWidget::Configure(config);
 
     position_angle_ = GetConfigValue<double>(
         configuration_.properties,

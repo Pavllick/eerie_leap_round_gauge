@@ -13,12 +13,13 @@ using namespace eerie_leap::views::utilitites;
 class IRenderable : public IThemeObserver {
 protected:
     virtual int DoRender() = 0;
-    virtual int ApplyTheme() = 0;
 
 public:
     virtual ~IRenderable() = default;
 
     virtual int Render() = 0;
+    virtual int ApplyTheme() = 0;
+    virtual std::shared_ptr<Frame> GetContainer() const = 0;
     virtual bool IsReady() const = 0;
 };
 

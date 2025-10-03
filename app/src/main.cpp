@@ -42,6 +42,7 @@
 #include "domain/ui_domain/models/widget_size.h"
 #include "domain/ui_domain/models/widget_position.h"
 #include "domain/ui_domain/models/widget_property.h"
+#include "domain/ui_domain/models/icon_type.h"
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 
 #include "subsys/event_bus/event_bus.h"
@@ -313,7 +314,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_POINT_COUNT), 35 },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE), static_cast<int>(HorizontalChartIndicatorType::BAR) },
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE), static_cast<int>(HorizontalChartIndicatorType::Bar) },
                 }
             },
             WidgetConfiguration {
@@ -333,7 +334,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE), static_cast<int>(HorizontalChartIndicatorType::LINE) }
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE), static_cast<int>(HorizontalChartIndicatorType::Line) }
                 }
             },
             WidgetConfiguration {
@@ -375,7 +376,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
                 }
             },
             WidgetConfiguration {
-                .type = WidgetType::BasicArcLabelIcon,
+                .type = WidgetType::BasicArcIcon,
                 .id = 5,
                 .position_grid = WidgetPosition {
                     .x = 0,
@@ -386,6 +387,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
                     .height = 3
                 },
                 .properties = {
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE), static_cast<int>(IconType::Label) },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), true },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE), false },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X), 0 },
@@ -393,7 +395,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
                     { WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_ANGLE), -56.0F },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::EDGE_OFFSET), 2 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::LABEL), "log" },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::UI_EVENT_TYPE), static_cast<int>(UiEventType::LOGGING_STATUS_UPDATED) }
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::UI_EVENT_TYPE), static_cast<int>(UiEventType::LoggingStatusUpdated) }
                 }
             }
         }

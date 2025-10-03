@@ -16,7 +16,7 @@ struct UserStatusFilter {
     ComUserStatus user_status;
 
     bool operator()(const UiEvent& event) const {
-        if (auto it = event.payload.find(UiPayloadType::COM_USER_STATUS); it != event.payload.end()) {
+        if (auto it = event.payload.find(UiPayloadType::ComUserStatus); it != event.payload.end()) {
             if (auto status = std::get_if<uint32_t>(&it->second)) {
                 return static_cast<ComUserStatus>(*status) == user_status;
             }

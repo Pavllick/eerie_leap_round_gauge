@@ -22,11 +22,11 @@ void ReadingProcessor::SubmitToEventBus(const SensorReadingDto& reading) {
     }
 
     UiEventPayload payload;
-    payload[UiPayloadType::SENSOR_ID] = reading.sensor_id_hash;
-    payload[UiPayloadType::VALUE] = reading.value;
+    payload[UiPayloadType::SensorId] = reading.sensor_id_hash;
+    payload[UiPayloadType::Value] = reading.value;
 
     UiEvent event {
-        .type = UiEventType::SENSOR_DATA_UPDATED,
+        .type = UiEventType::SensorDataUpdated,
         .payload = payload
     };
 

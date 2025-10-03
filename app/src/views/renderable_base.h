@@ -34,6 +34,10 @@ public:
         is_ready_= false;
     }
 
+    std::shared_ptr<Frame> GetContainer() const override {
+        return container_;
+    }
+
     int Render() override {
         int res = DoRender();
         if(res == 0)

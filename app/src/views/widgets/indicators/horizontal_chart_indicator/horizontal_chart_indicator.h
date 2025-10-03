@@ -7,8 +7,9 @@
 namespace eerie_leap::views::widgets::indicators {
 
 enum class HorizontalChartIndicatorType : uint8_t {
-    BAR,
-    LINE,
+    None = 0,
+    Bar,
+    Line,
 };
 
 class HorizontalChartIndicator : public IndicatorBase {
