@@ -92,7 +92,6 @@ int main() {
     auto ui_renderer = make_shared_ext<UiRenderer>();
     if(ui_renderer->Initialize() != 0)
         return -1;
-
     ui_renderer->Start();
 
     auto fs_service = make_shared_ext<FsService>(DtFs::GetInternalFsMp().value());
@@ -106,19 +105,19 @@ int main() {
     auto reading_processor = make_shared_ext<ReadingProcessor>();
     auto status_processor = make_shared_ext<StatusProcessor>();
 
-    auto system_config_service = make_shared_ext<ConfigurationService<SystemConfig>>("system_config", fs_service);
-    auto system_configuration_manager = make_shared_ext<SystemConfigurationManager>(system_config_service);
+    auto system_config_service = make_unique_ext<ConfigurationService<SystemConfig>>("system_config", fs_service);
+    auto system_configuration_manager = make_shared_ext<SystemConfigurationManager>(std::move(system_config_service));
 
-    auto ui_config_service = make_shared_ext<ConfigurationService<UiConfig>>("ui_config", fs_service);
-    auto ui_configuration_manager = make_shared_ext<UiConfigurationManager>(ui_config_service);
+    auto ui_config_service = make_unique_ext<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_configuration_manager = make_shared_ext<UiConfigurationManager>(std::move(ui_config_service));
 
     std::shared_ptr<Interface> interface = nullptr;
-    if(DtModbus::Get().has_value()) {
-        auto modbus = make_shared_ext<Modbus>(
-            DtModbus::Get().value(),
+    if(DtModbus::Get() != nullptr) {
+        auto modbus = make_unique_ext<Modbus>(
+            DtModbus::Get(),
             system_configuration_manager->Get()->interface_channel);
 
-        interface = make_shared_ext<Interface>(modbus, system_configuration_manager, reading_processor);
+        interface = make_shared_ext<Interface>(std::move(modbus), system_configuration_manager);
         if(interface->Initialize() != 0)
             return -1;
 

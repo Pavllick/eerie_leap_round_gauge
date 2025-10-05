@@ -19,7 +19,7 @@ protected:
     bool IsMounted() const;
 
 public:
-    FsService(fs_mount_t mountpoint);
+    explicit FsService(const fs_mount_t& mountpoint);
 
     bool Initialize() override;
     bool WriteFile(const std::string& relative_path, const void* data_p, size_t data_size) override;

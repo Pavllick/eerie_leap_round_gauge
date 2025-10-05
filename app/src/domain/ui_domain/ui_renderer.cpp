@@ -1,21 +1,30 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/device.h>
 #include <zephyr/drivers/display.h>
 #include <lvgl_mem.h>
+
+#include "subsys/device_tree/dt_display.h"
 
 #include "ui_renderer.h"
 
 namespace eerie_leap::domain::ui_domain {
 
+using namespace eerie_leap::subsys::device_tree;
+
 LOG_MODULE_REGISTER(renderer_logger);
 
-const device* UiRenderer::display_dev_ = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
-
-// Should be allocated on internal RAM to take an advantage of DMA for rendering
+// NOTE: Should be allocated on internal RAM to take an advantage of DMA for rendering
+// NOTE: Dinamic allocation causes issues with LVGL rendering memory access
 K_KERNEL_STACK_MEMBER(UiRenderer::stack_area_, UiRenderer::k_stack_size_);
 
 int UiRenderer::Initialize() {
-    if(!device_is_ready(display_dev_)) {
+    if(DtDisplay::Get() == nullptr) {
+        LOG_ERR("Display not found, aborting test");
+        return -1;
+    }
+
+    if(!device_is_ready(DtDisplay::Get())) {
 		LOG_ERR("Device not ready, aborting test");
 		return -1;
 	}
@@ -23,8 +32,8 @@ int UiRenderer::Initialize() {
     auto* act_scr = lv_display_get_default();
     lv_display_add_event_cb(act_scr, DisplayInvalidateCb, LV_EVENT_INVALIDATE_AREA, nullptr);
 
-    display_blanking_off(display_dev_);
-    display_set_brightness(display_dev_, 160);
+    display_blanking_off(DtDisplay::Get());
+    display_set_brightness(DtDisplay::Get(), 160);
 
     return 0;
 }
@@ -35,8 +44,9 @@ k_tid_t UiRenderer::Start() {
     thread_id_ = k_thread_create(
         &thread_data_,
         stack_area_,
-        K_THREAD_STACK_SIZEOF(stack_area_),
-        [](void* instance, void* p2, void* p3) { static_cast<UiRenderer*>(instance)->UiRendererThreadEntry(); },
+        K_KERNEL_STACK_SIZEOF(stack_area_),
+        [](void* instance, void* p2, void* p3) {
+            static_cast<UiRenderer*>(instance)->UiRendererThreadEntry(); },
         this, nullptr, nullptr,
         k_priority_, 0, K_NO_WAIT);
 

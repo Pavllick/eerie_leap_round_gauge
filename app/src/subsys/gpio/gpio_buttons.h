@@ -16,7 +16,7 @@ protected:
     std::vector<gpio_dt_spec> gpio_specs_;
     std::unordered_map<int, std::shared_ptr<GpioButtonCbData>> cb_data_containers_;
 
-    static int InitializeButton(gpio_dt_spec& button);
+    static int InitializeButton(const gpio_dt_spec& button);
     static void ButtonPressedCallback(const struct device* dev, gpio_callback* callback, uint32_t pins);
 
 public:

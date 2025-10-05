@@ -31,7 +31,7 @@ static void print_stack_info_callback(thread_analyzer_info* info) {
         used_percent);
 }
 
-void SystemInfo::print_stack_info(int cpu, const char *thread_name) {
+void SystemInfo::print_stack_info(int cpu, const char* thread_name) {
     stack_info_thread_name_filter = thread_name;
 
 #ifdef CONFIG_THREAD_ANALYZER
@@ -43,7 +43,7 @@ void SystemInfo::print_stack_info(int cpu, const char *thread_name) {
 }
 
 static const char* cpu_info_thread_name_filter = nullptr;
-static void print_cpu_info_callback(thread_analyzer_info *info) {
+static void print_cpu_info_callback(thread_analyzer_info* info) {
     if (cpu_info_thread_name_filter != nullptr && strcmp(cpu_info_thread_name_filter, info->name) != 0)
         return;
 
@@ -52,7 +52,7 @@ static void print_cpu_info_callback(thread_analyzer_info *info) {
 		info->utilization);
 }
 
-void SystemInfo::print_cpu_info(int cpu, const char *thread_name) {
+void SystemInfo::print_cpu_info(int cpu, const char* thread_name) {
     cpu_info_thread_name_filter = thread_name;
 
 #ifdef CONFIG_THREAD_ANALYZER
@@ -63,7 +63,7 @@ void SystemInfo::print_cpu_info(int cpu, const char *thread_name) {
 #endif
 }
 
-static void print_heap_stats(sys_heap *heap) {
+static void print_heap_stats(sys_heap* heap) {
     sys_memory_stats stats;
     sys_heap_runtime_stats_get(heap, &stats);
 
@@ -79,7 +79,7 @@ static void print_heap_stats(sys_heap *heap) {
 }
 
 void SystemInfo::print_heap_info() {
-    sys_heap **heap_p;
+    sys_heap** heap_p;
 
     int heaps_count = sys_heap_array_get(&heap_p);
     LOG_INF("Heap analyze, there are %zu heaps allocated at addrs:", heaps_count);

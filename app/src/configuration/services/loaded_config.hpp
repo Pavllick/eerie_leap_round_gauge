@@ -10,8 +10,8 @@ using namespace eerie_leap::utilities::memory;
 template <typename T>
 struct LoadedConfig {
 public:
-    std::shared_ptr<ExtVector> config_raw;
-    std::shared_ptr<T> config;
+    ext_unique_ptr<ExtVector> config_raw;
+    ext_unique_ptr<T> config;
 };
 
 }

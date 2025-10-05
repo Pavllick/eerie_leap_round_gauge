@@ -8,7 +8,7 @@ namespace eerie_leap::subsys::modbus {
 
 // TODO: Come up with a better way to handle this
 // callbacks have to be static, but we need to access instance members
-Modbus* instance = nullptr;
+Modbus* instance_ = nullptr;
 
 Modbus::Modbus(const char* iface_name, uint8_t server_id) : iface_name_(iface_name), client_iface_(modbus_iface_get_by_name(iface_name_)) {
     callbacks_ = {
@@ -29,14 +29,16 @@ Modbus::Modbus(const char* iface_name, uint8_t server_id) : iface_name_(iface_na
         },
     };
 
-    LOG_INF("Modbus initialized, server ID: %d", server_id);
-
-    instance = this;
+    instance_ = this;
 }
 
 int Modbus::Initialize(ModbusCallbacks callbacks_ext) {
     callbacks_ext_ = callbacks_ext;
-    return modbus_init_server(client_iface_, client_params_);
+    int ret = modbus_init_server(client_iface_, client_params_);
+
+    LOG_INF("Modbus initialized, server ID: %d", client_params_.server.unit_id);
+
+    return ret;
 };
 
 int Modbus::UpdateServerId(uint8_t server_id) {
@@ -49,35 +51,27 @@ int Modbus::UpdateServerId(uint8_t server_id) {
 }
 
 int Modbus::ReadRegistersCallback(uint16_t addr, uint16_t *reg, uint16_t num_regs) {
-	if (instance->callbacks_ext_.holding_regs_rd) {
-		return instance->callbacks_ext_.holding_regs_rd(addr, reg, num_regs);
+	if (instance_->callbacks_ext_.holding_regs_rd) {
+		return instance_->callbacks_ext_.holding_regs_rd(addr, reg, num_regs);
 	}
 
 	return MODBUS_EXC_ILLEGAL_FC;
 }
 
 int Modbus::WriteRegisterCallback(uint16_t addr, uint16_t reg) {
-	if (instance->callbacks_ext_.holding_reg_wr) {
-		return instance->callbacks_ext_.holding_reg_wr(addr, reg);
+	if (instance_->callbacks_ext_.holding_reg_wr) {
+		return instance_->callbacks_ext_.holding_reg_wr(addr, reg);
 	}
 
 	return MODBUS_EXC_ILLEGAL_FC;
 }
 
 int Modbus::WriteRegistersCallback(uint16_t addr, uint16_t* reg, uint16_t num_regs) {
-	if (instance->callbacks_ext_.holding_regs_wr) {
-		return instance->callbacks_ext_.holding_regs_wr(addr, reg, num_regs);
+	if (instance_->callbacks_ext_.holding_regs_wr) {
+		return instance_->callbacks_ext_.holding_regs_wr(addr, reg, num_regs);
 	}
 
 	return MODBUS_EXC_ILLEGAL_FC;
-}
-
-int Modbus::ReadRegisters(uint8_t address, uint16_t start_address, void* data, size_t count) {
-    return modbus_read_holding_regs(client_iface_, address, start_address, (uint16_t*)data, count);
-}
-
-int Modbus::WriteRegisters(uint8_t address, uint16_t start_address, void* data, size_t count) {
-    return modbus_write_holding_regs(client_iface_, address, start_address, (uint16_t*)data, count);
 }
 
 }  // namespace eerie_leap::subsys::modbus

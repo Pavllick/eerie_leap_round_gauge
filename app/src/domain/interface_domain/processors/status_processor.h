@@ -14,7 +14,7 @@ private:
 public:
     StatusProcessor();
 
-    int Process(UserStatus status) override;
+    int Process(const UserStatus& status) override;
 };
 
 } // namespace eerie_leap::domain::interface_domain::services

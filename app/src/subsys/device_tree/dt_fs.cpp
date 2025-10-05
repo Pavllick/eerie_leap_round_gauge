@@ -75,6 +75,9 @@ int DtFs::SdmmcRequestRca(const struct device* dev) {
 }
 
 bool DtFs::SdmmcReadStatus(const struct device* dev) {
+	if(dev == nullptr)
+		return false;
+
 	struct sdhc_command cmd;
 	int ret;
 
@@ -94,9 +97,8 @@ bool DtFs::SdmmcReadStatus(const struct device* dev) {
 	cmd.timeout_ms = CONFIG_SD_CMD_TIMEOUT;
 
 	ret = sdhc_request(dev, &cmd, NULL);
-	if (ret) {
+	if(ret != 0)
 		return false;
-	}
 
     return true;
 }

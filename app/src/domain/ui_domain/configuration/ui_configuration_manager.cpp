@@ -10,7 +10,7 @@ using namespace eerie_leap::utilities::memory;
 
 LOG_MODULE_REGISTER(ui_config_ctrl_logger);
 
-UiConfigurationManager::UiConfigurationManager(std::shared_ptr<ConfigurationService<UiConfig>> ui_configuration_service) :
+UiConfigurationManager::UiConfigurationManager(ext_unique_ptr<ConfigurationService<UiConfig>> ui_configuration_service) :
     ui_configuration_service_(std::move(ui_configuration_service)),
     ui_config_(nullptr),
     ui_configuration_(nullptr) {
@@ -27,7 +27,7 @@ void ValueTypeToPropertyValueType(PropertiesConfig& properties_config, std::unor
     size_t i = 0;
     for(auto& [key, value] : properties) {
         PropertiesConfig_PropertyValueType_m property_value;
-        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&key);
+        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(key);
 
         auto& prop = property_value.PropertyValueType_m;
         std::visit([&](auto&& arg) {
@@ -41,7 +41,7 @@ void ValueTypeToPropertyValueType(PropertiesConfig& properties_config, std::unor
                 prop.value = static_cast<double>(arg);
             } else if constexpr (std::is_same_v<T, std::string>) {
                 prop.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_tstr_c;
-                prop.value = CborHelpers::ToZcborString(&arg);
+                prop.value = CborHelpers::ToZcborString(arg);
             }
             else if constexpr (std::is_same_v<T, bool>) {
                 prop.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_bool_c;
@@ -54,15 +54,15 @@ void ValueTypeToPropertyValueType(PropertiesConfig& properties_config, std::unor
 
                 prop.value = std::vector<zcbor_string>();
                 for (auto it = arg.begin(); it != arg.end(); ++it)
-                    std::get<std::vector<zcbor_string>>(prop.value).push_back(CborHelpers::ToZcborString(&*it));
+                    std::get<std::vector<zcbor_string>>(prop.value).push_back(CborHelpers::ToZcborString(*it));
             } else if constexpr (std::is_same_v<T, std::unordered_map<std::string, std::string>>) {
                 prop.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_map_c;
 
                 prop.value = std::vector<map_tstrtstr>();
                 for (auto it = arg.begin(); it != arg.end(); ++it) {
                     std::get<std::vector<map_tstrtstr>>(prop.value).push_back({
-                        .tstrtstr_key = CborHelpers::ToZcborString(&it->first),
-                        .tstrtstr = CborHelpers::ToZcborString(&it->second)
+                        .tstrtstr_key = CborHelpers::ToZcborString(it->first),
+                        .tstrtstr = CborHelpers::ToZcborString(it->second)
                     });
                 }
             } else {
@@ -77,7 +77,7 @@ void ValueTypeToPropertyValueType(PropertiesConfig& properties_config, std::unor
 }
 
 bool UiConfigurationManager::Update(std::shared_ptr<UiConfiguration> ui_configuration) {
-    auto ui_config = make_shared_ext<UiConfig>();
+    auto ui_config = make_unique_ext<UiConfig>();
 
     ui_config->active_screen_index = ui_configuration->active_screen_index;
 
@@ -126,7 +126,7 @@ bool UiConfigurationManager::Update(std::shared_ptr<UiConfiguration> ui_configur
     if(!ui_configuration_service_->Save(ui_config.get()))
         return false;
 
-    ui_config_ = ui_config;
+    ui_config_ = std::move(ui_config);
     ui_configuration_ = ui_configuration;
 
     return true;
@@ -183,8 +183,8 @@ std::shared_ptr<UiConfiguration> UiConfigurationManager::Get(bool force_load) {
     if(!ui_config.has_value())
         return nullptr;
 
-    ui_config_raw_ = ui_config.value().config_raw;
-    ui_config_ = ui_config.value().config;
+    ui_config_raw_ = std::move(ui_config.value().config_raw);
+    ui_config_ = std::move(ui_config.value().config);
 
     UiConfiguration ui_configuration;
     ui_configuration.active_screen_index = ui_config_->active_screen_index;

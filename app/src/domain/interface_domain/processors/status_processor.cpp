@@ -17,15 +17,13 @@ void StatusProcessor::SubmitToEventBus(const UserStatus& status) {
     payload[UiPayloadType::IsStatusOk] = status.is_ok;
     payload[UiPayloadType::ComUserStatus] = static_cast<uint32_t>(status.status);
 
-    UiEvent event {
+    UiEventBus::GetInstance().PublishAsync({
         .type = UiEventType::StatusUpdated,
         .payload = payload
-    };
-
-    UiEventBus::GetInstance().PublishAsync(event);
+    });
 }
 
-int StatusProcessor::Process(UserStatus status) {
+int StatusProcessor::Process(const UserStatus& status) {
     SubmitToEventBus(status);
 
     return 0;

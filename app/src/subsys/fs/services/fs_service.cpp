@@ -10,7 +10,7 @@ namespace eerie_leap::subsys::fs::services {
 
 LOG_MODULE_REGISTER(fs_service_logger);
 
-FsService::FsService(fs_mount_t mountpoint) : mountpoint_(mountpoint) { }
+FsService::FsService(const fs_mount_t& mountpoint) : mountpoint_(mountpoint) { }
 
 bool FsService::Initialize() {
     if(!IsMounted())

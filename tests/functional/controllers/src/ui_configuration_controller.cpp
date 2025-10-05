@@ -86,7 +86,7 @@ std::shared_ptr<UiConfiguration> ui_configuration_manager_test_SetupTestUiConfig
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_POINT_COUNT), 35 },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE), static_cast<std::uint16_t>(HorizontalChartIndicatorType::LINE) }
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE), static_cast<std::uint16_t>(HorizontalChartIndicatorType::Line) }
                 }
             }
         }
@@ -103,8 +103,8 @@ ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_successf
 
     fs_service->Format();
 
-    auto ui_configuration_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
-    auto ui_configuration_manager = std::make_shared<UiConfigurationManager>(ui_configuration_service);
+    auto ui_configuration_service = make_unique_ext<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_configuration_manager = std::make_shared<UiConfigurationManager>(std::move(ui_configuration_service));
 
     auto ui_config = ui_configuration_manager_test_SetupTestUiConfig();
     bool result = ui_configuration_manager->Update(ui_config);
@@ -117,8 +117,8 @@ ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_and_Load
 
     fs_service->Format();
 
-    auto ui_configuration_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
-    auto ui_configuration_manager = std::make_shared<UiConfigurationManager>(ui_configuration_service);
+    auto ui_configuration_service = make_unique_ext<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_configuration_manager = std::make_shared<UiConfigurationManager>(std::move(ui_configuration_service));
 
     auto ui_config = ui_configuration_manager_test_SetupTestUiConfig();
     bool result = ui_configuration_manager->Update(ui_config);

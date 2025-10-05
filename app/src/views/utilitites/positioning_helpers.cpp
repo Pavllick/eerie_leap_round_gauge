@@ -15,20 +15,20 @@ WidgetPosition PositioningHelpers::GetPointOnCircle(int center_x, int center_y, 
     return { .x = x, .y = y };
 }
 
-void PositioningHelpers::PlaceObjectOnCircle(lv_obj_t* obj, int center_x, int center_y, int radius_px, float angle_deg) {
+void PositioningHelpers::PlaceObjectOnCircle(lv_obj_t* object, int center_x, int center_y, int radius_px, float angle_deg) {
     float angle_deg_normalized = 180.0F + angle_deg;
     WidgetPosition pos = GetPointOnCircle(center_x, center_y, radius_px, angle_deg_normalized);
 
     int angle = static_cast<int>(angle_deg_normalized * 10) - 900;
 
-    // NOTE: lv_obj_set_style_transform_rotation causes native_sim to segfault
-    // if delay is not added
+    // NOTE: lv_obj_set_style_transform_rotation causes native_sim
+    // to segfault if delay is not added
 #ifdef CONFIG_BOARD_NATIVE_SIM
     k_sleep(K_TICKS(1));
 #endif // CONFIG_BOARD_NATIVE_SIM
-    lv_obj_set_style_transform_rotation(obj, angle, 0);
-    lv_obj_set_x(obj, pos.x);
-    lv_obj_set_y(obj, pos.y);
+    lv_obj_set_style_transform_rotation(object, angle, 0);
+    lv_obj_set_x(object, pos.x);
+    lv_obj_set_y(object, pos.y);
 }
 
 } // namespace eerie_leap::views::utilitites

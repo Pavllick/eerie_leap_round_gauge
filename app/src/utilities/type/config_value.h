@@ -27,13 +27,13 @@ T GetConfigValue(
 
     auto it = config.find(key);
 
-    if (it == config.end()) {
+    if(it == config.end()) {
         return default_value;
     }
 
     const ConfigValue& value = it->second;
 
-    if (std::holds_alternative<T>(value)) {
+    if(std::holds_alternative<T>(value)) {
         return std::get<T>(value);
     }
 

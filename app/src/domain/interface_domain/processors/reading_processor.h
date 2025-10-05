@@ -18,7 +18,7 @@ private:
 public:
     ReadingProcessor();
 
-    int Process(SensorReadingDto reading) override;
+    int Process(const SensorReadingDto& reading) override;
 };
 
 } // namespace eerie_leap::domain::interface_domain::services

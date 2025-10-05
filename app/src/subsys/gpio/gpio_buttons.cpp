@@ -32,9 +32,8 @@ void GpioButtons::ButtonPressedCallback(const struct device* dev, gpio_callback*
 
     cb_data->last_press_time = now;
 
-    for(auto& handler : cb_data->handlers) {
+    for(auto& handler : cb_data->handlers)
         handler();
-    }
 }
 
 bool GpioButtons::RegisterCallback(int index, GptioButtonHandler handler) {
@@ -62,8 +61,8 @@ int GpioButtons::Count() {
     return gpio_specs_.size();
 }
 
-int GpioButtons::InitializeButton(gpio_dt_spec& button) {
-    if (!gpio_is_ready_dt(&button)) {
+int GpioButtons::InitializeButton(const gpio_dt_spec& button) {
+    if(!gpio_is_ready_dt(&button)) {
         LOG_ERR("Button GPIO device not ready.");
         return -1;
     } else {
@@ -71,7 +70,7 @@ int GpioButtons::InitializeButton(gpio_dt_spec& button) {
             button.port->name, button.pin);
 
         int ret = gpio_pin_configure_dt(&button, GPIO_INPUT);
-        if (ret != 0) {
+        if(ret != 0) {
             LOG_ERR("Error %d: failed to configure %s pin %d\n",
                 ret, button.port->name, button.pin);
 
@@ -79,7 +78,7 @@ int GpioButtons::InitializeButton(gpio_dt_spec& button) {
         }
 
         ret = gpio_pin_interrupt_configure_dt(&button, GPIO_INT_EDGE_TO_ACTIVE);
-        if (ret != 0) {
+        if(ret != 0) {
             LOG_ERR("Error %d: failed to configure interrupt on %s pin %d\n",
                 ret, button.port->name, button.pin);
 

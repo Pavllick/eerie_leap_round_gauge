@@ -22,9 +22,6 @@ public:
     int Initialize(ModbusCallbacks callbacks_ext);
     int UpdateServerId(uint8_t server_id);
 
-    int ReadRegisters(uint8_t address, uint16_t start_address, void* data, size_t count);
-    int WriteRegisters(uint8_t address, uint16_t start_address, void* data, size_t count);
-
     static int ReadRegistersCallback(uint16_t addr, uint16_t *reg, uint16_t num_regs);
     static int WriteRegisterCallback(uint16_t addr, uint16_t reg);
     static int WriteRegistersCallback(uint16_t addr, uint16_t *reg, uint16_t num_regs);

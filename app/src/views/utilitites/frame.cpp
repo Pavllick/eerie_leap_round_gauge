@@ -26,7 +26,7 @@ Frame Frame::Build() {
     return *this;
 }
 
-void Frame::ValidateFrame(lv_obj_t* frame) {
+void Frame::ValidateFrame(const lv_obj_t* frame) {
     if(!frame)
         throw std::runtime_error("Frame not created");
 }

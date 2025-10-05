@@ -25,15 +25,13 @@ void ReadingProcessor::SubmitToEventBus(const SensorReadingDto& reading) {
     payload[UiPayloadType::SensorId] = reading.sensor_id_hash;
     payload[UiPayloadType::Value] = reading.value;
 
-    UiEvent event {
+    UiEventBus::GetInstance().PublishAsync({
         .type = UiEventType::SensorDataUpdated,
         .payload = payload
-    };
-
-    UiEventBus::GetInstance().PublishAsync(event);
+    });
 }
 
-int ReadingProcessor::Process(SensorReadingDto reading) {
+int ReadingProcessor::Process(const SensorReadingDto& reading) {
     SubmitToEventBus(reading);
 
     return 0;

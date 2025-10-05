@@ -3,22 +3,18 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/device.h>
 
-#if DT_HAS_ALIAS(modbus0)
-#define MODBUS_NODE DT_ALIAS(modbus0)
-#endif
-
 namespace eerie_leap::subsys::device_tree {
 
-class DtModbus {
+class DtDisplay {
 private:
-    static char* iface_;
+    static const device* display_dev_;
 
-    DtModbus() = default;
+    DtDisplay() = default;
 
 public:
     static void Initialize();
 
-    static const char* Get() { return iface_; }
+    static const device* Get() { return display_dev_; }
 };
 
 } // namespace eerie_leap::subsys::device_tree

@@ -16,13 +16,13 @@ using namespace eerie_leap::utilities::guid;
 
 struct SensorReading {
     const Guid id;
-    const std::shared_ptr<Sensor> sensor;
+    std::shared_ptr<Sensor> sensor;
     std::optional<float> value;
     std::optional<system_clock::time_point> timestamp;
     ReadingStatus status = ReadingStatus::UNINITIALIZED;
     std::optional<std::string> error_message;
 
-    SensorReading(const Guid id, const std::shared_ptr<Sensor> sensor) : id(id), sensor(std::move(sensor)) {}
+    SensorReading(const Guid id, std::shared_ptr<Sensor> sensor) : id(id), sensor(std::move(sensor)) {}
 };
 
 }

@@ -13,7 +13,7 @@ private:
 
     Frame();
 
-    static void ValidateFrame(lv_obj_t* frame);
+    static void ValidateFrame(const lv_obj_t* frame);
 
 public:
     static Frame Create(lv_obj_t* parent);

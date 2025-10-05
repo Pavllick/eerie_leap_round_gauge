@@ -11,11 +11,10 @@ using namespace eerie_leap::domain::ui_domain::event_bus;
 
 LOG_MODULE_REGISTER(interface_logger);
 
-Interface::Interface(std::shared_ptr<Modbus> modbus, std::shared_ptr<SystemConfigurationManager> system_configuration_manager, std::shared_ptr<ReadingProcessor> reading_processor)
-    : modbus_(modbus),
+Interface::Interface(ext_unique_ptr<Modbus> modbus, std::shared_ptr<SystemConfigurationManager> system_configuration_manager)
+    : modbus_(std::move(modbus)),
     system_configuration_manager_(std::move(system_configuration_manager)),
-    reading_processor_(std::move(reading_processor)),
-    server_id_(modbus->GetServerId()),
+    server_id_(modbus_->GetServerId()),
     server_id_counter_(0) {
 
     server_id_resolved_ = server_id_ != Modbus::DEFAULT_SERVER_ID;
@@ -30,11 +29,11 @@ int Interface::Initialize() {
             return this->ReadHoldingRegisters(addr, reg, num_regs);
         },
 
-        .holding_reg_wr = [this](uint16_t addr, uint16_t reg) -> int {
+        .holding_reg_wr = [this](uint16_t addr, const uint16_t& reg) -> int {
             return this->WriteHoldingRegister(addr, reg);
         },
 
-        .holding_regs_wr = [this](uint16_t addr, uint16_t* reg, uint16_t num_regs) -> int {
+        .holding_regs_wr = [this](uint16_t addr, const uint16_t* reg, uint16_t num_regs) -> int {
             return this->WriteHoldingRegisters(addr, reg, num_regs);
         },
     };
@@ -68,7 +67,7 @@ int Interface::Get(ComRequestType com_request_type, uint16_t* data, size_t size_
     return -1;
 }
 
-int Interface::Set(ComRequestType com_request_type, uint16_t* data, size_t size_bytes) {
+int Interface::Set(ComRequestType com_request_type, const uint16_t* data, size_t size_bytes) {
     if(com_request_type == ComRequestType::SET_RESOLVE_SERVER_ID) {
         server_id_resolved_ = false;
         server_id_counter_ = 0;
@@ -142,11 +141,11 @@ int Interface::ReadHoldingRegisters(uint16_t addr, uint16_t *reg, uint16_t num_r
     return Get(static_cast<ComRequestType>(addr), reg, num_regs * sizeof(uint16_t));
 }
 
-int Interface::WriteHoldingRegister(uint16_t addr, uint16_t reg) {
+int Interface::WriteHoldingRegister(uint16_t addr, const uint16_t& reg) {
     return Set(static_cast<ComRequestType>(addr), &reg, sizeof(uint16_t));
 }
 
-int Interface::WriteHoldingRegisters(uint16_t addr, uint16_t* reg, uint16_t num_regs) {
+int Interface::WriteHoldingRegisters(uint16_t addr, const uint16_t* reg, uint16_t num_regs) {
     return Set(static_cast<ComRequestType>(addr), reg, num_regs * sizeof(uint16_t));
 }
 

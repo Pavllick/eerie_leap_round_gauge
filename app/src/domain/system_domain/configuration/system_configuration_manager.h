@@ -15,9 +15,9 @@ using namespace eerie_leap::domain::system_domain;
 
 class SystemConfigurationManager{
 private:
-    std::shared_ptr<ConfigurationService<SystemConfig>> system_configuration_service_;
-    std::shared_ptr<ExtVector> system_config_raw_;
-    std::shared_ptr<SystemConfig> system_config_;
+    ext_unique_ptr<ConfigurationService<SystemConfig>> system_configuration_service_;
+    ext_unique_ptr<ExtVector> system_config_raw_;
+    ext_unique_ptr<SystemConfig> system_config_;
     std::shared_ptr<SystemConfiguration> system_configuration_;
 
     bool UpdateHwVersion(uint32_t hw_version);
@@ -25,7 +25,7 @@ private:
     bool CreateDefaultSystemConfiguration();
 
 public:
-    explicit SystemConfigurationManager(std::shared_ptr<ConfigurationService<SystemConfig>> system_configuration_service);
+    explicit SystemConfigurationManager(ext_unique_ptr<ConfigurationService<SystemConfig>> system_configuration_service);
 
     bool UpdateInterfaceChannel(uint16_t interface_channel);
     bool UpdateBuildNumber(uint32_t build_number);

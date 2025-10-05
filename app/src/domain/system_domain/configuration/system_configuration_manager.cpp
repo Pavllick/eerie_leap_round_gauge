@@ -9,7 +9,7 @@ using namespace eerie_leap::utilities::memory;
 
 LOG_MODULE_REGISTER(system_config_ctrl_logger);
 
-SystemConfigurationManager::SystemConfigurationManager(std::shared_ptr<ConfigurationService<SystemConfig>> system_configuration_service) :
+SystemConfigurationManager::SystemConfigurationManager(ext_unique_ptr<ConfigurationService<SystemConfig>> system_configuration_service) :
     system_configuration_service_(std::move(system_configuration_service)),
     system_config_(nullptr),
     system_configuration_(nullptr) {
@@ -135,7 +135,7 @@ bool SystemConfigurationManager::Update(std::shared_ptr<SystemConfiguration> sys
     if(!system_configuration_service_->Save(&system_config))
         return false;
 
-    system_config_ = make_shared_ext<SystemConfig>(system_config);
+    system_config_ = make_unique_ext<SystemConfig>(system_config);
     system_configuration_ = system_configuration;
 
     return true;
@@ -150,8 +150,8 @@ std::shared_ptr<SystemConfiguration> SystemConfigurationManager::Get(bool force_
     if(!system_config.has_value())
         return nullptr;
 
-    system_config_raw_ = system_config.value().config_raw;
-    system_config_ = system_config.value().config;
+    system_config_raw_ = std::move(system_config.value().config_raw);
+    system_config_ = std::move(system_config.value().config);
 
     SystemConfiguration system_configuration {
         .device_id = system_config_->device_id,

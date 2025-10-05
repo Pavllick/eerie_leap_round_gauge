@@ -47,20 +47,6 @@ std::shared_ptr<IScreen> MainView::GetActiveScreen() {
     return GetScreen(active_screen_id_);
 }
 
-int MainView::DoRender() {
-    for(auto& screen : screens_)
-        screen.second->Render();
-
-    return 0;
-}
-
-int MainView::ApplyTheme() {
-    lv_obj_set_style_bg_color(container_->GetObject(), ThemeManager::GetInstance().GetCurrentTheme()->GetBackgroundColor().ToLvColor(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(container_->GetObject(), ThemeManager::GetInstance().GetCurrentTheme()->GetBackgroundColor().ToLvOpa(), LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    return 0;
-}
-
 void RenderCenterCrossHelperGuides(lv_obj_t* screen) {
     lv_obj_t * panel1 = lv_obj_create(screen);
     lv_obj_set_width(panel1, 2);
@@ -77,6 +63,22 @@ void RenderCenterCrossHelperGuides(lv_obj_t* screen) {
     lv_obj_remove_flag(panel2, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_border_color(panel2, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_opa(panel2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
+int MainView::DoRender() {
+    for(auto& screen : screens_)
+        screen.second->Render();
+
+    // RenderCenterCrossHelperGuides(container_->GetObject());
+
+    return 0;
+}
+
+int MainView::ApplyTheme() {
+    lv_obj_set_style_bg_color(container_->GetObject(), ThemeManager::GetInstance().GetCurrentTheme()->GetBackgroundColor().ToLvColor(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(container_->GetObject(), ThemeManager::GetInstance().GetCurrentTheme()->GetBackgroundColor().ToLvOpa(), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    return 0;
 }
 
 } // namespace eerie_leap::views

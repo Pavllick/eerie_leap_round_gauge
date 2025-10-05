@@ -75,32 +75,35 @@ std::shared_ptr<T> make_shared_ext(Args&&... args) {
 
 template<typename T>
 struct alloc_deleter {
-    alloc_deleter(const T& obj) : obj_(obj) { }
+    alloc_deleter() = default;
+    alloc_deleter(const HeapAllocator<T>& obj) : obj_(obj) { }
 
-    using pointer = std::allocator_traits<T>::pointer;
+    using pointer = T*;
 
     void operator()(pointer p) const {
-        T object(obj_);
-        std::allocator_traits<T>::destroy(object, std::addressof(*p));
-        std::allocator_traits<T>::deallocate(object, p, 1);
+        if (p) {
+            HeapAllocator<T> allocator(obj_);
+            std::allocator_traits<HeapAllocator<T>>::destroy(allocator, p);
+            std::allocator_traits<HeapAllocator<T>>::deallocate(allocator, p, 1);
+        }
     }
 
 private:
-    T obj_;
+    HeapAllocator<T> obj_;
 };
 
 template<typename T, typename... Args>
 auto allocate_unique(const HeapAllocator<T>& obj, Args&&... args) {
     using AT = std::allocator_traits<HeapAllocator<T>>;
-    static_assert(std::is_same<typename AT::value_type, std::remove_cv_t<T>>{}(),
+    static_assert(std::is_same<typename AT::value_type, std::remove_cv_t<T>>::value,
                 "Allocator has the wrong value_type");
 
     HeapAllocator<T> allocator(obj);
     auto p = allocator.allocate(1);
 
     try {
-        ::new (static_cast<void*>(p)) T(std::forward<Args>(args)...);
-        using D = alloc_deleter<HeapAllocator<T>>;
+        AT::construct(allocator, p, std::forward<Args>(args)...);
+        using D = alloc_deleter<T>;
         return std::unique_ptr<T, D>(p, D(allocator));
     } catch (...) {
         allocator.deallocate(p, 1);
@@ -108,8 +111,11 @@ auto allocate_unique(const HeapAllocator<T>& obj, Args&&... args) {
     }
 }
 
+template<typename T>
+using ext_unique_ptr = std::unique_ptr<T, alloc_deleter<T>>;
+
 template <typename T, typename... Args>
-std::unique_ptr<T, alloc_deleter<HeapAllocator<T>>> make_unique_ext(Args&&... args) {
+ext_unique_ptr<T> make_unique_ext(Args&&... args) {
     return allocate_unique<T>(HeapAllocator<T>(), std::forward<Args>(args)...);
 }
 

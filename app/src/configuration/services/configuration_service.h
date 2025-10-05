@@ -65,7 +65,7 @@ public:
             return std::nullopt;
         }
 
-        auto buffer = make_shared_ext<ExtVector>(load_buffer_size_);
+        auto buffer = make_unique_ext<ExtVector>(load_buffer_size_);
         size_t out_len = 0;
 
         if (!fs_service_->ReadFile(configuration_file_path_, buffer->data(), load_buffer_size_, out_len)) {
@@ -83,11 +83,11 @@ public:
             return std::nullopt;
         }
 
-        auto config = make_shared_ext<T>(configuration.value());
+        auto config = make_unique_ext<T>(configuration.value());
 
         LoadedConfig<T> loaded_config {
-            .config_raw = buffer,
-            .config = config
+            .config_raw = std::move(buffer),
+            .config = std::move(config)
         };
 
         LOG_INF("Loaded %s configuration successfully. Size: %d", configuration_file_path_.c_str(), out_len);

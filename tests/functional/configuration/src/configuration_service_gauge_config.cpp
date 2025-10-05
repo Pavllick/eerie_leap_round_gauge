@@ -36,7 +36,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_int_Save_
     for(int i = 0; i < 4; i++) {
         PropertiesConfig_PropertyValueType_m property_value;
 
-        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
+        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_c;
         property_value.PropertyValueType_m.value = values[i];
         ui_config->properties.PropertyValueType_m.push_back(property_value);
@@ -80,7 +80,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_double_Sa
     for(int i = 0; i < 4; i++) {
         PropertiesConfig_PropertyValueType_m property_value;
 
-        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
+        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_float_c;
         property_value.PropertyValueType_m.value = values[i];
         ui_config->properties.PropertyValueType_m.push_back(property_value);
@@ -124,9 +124,9 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_Sa
     for(int i = 0; i < 4; i++) {
         PropertiesConfig_PropertyValueType_m property_value;
 
-        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
+        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_tstr_c;
-        property_value.PropertyValueType_m.value = CborHelpers::ToZcborString(&values[i]);
+        property_value.PropertyValueType_m.value = CborHelpers::ToZcborString(values[i]);
         ui_config->properties.PropertyValueType_m.push_back(property_value);
     }
 
@@ -170,7 +170,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_bool_Save
     for(int i = 0; i < 4; i++) {
         PropertiesConfig_PropertyValueType_m property_value;
 
-        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
+        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_bool_c;
         property_value.PropertyValueType_m.value = values[i];
         ui_config->properties.PropertyValueType_m.push_back(property_value);
@@ -214,7 +214,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_int_list_
     for(int i = 0; i < 4; i++) {
         PropertiesConfig_PropertyValueType_m property_value;
 
-        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
+        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_l_c;
         property_value.PropertyValueType_m.value = values[i];
         ui_config->properties.PropertyValueType_m.push_back(property_value);
@@ -261,7 +261,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_li
         std::vector<zcbor_string> value_zcbor;
         value_zcbor.reserve(3);
         for(int j = 0; j < 3; j++) {
-            value_zcbor.push_back(CborHelpers::ToZcborString(&values[i][j]));
+            value_zcbor.push_back(CborHelpers::ToZcborString(values[i][j]));
         }
         values_zcbor.push_back(value_zcbor);
     }
@@ -269,7 +269,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_li
     for(int i = 0; i < 4; i++) {
         PropertiesConfig_PropertyValueType_m property_value;
 
-        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
+        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_tstr_l_c;
         property_value.PropertyValueType_m.value = values_zcbor[i];
         ui_config->properties.PropertyValueType_m.push_back(property_value);
@@ -329,8 +329,8 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_ma
 
         for(auto &item : values[i])
             value_zcbor.push_back({
-                .tstrtstr_key = CborHelpers::ToZcborString(&item.first),
-                .tstrtstr = CborHelpers::ToZcborString(&item.second)
+                .tstrtstr_key = CborHelpers::ToZcborString(item.first),
+                .tstrtstr = CborHelpers::ToZcborString(item.second)
             });
 
         values_zcbor.push_back(value_zcbor);
@@ -339,7 +339,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_ma
     for(int i = 0; i < 4; i++) {
         PropertiesConfig_PropertyValueType_m property_value;
 
-        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
+        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_map_c;
         property_value.PropertyValueType_m.value = values_zcbor[i];
         ui_config->properties.PropertyValueType_m.push_back(property_value);
@@ -407,7 +407,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_al
 
     // int32_t
     ui_config->properties.PropertyValueType_m.push_back({
-        .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[0]),
+        .PropertyValueType_m_key = CborHelpers::ToZcborString(keys[0]),
         .PropertyValueType_m = {
             .value = uint32_t_value,
             .PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_c
@@ -416,7 +416,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_al
 
     // double
     ui_config->properties.PropertyValueType_m.push_back({
-        .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[1]),
+        .PropertyValueType_m_key = CborHelpers::ToZcborString(keys[1]),
         .PropertyValueType_m = {
             .value = double_value,
             .PropertyValueType_choice = PropertyValueType_r::PropertyValueType_float_c
@@ -425,15 +425,15 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_al
 
     // string
     ui_config->properties.PropertyValueType_m.push_back({
-        .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[2]),
+        .PropertyValueType_m_key = CborHelpers::ToZcborString(keys[2]),
         .PropertyValueType_m = {
-            .value = CborHelpers::ToZcborString(&string_value),
+            .value = CborHelpers::ToZcborString(string_value),
             .PropertyValueType_choice = PropertyValueType_r::PropertyValueType_tstr_c
         }
     });
 
         ui_config->properties.PropertyValueType_m.push_back({
-        .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[3]),
+        .PropertyValueType_m_key = CborHelpers::ToZcborString(keys[3]),
         .PropertyValueType_m = {
             .value = bool_value,
             .PropertyValueType_choice = PropertyValueType_r::PropertyValueType_bool_c
@@ -442,7 +442,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_al
 
     // int vector
     ui_config->properties.PropertyValueType_m.push_back({
-        .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[4]),
+        .PropertyValueType_m_key = CborHelpers::ToZcborString(keys[4]),
         .PropertyValueType_m = {
             .value = int_vector_value,
             .PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_l_c
@@ -452,10 +452,10 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_al
         std::vector<zcbor_string> string_vector_value_zcbor;
     string_vector_value_zcbor.reserve(string_vector_value.size());
     for(int i = 0; i < string_vector_value.size(); i++)
-        string_vector_value_zcbor.push_back(CborHelpers::ToZcborString(&string_vector_value[i]));
+        string_vector_value_zcbor.push_back(CborHelpers::ToZcborString(string_vector_value[i]));
 
     ui_config->properties.PropertyValueType_m.push_back({
-        .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[5]),
+        .PropertyValueType_m_key = CborHelpers::ToZcborString(keys[5]),
         .PropertyValueType_m = {
             .value = string_vector_value_zcbor,
             .PropertyValueType_choice = PropertyValueType_r::PropertyValueType_tstr_l_c
@@ -467,13 +467,13 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_al
     string_map_value_zcbor.reserve(string_map_value.size());
     for(auto &item : string_map_value) {
         string_map_value_zcbor.push_back({
-            .tstrtstr_key = CborHelpers::ToZcborString(&item.first),
-            .tstrtstr = CborHelpers::ToZcborString(&item.second)
+            .tstrtstr_key = CborHelpers::ToZcborString(item.first),
+            .tstrtstr = CborHelpers::ToZcborString(item.second)
         });
     }
 
     ui_config->properties.PropertyValueType_m.push_back({
-        .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[6]),
+        .PropertyValueType_m_key = CborHelpers::ToZcborString(keys[6]),
         .PropertyValueType_m = {
             .value = string_map_value_zcbor,
             .PropertyValueType_choice = PropertyValueType_r::PropertyValueType_map_c
@@ -562,7 +562,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_Save_successfully_saved_and
     for(int i = 0; i < 4; i++) {
         PropertiesConfig_PropertyValueType_m property_value;
 
-        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[i]);
+        property_value.PropertyValueType_m_key = CborHelpers::ToZcborString(keys[i]);
         property_value.PropertyValueType_m.PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_c;
         property_value.PropertyValueType_m.value = values[i];
         ui_config->properties.PropertyValueType_m.push_back(property_value);
@@ -591,7 +591,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_Save_successfully_saved_and
             },
             .properties = {
                 .PropertyValueType_m = {{
-                    .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[0]),
+                    .PropertyValueType_m_key = CborHelpers::ToZcborString(keys[0]),
                     .PropertyValueType_m = {
                         .value = values[0],
                         .PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_c
@@ -614,28 +614,28 @@ ZTEST(configuration_service_ui_config, test_UiConfig_Save_successfully_saved_and
             },
             .properties = {
                 .PropertyValueType_m = {{
-                    .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[0]),
+                    .PropertyValueType_m_key = CborHelpers::ToZcborString(keys[0]),
                     .PropertyValueType_m = {
                         .value = values[0],
                         .PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_c
                     }
                 },
                 {
-                    .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[1]),
+                    .PropertyValueType_m_key = CborHelpers::ToZcborString(keys[1]),
                     .PropertyValueType_m = {
                         .value = values[1],
                         .PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_c
                     }
                 },
                 {
-                    .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[2]),
+                    .PropertyValueType_m_key = CborHelpers::ToZcborString(keys[2]),
                     .PropertyValueType_m = {
                         .value = values[2],
                         .PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_c
                     }
                 },
                 {
-                    .PropertyValueType_m_key = CborHelpers::ToZcborString(&keys[3]),
+                    .PropertyValueType_m_key = CborHelpers::ToZcborString(keys[3]),
                     .PropertyValueType_m = {
                         .value = values[3],
                         .PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_c

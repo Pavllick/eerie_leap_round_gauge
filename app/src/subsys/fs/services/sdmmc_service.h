@@ -31,7 +31,7 @@ private:
     int PrintInfo() const;
 
 public:
-    SdmmcService(fs_mount_t mountpoint);
+    explicit SdmmcService(const fs_mount_t& mountpoint);
 
     bool Initialize() override;
 };

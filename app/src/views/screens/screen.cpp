@@ -38,8 +38,8 @@ void Screen::Configure(const ScreenConfiguration& config) {
 
     for(auto& widget_config : configuration_.widget_configurations) {
         auto widget = WidgetFactory::GetInstance().CreateWidget(widget_config, container_);
-        UpdateWidgetSize(widget, configuration_.grid);
-        UpdateWidgetPosition(widget, configuration_.grid);
+        UpdateWidgetSize(*widget, configuration_.grid);
+        UpdateWidgetPosition(*widget, configuration_.grid);
 
         widgets_->push_back(std::move(widget));
     }
@@ -53,12 +53,12 @@ std::shared_ptr<std::vector<std::unique_ptr<IWidget>>> Screen::GetWidgets() cons
     return widgets_;
 }
 
-void Screen::UpdateWidgetSize(std::unique_ptr<IWidget>& widget, GridSettings& grid_settings) {
+void Screen::UpdateWidgetSize(IWidget& widget, GridSettings& grid_settings) {
     lv_obj_t *active_screen = lv_screen_active();
     int32_t screen_width = lv_obj_get_width(active_screen);
     int32_t screen_height = lv_obj_get_height(active_screen);
 
-    auto widget_config = widget->GetConfiguration();
+    auto widget_config = widget.GetConfiguration();
 
     uint32_t width = 0;
     if(grid_settings.width == widget_config.size_grid.width)
@@ -72,17 +72,17 @@ void Screen::UpdateWidgetSize(std::unique_ptr<IWidget>& widget, GridSettings& gr
     else
         height = (screen_height / grid_settings.height) * widget_config.size_grid.height - grid_settings.spacing_px * 2;
 
-    widget->SetSizePx({.width = width, .height = height});
+    widget.SetSizePx({.width = width, .height = height});
 }
 
-void Screen::UpdateWidgetPosition(std::unique_ptr<IWidget>& widget, GridSettings& grid_settings) {
+void Screen::UpdateWidgetPosition(IWidget& widget, GridSettings& grid_settings) {
     lv_obj_t *active_screen = lv_screen_active();
     int32_t screen_width = lv_obj_get_width(active_screen);
     int32_t screen_height = lv_obj_get_height(active_screen);
 
-    auto widget_config = widget->GetConfiguration();
+    auto widget_config = widget.GetConfiguration();
 
-    auto size_px = widget->GetSizePx();
+    auto size_px = widget.GetSizePx();
     if(size_px.width == 0 || size_px.height == 0)
         throw std::runtime_error("Widget size is not set.");
 
@@ -93,7 +93,7 @@ void Screen::UpdateWidgetPosition(std::unique_ptr<IWidget>& widget, GridSettings
     int y = screen_height - cell_height * widget_config.position_grid.y - size_px.height;
     y = std::abs(y);
 
-    widget->SetPositionPx({.x = x, .y = y});
+    widget.SetPositionPx({.x = x, .y = y});
 }
 
 } // namespace eerie_leap::views::screens
