@@ -76,7 +76,6 @@ void HorizontalChartIndicator::UpdateIndicator(float value) {
     auto ser = lv_chart_get_series_next(lv_chart_, nullptr);
 
     lv_chart_set_next_value(lv_chart_, ser, static_cast<int32_t>(value));
-    value_ = value;
 }
 
 void HorizontalChartIndicator::Configure(const WidgetConfiguration& config) {

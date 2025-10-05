@@ -51,7 +51,6 @@ void DigitalIndicator::UpdateIndicator(float value) {
     snprintf(value_str, sizeof(value_str), "%.*f", value_precision_, value);
 
     lv_label_set_text(lv_label_, value_str);
-    value_ = value;
 }
 
 void DigitalIndicator::Configure(const WidgetConfiguration& config) {

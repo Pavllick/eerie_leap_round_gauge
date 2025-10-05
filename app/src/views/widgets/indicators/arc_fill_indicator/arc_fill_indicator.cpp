@@ -40,6 +40,7 @@ lv_obj_t* ArcFillIndicator::Create(lv_obj_t* parent, int32_t range_start, int32_
     lv_obj_set_align(lv_arc_, LV_ALIGN_CENTER);
     lv_obj_remove_flag(lv_arc_, LV_OBJ_FLAG_CLICKABLE);
     lv_arc_set_value(lv_arc_, range_start);
+    lv_arc_set_bg_angles(lv_arc_, start_angle_ + 90, end_angle_ + 90);
     // lv_obj_set_style_arc_rounded(ui_arc, false, LV_PART_INDICATOR | LV_STATE_DEFAULT);
 
     // lv_obj_set_style_bg_color(lv_arc_, lv_color_hex(0xFFFFFF), LV_PART_KNOB | LV_STATE_DEFAULT);
@@ -53,7 +54,20 @@ lv_obj_t* ArcFillIndicator::Create(lv_obj_t* parent, int32_t range_start, int32_
 
 void ArcFillIndicator::UpdateIndicator(float value) {
     lv_arc_set_value(lv_arc_, static_cast<int32_t>(value));
-    value_ = value;
+}
+
+void ArcFillIndicator::Configure(const WidgetConfiguration& config) {
+    IndicatorBase::Configure(config);
+
+    start_angle_ = GetConfigValue<int>(
+        config.properties,
+        WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE),
+        45);
+
+    end_angle_ = GetConfigValue<int>(
+        config.properties,
+        WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE),
+        315);
 }
 
 } // namespace eerie_leap::views::widgets::indicators

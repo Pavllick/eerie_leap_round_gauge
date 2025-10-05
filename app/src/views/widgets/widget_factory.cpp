@@ -2,6 +2,7 @@
 #include "views/widgets/basic/arc_icon_widget/arc_icon_widget.h"
 
 #include "views/widgets/indicators/arc_fill_indicator/arc_fill_indicator.h"
+#include "views/widgets/indicators/segment_arc_indicator/segment_arc_indicator.h"
 #include "views/widgets/indicators/digital_indicator/digital_indicator.h"
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 
@@ -62,6 +63,7 @@ void WidgetFactory::RegisterTypes() {
     RegisterWidget<ArcIconWidget>(WidgetType::BasicArcIcon);
 
     RegisterWidget<ArcFillIndicator>(WidgetType::IndicatorArcFill);
+    RegisterWidget<SegmentArcIndicator>(WidgetType::IndicatorSegmentArc);
     RegisterWidget<DigitalIndicator>(WidgetType::IndicatorDigital);
     RegisterWidget<HorizontalChartIndicator>(WidgetType::IndicatorHorizontalChart);
 }

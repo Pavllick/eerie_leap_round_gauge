@@ -1,4 +1,3 @@
-#include "domain/ui_domain/models/widget_property.h"
 #include "views/themes/theme_manager.h"
 
 #include "dot_icon.h"
@@ -29,7 +28,7 @@ int DotIcon::ApplyTheme() {
     lv_coord_t icon_height = lv_obj_get_height(container_->GetObject());
 
     if(icon_width == 0 || icon_height == 0)
-        throw std::runtime_error("IconWidget: Icon dimensions are invalid.");
+        throw std::runtime_error("Icon dimensions are invalid.");
 
     lv_obj_set_style_transform_pivot_x(container_->GetObject(), icon_width / 2, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_transform_pivot_y(container_->GetObject(), icon_height / 2, LV_PART_MAIN | LV_STATE_DEFAULT);

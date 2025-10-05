@@ -372,9 +372,32 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
                     { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED), true },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
                     { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
-                    { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" }
+                    { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
+                    // { WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE), 0 },
+                    // { WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE), 360 }
                 }
             },
+            // WidgetConfiguration {
+            //     .type = WidgetType::IndicatorSegmentArc,
+            //     .id = 0,
+            //     .position_grid = WidgetPosition {
+            //         .x = 0,
+            //         .y = 0
+            //     },
+            //     .size_grid = WidgetSize {
+            //         .width = 3,
+            //         .height = 3
+            //     },
+            //     .properties = {
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE), true },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED), true },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE), 0 },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE), 100 },
+            //         { WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID), "2348664336" },
+            //         // { WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE), 0 },
+            //         // { WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE), 360 }
+            //     }
+            // },
             WidgetConfiguration {
                 .type = WidgetType::BasicArcIcon,
                 .id = 5,

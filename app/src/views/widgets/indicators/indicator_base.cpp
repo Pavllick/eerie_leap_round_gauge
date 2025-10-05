@@ -19,8 +19,12 @@ IndicatorBase::IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent)
 }
 
 void IndicatorBase::UpdateIndicatorCallback(void* obj, int32_t value) {
+    float value_float = static_cast<float>(value) / (10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS);
+
     auto* indicator = static_cast<IndicatorBase*>(obj);
-    indicator->UpdateIndicator(static_cast<float>(value) / (10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS));
+
+    indicator->UpdateIndicator(value_float);
+    indicator->value_ = value_float;
 }
 
 lv_anim_t IndicatorBase::CreateValueChangeAnimation() {
@@ -56,7 +60,7 @@ void IndicatorBase::Update(float value) {
             value_,
             value);
     } else {
-        UpdateIndicator(value);
+        UpdateIndicatorCallback(this, static_cast<int32_t>(value * 10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS));
     }
 }
 
