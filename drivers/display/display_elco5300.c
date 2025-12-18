@@ -4,14 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT chipone_co5300
+#define DT_DRV_COMPAT chipone_elco5300
 
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/sys/byteorder.h>
-#include <zephyr/drivers/display/display_co5300.h>
 
-#include "display_co5300.h"
+#include "display_elco5300.h"
 
 LOG_MODULE_REGISTER(display_co5300, CONFIG_DISPLAY_LOG_LEVEL);
 

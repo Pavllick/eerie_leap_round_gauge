@@ -66,7 +66,7 @@
 
 		// CO5300 display as MSPI device
 		co5300_display: co5300-display@0 {
-			compatible = "chipone,co5300";
+			compatible = "chipone,elco5300";
 			reg = <0>;
 			status = "okay";
 			/* Should be less than or equal to CONFIG_MSPI_DMA_MAX_BUFFER_SIZE */

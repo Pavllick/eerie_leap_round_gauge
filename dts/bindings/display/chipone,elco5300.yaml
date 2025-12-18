@@ -3,7 +3,7 @@
 
 description: CO5300 QSPI Display Controller
 
-compatible: "chipone,co5300"
+compatible: "chipone,elco5300"
 
 include: [mspi-device.yaml, display-controller.yaml, lcd-controller.yaml, pinctrl-device.yaml]
 

@@ -3,9 +3,9 @@
 
 # CO5300 QSPI Display Controller Configuration
 
-config CO5300
+config ELCO5300
 	bool "CO5300 QSPI Display Controller"
 	default y
-	depends on DT_HAS_CHIPONE_CO5300_ENABLED
+	depends on DT_HAS_CHIPONE_ELCO5300_ENABLED
 	help
 	  Enable support for the CO5300 QSPI display controller.
