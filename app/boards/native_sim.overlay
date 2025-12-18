@@ -1,6 +1,7 @@
 / {
 	aliases {
 		intfs0 = &intfs0;
+        can0 = &can_loopback0;
 	};
 
 	fstab {

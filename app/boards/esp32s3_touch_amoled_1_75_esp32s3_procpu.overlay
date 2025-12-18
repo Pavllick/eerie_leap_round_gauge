@@ -4,8 +4,8 @@
 / {
     aliases {
         intfs0 = &intfs0;
-        modbus0 = &modbus0;
         gpio0buttons = &gpio0buttons;
+        can0 = &can0;
     };
 
     chosen {
@@ -57,27 +57,41 @@
     status = "okay";
 };
 
-&uart1 {
+&spi3 {
 	status = "okay";
-	current-speed = <115200>;
-	pinctrl-0 = <&uart1_default>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+	pinctrl-0 = <&spim3_canbus>;
 	pinctrl-names = "default";
 
-    modbus0: modbus0 {
-		compatible = "zephyr,modbus-serial";
+	can0: mcp2518fd@0 {
+		compatible = "microchip,mcp251xfd";
+		reg = <0>;
 		status = "okay";
+
+		// MCP2518FD maximum SPI frequency is 20 MHz
+		// But current temp setup is not stable at frequencies above 8 MHz
+		// TODO: Investigate
+		spi-max-frequency = <8000000>;
+		int-gpios = <&gpio1 11 GPIO_ACTIVE_LOW>;
+		osc-freq = <20000000>;
+	};
+
+	can-transceiver {
+		max-bitrate = <8000000>;
 	};
 };
 
 &pinctrl {
-	uart1_default: uart1_default {
+    spim3_canbus: spim3_canbus {
 		group1 {
-			pinmux = <UART1_TX_GPIO17>;
-			output-high;
+			pinmux = <SPIM3_MISO_GPIO17>,
+				     <SPIM3_SCLK_GPIO44>,
+				     <SPIM3_CSEL_GPIO18>;
 		};
 		group2 {
-			pinmux = <UART1_RX_GPIO16>;
-			bias-pull-up;
+			pinmux = <SPIM3_MOSI_GPIO16>;
+			output-low;
 		};
 	};
 };
