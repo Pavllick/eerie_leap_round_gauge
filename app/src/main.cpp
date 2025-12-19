@@ -171,8 +171,8 @@ int main() {
 
         k_msleep(SLEEP_TIME_MS);
 
-        // SystemInfo::print_heap_info();
-        // SystemInfo::print_stack_info();
+        // SystemInfo::PrintHeapInfo();
+        // SystemInfo::PrintStackInfo();
 	}
 
 	return 0;

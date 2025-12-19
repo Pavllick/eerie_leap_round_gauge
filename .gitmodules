@@ -1,0 +1,3 @@
+[submodule "modules/eerie_leap_common"]
+	path = modules/eerie_leap_common
+	url = https://github.com/Pavllick/eerie_leap_common.git

@@ -86,6 +86,14 @@ endfunction()
 # generate_zcbor_configuration("system_config.cddl" "system_config")
 # generate_zcbor_configuration("ui_config.cddl" "ui_config")
 
+# Add Zephyr modules
+set(EXTRA_ZEPHYR_MODULES
+    "${CMAKE_CURRENT_SOURCE_DIR}/../modules/eerie_leap_common")
+
+# Boost is linked through eerie_leap_common module
+# but has to be configured here
+add_definitions(-DBOOST_SYSTEM_DISABLE_THREADS)
+
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(eerie_leap_round_gauge)
 
