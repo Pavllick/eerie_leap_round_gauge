@@ -5,7 +5,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
-#include "utilities/memory/heap_allocator.h"
+#include "utilities/memory/memory_resource_manager.h"
 #include "utilities/dev_tools/system_info.h"
 #include "utilities/guid/guid_generator.h"
 
@@ -18,12 +18,14 @@
 #include "subsys/fs/services/fs_service.h"
 #include "subsys/modbus/modbus.h"
 #include "subsys/gpio/gpio_buttons.h"
+#include "subsys/time/time_service.h"
+#include "subsys/time/rtc_provider.h"
+#include "subsys/time/boot_elapsed_time_provider.h"
 
-#include "domain/interface_domain/interface.h"
 #include "domain/ui_domain/ui_renderer.h"
 #include "domain/sensor_domain/models/sensor.h"
-#include "domain/interface_domain/processors/reading_processor.h"
-#include "domain/interface_domain/processors/status_processor.h"
+#include "domain/canbus_domain/sensor_readers/canbus_sensor_reader.h"
+#include "domain/canbus_domain/services/canbus_service.h"
 
 #include "controllers/ui_controller.h"
 #include "controllers/logging_controller.h"
@@ -63,15 +65,17 @@ using namespace eerie_leap::subsys::device_tree;
 using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::modbus;
 using namespace eerie_leap::subsys::gpio;
+using namespace eerie_leap::subsys::time;
 
 using namespace eerie_leap::domain::system_domain::configuration;
-using namespace eerie_leap::domain::interface_domain;
-using namespace eerie_leap::domain::interface_domain::processors;
 using namespace eerie_leap::domain::ui_domain;
 using namespace eerie_leap::domain::ui_domain::configuration;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::domain::sensor_domain::models;
 using namespace eerie_leap::configuration::services;
+using namespace eerie_leap::domain::canbus_domain::services;
+using namespace eerie_leap::domain::canbus_domain::models;
+using namespace eerie_leap::domain::canbus_domain::sensor_readers;
 
 using namespace eerie_leap::controllers;
 using namespace eerie_leap::views::themes;
@@ -100,10 +104,15 @@ int main() {
         return -1;
     }
 
+    auto rtc_provider = std::make_shared<RtcProvider>();
+    auto boot_elapsed_time_provider = std::make_shared<BootElapsedTimeProvider>();
+    auto time_service = std::make_shared<TimeService>(rtc_provider, boot_elapsed_time_provider);
+    time_service->Initialize();
+
     auto guid_generator = make_shared_ext<GuidGenerator>();
 
-    auto reading_processor = make_shared_ext<ReadingProcessor>();
-    auto status_processor = make_shared_ext<StatusProcessor>();
+    // auto reading_processor = make_shared_ext<ReadingProcessor>();
+    // auto status_processor = make_shared_ext<StatusProcessor>();
 
     auto system_config_service = make_unique_ext<ConfigurationService<SystemConfig>>("system_config", fs_service);
     auto system_configuration_manager = make_shared_ext<SystemConfigurationManager>(std::move(system_config_service));
@@ -111,19 +120,51 @@ int main() {
     auto ui_config_service = make_unique_ext<ConfigurationService<UiConfig>>("ui_config", fs_service);
     auto ui_configuration_manager = make_shared_ext<UiConfigurationManager>(std::move(ui_config_service));
 
-    std::shared_ptr<Interface> interface = nullptr;
-    if(DtModbus::Get() != nullptr) {
-        auto modbus = make_unique_ext<Modbus>(
-            DtModbus::Get(),
-            system_configuration_manager->Get()->interface_channel);
+    std::shared_ptr<CanChannelConfiguration> can_channel_configuration =
+        make_shared_pmr<CanChannelConfiguration>(Mrm::GetExtPmr());
 
-        interface = make_shared_ext<Interface>(std::move(modbus), system_configuration_manager);
-        if(interface->Initialize() != 0)
-            return -1;
+    can_channel_configuration->type = CanbusType::CANFD;
+    can_channel_configuration->is_extended_id = false;
+    can_channel_configuration->bus_channel = 0;
+    can_channel_configuration->bitrate = 1000000;
+    can_channel_configuration->data_bitrate = 2000000;
 
-        interface->RegisterProcessor<SensorReadingDto>(reading_processor);
-        interface->RegisterProcessor<UserStatus>(status_processor);
-    }
+    auto message_configuration_0 = make_shared_pmr<CanMessageConfiguration>(Mrm::GetExtPmr());
+    message_configuration_0->name = "EL_FRAME_0";
+    message_configuration_0->message_size = 8;
+    message_configuration_0->frame_id = 790;
+    message_configuration_0->send_interval_ms = 10;
+
+    CanSignalConfiguration signal_configuration_0(std::allocator_arg, Mrm::GetExtPmr());
+    signal_configuration_0.start_bit = 16;
+    signal_configuration_0.size_bits = 16;
+    signal_configuration_0.name = "sensor_1";
+    signal_configuration_0.unit = "km/h";
+    signal_configuration_0.factor = 0.1;
+    message_configuration_0->signal_configurations.emplace_back(std::move(signal_configuration_0));
+    can_channel_configuration->message_configurations.emplace_back(std::move(message_configuration_0));
+
+    auto canbus_service = std::make_shared<CanbusService>(can_channel_configuration);
+
+    CanbusSensorReader canbus_sensor_reader(
+        time_service,
+        guid_generator,
+        canbus_service->GetCanbus(can_channel_configuration->bus_channel),
+        can_channel_configuration->dbc);
+
+    // std::shared_ptr<Interface> interface = nullptr;
+    // if(DtModbus::Get() != nullptr) {
+    //     auto modbus = make_unique_ext<Modbus>(
+    //         DtModbus::Get(),
+    //         system_configuration_manager->Get()->interface_channel);
+
+    //     interface = make_shared_ext<Interface>(std::move(modbus), system_configuration_manager);
+    //     if(interface->Initialize() != 0)
+    //         return -1;
+
+    //     interface->RegisterProcessor<SensorReadingDto>(reading_processor);
+    //     interface->RegisterProcessor<UserStatus>(status_processor);
+    // }
 
     // NOTE: This is a temporary solution.
     // auto sensors = SetupTestSensors();
@@ -132,27 +173,27 @@ int main() {
     auto ui_controller = make_shared_ext<UiController>(ui_configuration_manager);
     ui_controller->Render();
 
-    std::shared_ptr<LoggingController> logging_controller;
-    do {
-        if(interface == nullptr) {
-            LOG_WRN("No interface configured.");
-            break;
-        }
+    // std::shared_ptr<LoggingController> logging_controller;
+    // do {
+    //     if(interface == nullptr) {
+    //         LOG_WRN("No interface configured.");
+    //         break;
+    //     }
 
-        if(!DtGpio::GetButtons().has_value()) {
-            LOG_WRN("No buttons configured.");
-            break;
-        }
+    //     if(!DtGpio::GetButtons().has_value()) {
+    //         LOG_WRN("No buttons configured.");
+    //         break;
+    //     }
 
-        auto gpio_buttons = make_shared_ext<GpioButtons>(DtGpio::GetButtons().value());
-        if(gpio_buttons->Initialize() != 0) {
-            LOG_ERR("Failed to initialize buttons.");
-            break;
-        }
+    //     auto gpio_buttons = make_shared_ext<GpioButtons>(DtGpio::GetButtons().value());
+    //     if(gpio_buttons->Initialize() != 0) {
+    //         LOG_ERR("Failed to initialize buttons.");
+    //         break;
+    //     }
 
-        logging_controller = make_shared_ext<LoggingController>(gpio_buttons, interface);
-        logging_controller->Initialize();
-    } while(false);
+    //     logging_controller = make_shared_ext<LoggingController>(gpio_buttons, interface);
+    //     logging_controller->Initialize();
+    // } while(false);
 
 #ifdef CONFIG_BOARD_NATIVE_SIM
     SensorReadingDto reading;
@@ -164,10 +205,10 @@ int main() {
 #endif // CONFIG_BOARD_NATIVE_SIM
 
 	while (true) {
-    #ifdef CONFIG_BOARD_NATIVE_SIM
-        reading.value = (Rng::Get32() / static_cast<float>(UINT32_MAX)) * 100;
-        reading_processor->Process(reading);
-    #endif // CONFIG_BOARD_NATIVE_SIM
+    // #ifdef CONFIG_BOARD_NATIVE_SIM
+    //     reading.value = (Rng::Get32() / static_cast<float>(UINT32_MAX)) * 100;
+    //     reading_processor->Process(reading);
+    // #endif // CONFIG_BOARD_NATIVE_SIM
 
         k_msleep(SLEEP_TIME_MS);
 
@@ -181,7 +222,7 @@ int main() {
 std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> SetupTestSensors() {
     Sensor sensor_1 {
         .id = "sensor_1",
-        .id_hash = 2348664336,
+        .id_hash = static_cast<uint32_t>(4634802150965772288),
         .metadata = {
             .name = "Sensor 1",
             .unit = "km/h",

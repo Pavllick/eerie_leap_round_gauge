@@ -60,6 +60,10 @@ config EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS
 	int "Floating point significant digits"
 	default 4
 
+config EERIE_LEAP_CANBUS_AUTO_DETECT_INTERVAL_MS
+	int "Canbus auto detect activity check interval ms"
+	default 5000
+
 module = APP
 module-str = APP
 source "subsys/logging/Kconfig.template.log_config"

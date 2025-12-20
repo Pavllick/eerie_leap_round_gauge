@@ -5,7 +5,7 @@
 
 #include "reading_processor.h"
 
-namespace eerie_leap::domain::interface_domain::processors {
+namespace eerie_leap::domain::canbus_domain::processors {
 
 using namespace eerie_leap::subsys::time;
 using namespace eerie_leap::domain::ui_domain::event_bus;
@@ -16,7 +16,7 @@ ReadingProcessor::ReadingProcessor() : service_running_(ATOMIC_INIT(0)) { }
 
 void ReadingProcessor::SubmitToEventBus(const SensorReadingDto& reading) {
     if(reading.status != ReadingStatus::PROCESSED) {
-        LOG_DBG("Reading status not PROCESSED for sensor: %lu", reading.sensor_id_hash);
+        printf("Reading status not PROCESSED for sensor: %lu", reading.sensor_id_hash);
         return;
     }
 
@@ -36,4 +36,4 @@ int ReadingProcessor::Process(const SensorReadingDto& reading) {
     return 0;
 }
 
-} // namespace eerie_leap::domain::interface_domain::services
+} // namespace eerie_leap::domain::canbus_domain::processors
