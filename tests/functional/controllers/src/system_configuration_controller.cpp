@@ -3,7 +3,7 @@
 #include <zephyr/ztest.h>
 
 #include "configuration/system_config/system_config.h"
-#include "configuration/services/configuration_service.h"
+#include "configuration/services/cbor_configuration_service.h"
 #include "domain/system_domain/configuration/system_configuration_manager.h"
 
 #include "subsys/device_tree/dt_fs.h"
@@ -22,7 +22,7 @@ ZTEST(system_configuration_manager, test_SystemConfigurationManager_Save_config_
 
     fs_service->Format();
 
-    auto system_configuration_service = make_unique_ext<ConfigurationService<SystemConfig>>("system_config", fs_service);
+    auto system_configuration_service = make_unique_ext<CborConfigurationService<SystemConfig>>("system_config", fs_service);
     auto system_configuration_manager = std::make_shared<SystemConfigurationManager>(std::move(system_configuration_service));
 
     SystemConfiguration system_configuration {
@@ -46,7 +46,7 @@ ZTEST(system_configuration_manager, test_SystemConfigurationManager_Save_config_
 
     fs_service->Format();
 
-    auto system_configuration_service = make_unique_ext<ConfigurationService<SystemConfig>>("system_config", fs_service);
+    auto system_configuration_service = make_unique_ext<CborConfigurationService<SystemConfig>>("system_config", fs_service);
     auto system_configuration_manager = std::make_shared<SystemConfigurationManager>(std::move(system_configuration_service));
 
     SystemConfiguration system_configuration {
@@ -57,7 +57,7 @@ ZTEST(system_configuration_manager, test_SystemConfigurationManager_Save_config_
     bool result = system_configuration_manager->Update(system_configuration_ptr);
     zassert_true(result);
 
-    system_configuration_service = make_unique_ext<ConfigurationService<SystemConfig>>("system_config", fs_service);
+    system_configuration_service = make_unique_ext<CborConfigurationService<SystemConfig>>("system_config", fs_service);
     system_configuration_manager = std::make_shared<SystemConfigurationManager>(std::move(system_configuration_service));
 
     auto saved_system_configuration = *system_configuration_manager->Get(true);

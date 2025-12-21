@@ -3,7 +3,7 @@
 #include <zephyr/ztest.h>
 
 #include "configuration/ui_config/ui_config.h"
-#include "configuration/services/configuration_service.h"
+#include "configuration/services/cbor_configuration_service.h"
 
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
 #include "domain/ui_domain/models/widget_property.h"
@@ -103,7 +103,7 @@ ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_successf
 
     fs_service->Format();
 
-    auto ui_configuration_service = make_unique_ext<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_configuration_service = make_unique_ext<CborConfigurationService<UiConfig>>("ui_config", fs_service);
     auto ui_configuration_manager = std::make_shared<UiConfigurationManager>(std::move(ui_configuration_service));
 
     auto ui_config = ui_configuration_manager_test_SetupTestUiConfig();
@@ -117,7 +117,7 @@ ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_and_Load
 
     fs_service->Format();
 
-    auto ui_configuration_service = make_unique_ext<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_configuration_service = make_unique_ext<CborConfigurationService<UiConfig>>("ui_config", fs_service);
     auto ui_configuration_manager = std::make_shared<UiConfigurationManager>(std::move(ui_configuration_service));
 
     auto ui_config = ui_configuration_manager_test_SetupTestUiConfig();

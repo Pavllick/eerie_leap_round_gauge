@@ -22,7 +22,7 @@ using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::utilities::cbor;
 
 template <typename T>
-class ConfigurationService {
+class CborConfigurationService {
 private:
     const std::string configuration_dir_ = "config";
     static constexpr size_t load_buffer_size_ = sizeof(T) + 2048;
@@ -34,7 +34,7 @@ private:
     const std::string configuration_file_path_ = configuration_dir_ + "/" + configuration_name_ + ".cbor";
 
 public:
-    ConfigurationService(std::string configuration_name, std::shared_ptr<IFsService> fs_service)
+    CborConfigurationService(std::string configuration_name, std::shared_ptr<IFsService> fs_service)
         : configuration_name_(std::move(configuration_name)), fs_service_(std::move(fs_service)) {
 
         cbor_serializer_ = make_shared_ext<CborSerializer<T>>(

@@ -3,7 +3,7 @@
 
 #include "utilities/cbor/cbor_helpers.hpp"
 #include "configuration/system_config/system_config.h"
-#include "configuration/services/configuration_service.h"
+#include "configuration/services/cbor_configuration_service.h"
 
 #include "subsys/device_tree/dt_fs.h"
 #include "subsys/fs/services/i_fs_service.h"
@@ -28,7 +28,7 @@ ZTEST(configuration_service_system_config, test_SystemConfig_Save_config_success
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto system_config_service = std::make_shared<ConfigurationService<SystemConfig>>("system_config", fs_service);
+    auto system_config_service = std::make_shared<CborConfigurationService<SystemConfig>>("system_config", fs_service);
 
     auto save_res = system_config_service->Save(&system_config);
     zassert_true(save_res);
@@ -46,7 +46,7 @@ ZTEST(configuration_service_system_config, test_SystemConfig_Load_config_success
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto system_config_service = std::make_shared<ConfigurationService<SystemConfig>>("system_config", fs_service);
+    auto system_config_service = std::make_shared<CborConfigurationService<SystemConfig>>("system_config", fs_service);
 
     auto save_res = system_config_service->Save(&system_config);
     zassert_true(save_res);

@@ -8,7 +8,7 @@
 
 #include "utilities/cbor/cbor_helpers.hpp"
 #include "configuration/ui_config/ui_config.h"
-#include "configuration/services/configuration_service.h"
+#include "configuration/services/cbor_configuration_service.h"
 
 #include "subsys/device_tree/dt_fs.h"
 #include "subsys/fs/services/i_fs_service.h"
@@ -88,7 +88,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_double_Sa
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_config_service = std::make_shared<CborConfigurationService<UiConfig>>("ui_config", fs_service);
 
     auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
@@ -131,7 +131,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_Sa
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_config_service = std::make_shared<CborConfigurationService<UiConfig>>("ui_config", fs_service);
 
     auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
@@ -176,7 +176,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_bool_Save
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_config_service = std::make_shared<CborConfigurationService<UiConfig>>("ui_config", fs_service);
 
     auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
@@ -219,7 +219,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_int_list_
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_config_service = std::make_shared<CborConfigurationService<UiConfig>>("ui_config", fs_service);
 
     auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
@@ -273,7 +273,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_li
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_config_service = std::make_shared<CborConfigurationService<UiConfig>>("ui_config", fs_service);
 
     auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
@@ -342,7 +342,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_ma
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_config_service = std::make_shared<CborConfigurationService<UiConfig>>("ui_config", fs_service);
 
     auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
@@ -475,7 +475,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_al
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_config_service = std::make_shared<CborConfigurationService<UiConfig>>("ui_config", fs_service);
 
     auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);
@@ -639,7 +639,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_Save_successfully_saved_and
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto ui_config_service = std::make_shared<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_config_service = std::make_shared<CborConfigurationService<UiConfig>>("ui_config", fs_service);
 
     auto save_res = ui_config_service->Save(ui_config.get());
     zassert_true(save_res);

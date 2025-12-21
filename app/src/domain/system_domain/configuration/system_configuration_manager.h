@@ -4,7 +4,7 @@
 
 #include "utilities/memory/memory_resource_manager.h"
 #include "configuration/cbor/cbor_system_config/cbor_system_config.h"
-#include "configuration/services/configuration_service.h"
+#include "configuration/services/cbor_configuration_service.h"
 #include "domain/system_domain/models/system_configuration.h"
 #include "domain/system_domain/configuration/parsers/system_configuration_cbor_parser.h"
 
@@ -17,7 +17,7 @@ using namespace eerie_leap::domain::system_domain::configuration::parsers;
 
 class SystemConfigurationManager{
 private:
-    std::unique_ptr<ConfigurationService<CborSystemConfig>> cbor_configuration_service_;
+    std::unique_ptr<CborConfigurationService<CborSystemConfig>> cbor_configuration_service_;
 
     std::unique_ptr<SystemConfigurationCborParser> cbor_parser_;
 
@@ -28,7 +28,7 @@ private:
     bool CreateDefaultConfiguration();
 
 public:
-    explicit SystemConfigurationManager(std::unique_ptr<ConfigurationService<CborSystemConfig>> system_configuration_service);
+    explicit SystemConfigurationManager(std::unique_ptr<CborConfigurationService<CborSystemConfig>> system_configuration_service);
 
     bool UpdateInterfaceChannel(uint16_t interface_channel);
     bool UpdateBuildNumber(uint32_t build_number);

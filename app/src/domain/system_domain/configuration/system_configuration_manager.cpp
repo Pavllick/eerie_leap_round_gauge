@@ -9,7 +9,7 @@ using namespace eerie_leap::utilities::memory;
 
 LOG_MODULE_REGISTER(system_config_ctrl_logger);
 
-SystemConfigurationManager::SystemConfigurationManager(std::unique_ptr<ConfigurationService<CborSystemConfig>> cbor_configuration_service) :
+SystemConfigurationManager::SystemConfigurationManager(std::unique_ptr<CborConfigurationService<CborSystemConfig>> cbor_configuration_service) :
     cbor_configuration_service_(std::move(cbor_configuration_service)),
     configuration_(nullptr) {
 

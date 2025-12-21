@@ -23,7 +23,7 @@
 #include "subsys/time/boot_elapsed_time_provider.h"
 #include "subsys/event_bus/event_bus.h"
 
-#include "configuration/services/configuration_service.h"
+#include "configuration/services/cbor_configuration_service.h"
 
 #include "domain/system_domain/configuration/system_configuration_manager.h"
 
@@ -115,12 +115,12 @@ int main() {
     // auto reading_processor = make_shared_ext<ReadingProcessor>();
     // auto status_processor = make_shared_ext<StatusProcessor>();
 
-    auto system_config_service = std::make_unique<ConfigurationService<CborSystemConfig>>(
+    auto system_config_service = std::make_unique<CborConfigurationService<CborSystemConfig>>(
         "system_config", fs_service);
     auto system_configuration_manager = make_shared_ext<SystemConfigurationManager>(
         std::move(system_config_service));
 
-    auto ui_config_service = std::make_unique<ConfigurationService<CborUiConfig>>(
+    auto ui_config_service = std::make_unique<CborConfigurationService<CborUiConfig>>(
         "ui_config", fs_service);
     auto ui_configuration_manager = make_shared_ext<UiConfigurationManager>(
         std::move(ui_config_service));
