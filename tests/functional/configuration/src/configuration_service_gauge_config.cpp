@@ -28,7 +28,6 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_int_Save_
     ui_config->active_screen_index = 12;
 
     ui_config->properties_present = true;
-    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
     std::vector<int32_t> values = {1, 2, 3, 4};
@@ -56,7 +55,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_int_Save_
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
-    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m_count, 4);
+    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m.size(), 4);
 
     for(int i = 0; i < 4; i++) {
         zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->properties.PropertyValueType_m[i].PropertyValueType_m_key), keys[i]);
@@ -72,7 +71,6 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_double_Sa
     ui_config->active_screen_index = 12;
 
     ui_config->properties_present = true;
-    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
     std::vector<double> values = {1.1, 2.2, 3.3, 4.4};
@@ -100,7 +98,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_double_Sa
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
-    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m_count, 4);
+    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m.size(), 4);
 
     for(int i = 0; i < 4; i++) {
         zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->properties.PropertyValueType_m[i].PropertyValueType_m_key), keys[i]);
@@ -116,7 +114,6 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_Sa
     ui_config->active_screen_index = 12;
 
     ui_config->properties_present = true;
-    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
     std::vector<std::string> values = {"v_0", "v_1", "v_2", "v_3"};
@@ -144,7 +141,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_Sa
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
-    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m_count, 4);
+    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m.size(), 4);
 
     for(int i = 0; i < 4; i++) {
         zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->properties.PropertyValueType_m[i].PropertyValueType_m_key), keys[i]);
@@ -162,7 +159,6 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_bool_Save
     ui_config->active_screen_index = 12;
 
     ui_config->properties_present = true;
-    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
     std::vector<bool> values = {true, false, true, false};
@@ -190,7 +186,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_bool_Save
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
-    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m_count, 4);
+    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m.size(), 4);
 
     for(int i = 0; i < 4; i++) {
         zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->properties.PropertyValueType_m[i].PropertyValueType_m_key), keys[i]);
@@ -206,7 +202,6 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_int_list_
     ui_config->active_screen_index = 12;
 
     ui_config->properties_present = true;
-    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
     std::vector<std::vector<int32_t>> values = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}};
@@ -234,7 +229,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_int_list_
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
-    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m_count, 4);
+    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m.size(), 4);
 
     for(int i = 0; i < 4; i++) {
         zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->properties.PropertyValueType_m[i].PropertyValueType_m_key), keys[i]);
@@ -250,7 +245,6 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_li
     ui_config->active_screen_index = 12;
 
     ui_config->properties_present = true;
-    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
     std::vector<std::vector<std::string>> values = {{"v_0", "v_1", "v_2"}, {"v_3", "v_4", "v_5"}, {"v_6", "v_7", "v_8"}, {"v_9", "v_10", "v_11"}};
@@ -289,7 +283,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_li
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
-    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m_count, 4);
+    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m.size(), 4);
 
     for(int i = 0; i < 4; i++) {
         zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->properties.PropertyValueType_m[i].PropertyValueType_m_key), keys[i]);
@@ -310,7 +304,6 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_ma
     ui_config->active_screen_index = 12;
 
     ui_config->properties_present = true;
-    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
 
@@ -359,7 +352,6 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_ma
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
-    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m_count, 4);
 
     for(int i = 0; i < 4; i++) {
         zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->properties.PropertyValueType_m[i].PropertyValueType_m_key), keys[i]);
@@ -387,7 +379,6 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_al
     ui_config->active_screen_index = 12;
 
     ui_config->properties_present = true;
-    ui_config->properties.PropertyValueType_m_count = 7;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3", "t_4", "t_5", "t_6"};
     int32_t uint32_t_value = 46;
@@ -494,7 +485,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_PropertyValueType_string_al
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
-    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m_count, 7);
+    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m.size(), 7);
 
     // int32_t
     zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->properties.PropertyValueType_m[0].PropertyValueType_m_key), keys[0]);
@@ -554,7 +545,6 @@ ZTEST(configuration_service_ui_config, test_UiConfig_Save_successfully_saved_and
     ui_config->active_screen_index = 12;
 
     ui_config->properties_present = true;
-    ui_config->properties.PropertyValueType_m_count = 4;
 
     std::vector<std::string> keys = {"t_0", "t_1", "t_2", "t_3"};
     std::vector<int32_t> values = {1, 2, 3, 4};
@@ -596,8 +586,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_Save_successfully_saved_and
                         .value = values[0],
                         .PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_c
                     }
-                }},
-                .PropertyValueType_m_count = 1
+                }}
             },
             .properties_present = true,
         },
@@ -640,12 +629,10 @@ ZTEST(configuration_service_ui_config, test_UiConfig_Save_successfully_saved_and
                         .value = values[3],
                         .PropertyValueType_choice = PropertyValueType_r::PropertyValueType_int_c
                     }
-                }},
-                .PropertyValueType_m_count = 4
+                }}
             },
             .properties_present = true,
-        }},
-        .WidgetConfig_m_count = 2
+        }}
     });
 
     DtFs::InitInternalFs();
@@ -662,7 +649,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_Save_successfully_saved_and
     zassert_true(loaded_config.has_value());
     zassert_equal(loaded_config.value().config->active_screen_index, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
-    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m_count, 4);
+    zassert_equal(loaded_config.value().config->properties.PropertyValueType_m.size(), 4);
 
     for(int i = 0; i < 4; i++) {
         zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->properties.PropertyValueType_m[i].PropertyValueType_m_key), keys[i]);
@@ -678,7 +665,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_Save_successfully_saved_and
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].grid.height, 100);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].grid.spacing_px, 10);
 
-    zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m_count, 2);
+    zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m.size(), 2);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].type, 1);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].id, 1);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].position.x, 0);
@@ -686,7 +673,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_Save_successfully_saved_and
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].size.width, 100);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].size.height, 100);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].properties_present, true);
-    zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].properties.PropertyValueType_m_count, 1);
+    zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].properties.PropertyValueType_m.size(), 1);
     zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].properties.PropertyValueType_m[0].PropertyValueType_m_key), keys[0]);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].properties.PropertyValueType_m[0].PropertyValueType_m.PropertyValueType_choice, PropertyValueType_r::PropertyValueType_int_c);
     zassert_equal(std::get<int32_t>(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[0].properties.PropertyValueType_m[0].PropertyValueType_m.value), values[0]);
@@ -698,7 +685,7 @@ ZTEST(configuration_service_ui_config, test_UiConfig_Save_successfully_saved_and
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].size.width, 100);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].size.height, 100);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].properties_present, true);
-    zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].properties.PropertyValueType_m_count, 4);
+    zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].properties.PropertyValueType_m.size(), 4);
     zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].properties.PropertyValueType_m[0].PropertyValueType_m_key), keys[0]);
     zassert_equal(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].properties.PropertyValueType_m[0].PropertyValueType_m.PropertyValueType_choice, PropertyValueType_r::PropertyValueType_int_c);
     zassert_equal(std::get<int32_t>(loaded_config.value().config->ScreenConfig_m[0].WidgetConfig_m[1].properties.PropertyValueType_m[0].PropertyValueType_m.value), values[0]);

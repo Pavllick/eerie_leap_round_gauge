@@ -73,7 +73,7 @@ static bool encode_PropertiesConfig(
 {
 	zcbor_log("%s\r\n", __func__);
 
-	bool res = (((zcbor_map_start_encode(state, 0) && ((zcbor_multi_encode((*input).PropertyValueType_m_count, (zcbor_encoder_t *)encode_repeated_PropertiesConfig_PropertyValueType_m, state, input->PropertyValueType_m.data(), sizeof(struct PropertiesConfig_PropertyValueType_m))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 0))));
+	bool res = (((zcbor_map_start_encode(state, 0) && ((zcbor_multi_encode(input->PropertyValueType_m.size(), (zcbor_encoder_t *)encode_repeated_PropertiesConfig_PropertyValueType_m, state, input->PropertyValueType_m.data(), sizeof(struct PropertiesConfig_PropertyValueType_m))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_map_end_encode(state, 0))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -141,7 +141,7 @@ static bool encode_ScreenConfig(
        ((zcbor_uint32_encode(state, (&(*input).id))))
     && ((zcbor_uint32_encode(state, (&(*input).type))))
 	&& ((encode_GridSettingsConfig(state, (&(*input).grid))))
-	&& ((zcbor_list_start_encode(state, 0) && ((zcbor_multi_encode((*input).WidgetConfig_m_count, (zcbor_encoder_t *)encode_WidgetConfig, state, input->WidgetConfig_m.data(), sizeof(struct WidgetConfig))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 0)))
+	&& ((zcbor_list_start_encode(state, 0) && ((zcbor_multi_encode(input->WidgetConfig_m.size(), (zcbor_encoder_t *)encode_WidgetConfig, state, input->WidgetConfig_m.data(), sizeof(struct WidgetConfig))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 0)))
 	) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 0))));
 
 	log_result(state, res, __func__);
@@ -156,7 +156,7 @@ static bool encode_UiConfig(
 	bool res = (((zcbor_list_start_encode(state, 0) && ((((zcbor_uint32_encode(state, (&(*input).version))))
 	&& ((zcbor_uint32_encode(state, (&(*input).active_screen_index))))
 	&& (!(*input).properties_present || encode_PropertiesConfig(state, (&(*input).properties)))
-	&& ((zcbor_list_start_encode(state, 0) && ((zcbor_multi_encode((*input).ScreenConfig_m_count, (zcbor_encoder_t *)encode_ScreenConfig, state, input->ScreenConfig_m.data(), sizeof(struct ScreenConfig))
+	&& ((zcbor_list_start_encode(state, 0) && ((zcbor_multi_encode(input->ScreenConfig_m.size(), (zcbor_encoder_t *)encode_ScreenConfig, state, input->ScreenConfig_m.data(), sizeof(struct ScreenConfig))
 	) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 0)))
 	) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 0))));
 

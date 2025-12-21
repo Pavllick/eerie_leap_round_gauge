@@ -22,8 +22,6 @@ UiConfigurationManager::UiConfigurationManager(ext_unique_ptr<ConfigurationServi
 }
 
 void ValueTypeToPropertyValueType(PropertiesConfig& properties_config, std::unordered_map<std::string, ConfigValue>& properties) {
-    properties_config.PropertyValueType_m_count = properties.size();
-
     size_t i = 0;
     for(auto& [key, value] : properties) {
         PropertiesConfig_PropertyValueType_m property_value;
@@ -82,12 +80,9 @@ bool UiConfigurationManager::Update(std::shared_ptr<UiConfiguration> ui_configur
     ui_config->active_screen_index = ui_configuration->active_screen_index;
 
     ui_config->properties_present = ui_configuration->properties.size() > 0;
-    if(ui_configuration->properties.size() > 0) {
-        ui_config->properties.PropertyValueType_m_count = ui_configuration->properties.size();
+    if(ui_configuration->properties.size() > 0)
         ValueTypeToPropertyValueType(ui_config->properties, ui_configuration->properties);
-    }
 
-    ui_config->ScreenConfig_m_count = ui_configuration->screen_configurations.size();
     ui_config->ScreenConfig_m.clear();
     for(int i = 0; i < ui_configuration->screen_configurations.size(); i++) {
         ScreenConfig screen_config;
@@ -99,7 +94,6 @@ bool UiConfigurationManager::Update(std::shared_ptr<UiConfiguration> ui_configur
         screen_config.grid.height = ui_configuration->screen_configurations[i].grid.height;
         screen_config.grid.spacing_px = ui_configuration->screen_configurations[i].grid.spacing_px;
 
-        screen_config.WidgetConfig_m_count = ui_configuration->screen_configurations[i].widget_configurations.size();
         screen_config.WidgetConfig_m.clear();
         for(int j = 0; j < ui_configuration->screen_configurations[i].widget_configurations.size(); j++) {
             WidgetConfig widget_config;
@@ -112,10 +106,8 @@ bool UiConfigurationManager::Update(std::shared_ptr<UiConfiguration> ui_configur
             widget_config.size.height = ui_configuration->screen_configurations[i].widget_configurations[j].size_grid.height;
 
             widget_config.properties_present = ui_configuration->screen_configurations[i].widget_configurations[j].properties.size() > 0;
-            if(ui_configuration->screen_configurations[i].widget_configurations[j].properties.size() > 0) {
-                widget_config.properties.PropertyValueType_m_count = ui_configuration->screen_configurations[i].widget_configurations[j].properties.size();
+            if(ui_configuration->screen_configurations[i].widget_configurations[j].properties.size() > 0)
                 ValueTypeToPropertyValueType(widget_config.properties, ui_configuration->screen_configurations[i].widget_configurations[j].properties);
-            }
 
             screen_config.WidgetConfig_m.push_back(widget_config);
         }
@@ -133,7 +125,7 @@ bool UiConfigurationManager::Update(std::shared_ptr<UiConfiguration> ui_configur
 }
 
 void PropertyValueTypeToValueType(std::unordered_map<std::string, ConfigValue>& properties, PropertiesConfig& properties_config) {
-    if(properties_config.PropertyValueType_m_count == 0)
+    if(properties_config.PropertyValueType_m.size() == 0)
         return;
 
     for(auto& property : properties_config.PropertyValueType_m) {
@@ -192,7 +184,7 @@ std::shared_ptr<UiConfiguration> UiConfigurationManager::Get(bool force_load) {
     if(ui_config_->properties_present)
         PropertyValueTypeToValueType(ui_configuration.properties, ui_config_->properties);
 
-    for(int i = 0; i < ui_config_->ScreenConfig_m_count; i++) {
+    for(int i = 0; i < ui_config_->ScreenConfig_m.size(); i++) {
         ScreenConfiguration screen_configuration;
         screen_configuration.id = ui_config_->ScreenConfig_m[i].id;
         screen_configuration.type = static_cast<ScreenType>(ui_config_->ScreenConfig_m[i].type);
@@ -202,7 +194,7 @@ std::shared_ptr<UiConfiguration> UiConfigurationManager::Get(bool force_load) {
         screen_configuration.grid.height = ui_config_->ScreenConfig_m[i].grid.height;
         screen_configuration.grid.spacing_px = ui_config_->ScreenConfig_m[i].grid.spacing_px;
 
-        for(int j = 0; j < ui_config_->ScreenConfig_m[i].WidgetConfig_m_count; j++) {
+        for(int j = 0; j < ui_config_->ScreenConfig_m[i].WidgetConfig_m.size(); j++) {
             WidgetConfiguration widget_configuration;
             widget_configuration.type = static_cast<WidgetType>(ui_config_->ScreenConfig_m[i].WidgetConfig_m[j].type);
             widget_configuration.id = ui_config_->ScreenConfig_m[i].WidgetConfig_m[j].id;

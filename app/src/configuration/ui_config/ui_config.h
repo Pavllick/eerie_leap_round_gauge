@@ -49,7 +49,6 @@ struct PropertiesConfig_PropertyValueType_m {
 
 struct PropertiesConfig {
 	std::vector<PropertiesConfig_PropertyValueType_m> PropertyValueType_m;
-	size_t PropertyValueType_m_count;
 };
 
 struct GridSettingsConfig {
@@ -83,7 +82,6 @@ struct ScreenConfig {
     uint32_t type;
 	GridSettingsConfig grid;
 	std::vector<WidgetConfig> WidgetConfig_m;
-	size_t WidgetConfig_m_count;
 };
 
 struct UiConfig {
@@ -92,5 +90,4 @@ struct UiConfig {
 	PropertiesConfig properties;
 	bool properties_present;
 	std::vector<ScreenConfig> ScreenConfig_m;
-	size_t ScreenConfig_m_count;
 };

@@ -176,20 +176,20 @@ static bool decode_PropertiesConfig(
 {
 	zcbor_log("%s\r\n", __func__);
 
-	result->PropertyValueType_m_count = 0;
+    size_t PropertyValueType_m_count = 0;
 	result->PropertyValueType_m.clear();
 
 	auto buffer = make_shared_ext<ExtVector>(sizeof(PropertiesConfig_PropertyValueType_m) * UI_CONFIG_MAX_PROPERTIES_COUNT);
 
 	bool res = zcbor_map_start_decode(state)
-		&& ((zcbor_multi_decode(0, UI_CONFIG_MAX_PROPERTIES_COUNT, &(*result).PropertyValueType_m_count, (zcbor_decoder_t *)decode_repeated_PropertiesConfig_PropertyValueType_m, state, buffer->data(), sizeof(struct PropertiesConfig_PropertyValueType_m))) ||
+		&& ((zcbor_multi_decode(0, UI_CONFIG_MAX_PROPERTIES_COUNT, &PropertyValueType_m_count, (zcbor_decoder_t *)decode_repeated_PropertiesConfig_PropertyValueType_m, state, buffer->data(), sizeof(struct PropertiesConfig_PropertyValueType_m))) ||
 			(zcbor_list_map_end_force_decode(state), false))
 		&& zcbor_map_end_decode(state);
 
 	if (res) {
-		result->PropertyValueType_m.resize(result->PropertyValueType_m_count);
+		result->PropertyValueType_m.resize(PropertyValueType_m_count);
 		memcpy(result->PropertyValueType_m.data(), buffer->data(),
-			result->PropertyValueType_m_count * sizeof(struct PropertiesConfig_PropertyValueType_m));
+			PropertyValueType_m_count * sizeof(struct PropertiesConfig_PropertyValueType_m));
 	}
 
 	log_result(state, res, __func__);
@@ -255,17 +255,18 @@ static bool decode_ScreenConfig(
 	zcbor_log("%s\r\n", __func__);
 
 	auto buffer = make_shared_ext<ExtVector>(sizeof(WidgetConfig) * UI_CONFIG_MAX_WIDGET_CONFIGURATIONS_COUNT);
+    size_t WidgetConfig_m_count = 0;
 
 	bool res = (((zcbor_list_start_decode(state) && ((
        ((zcbor_uint32_decode(state, (&(*result).id))))
     && ((zcbor_uint32_decode(state, (&(*result).type))))
 	&& ((decode_GridSettingsConfig(state, (&(*result).grid))))
-	&& ((zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, UI_CONFIG_MAX_WIDGET_CONFIGURATIONS_COUNT, &(*result).WidgetConfig_m_count, (zcbor_decoder_t *)decode_WidgetConfig, state, buffer->data(), sizeof(struct WidgetConfig))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
+	&& ((zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, UI_CONFIG_MAX_WIDGET_CONFIGURATIONS_COUNT, &WidgetConfig_m_count, (zcbor_decoder_t *)decode_WidgetConfig, state, buffer->data(), sizeof(struct WidgetConfig))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
 
 	if (res) {
-		result->WidgetConfig_m.resize(result->WidgetConfig_m_count);
+		result->WidgetConfig_m.resize(WidgetConfig_m_count);
 		memcpy(result->WidgetConfig_m.data(), buffer->data(),
-			result->WidgetConfig_m_count * sizeof(struct WidgetConfig));
+			WidgetConfig_m_count * sizeof(struct WidgetConfig));
 	}
 
 	log_result(state, res, __func__);
@@ -278,17 +279,18 @@ static bool decode_UiConfig(
 	zcbor_log("%s\r\n", __func__);
 
 	auto buffer = make_shared_ext<ExtVector>(sizeof(ScreenConfig) * UI_CONFIG_MAX_SCREEN_CONFIGURATIONS_COUNT);
+    size_t ScreenConfig_m_count = 0;
 
 	bool res = (((zcbor_list_start_decode(state) && ((((zcbor_uint32_decode(state, (&(*result).version))))
 	&& ((zcbor_uint32_decode(state, (&(*result).active_screen_index))))
 	&& ((*result).properties_present = ((decode_PropertiesConfig(state, (&(*result).properties)))), 1)
-	&& ((zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, UI_CONFIG_MAX_SCREEN_CONFIGURATIONS_COUNT, &(*result).ScreenConfig_m_count, (zcbor_decoder_t *)decode_ScreenConfig, state, buffer->data(), sizeof(struct ScreenConfig))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))))
+	&& ((zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, UI_CONFIG_MAX_SCREEN_CONFIGURATIONS_COUNT, &ScreenConfig_m_count, (zcbor_decoder_t *)decode_ScreenConfig, state, buffer->data(), sizeof(struct ScreenConfig))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))))
 	|| (zcbor_list_map_end_force_decode(state), false))) && zcbor_list_end_decode(state)));
 
 	if (res) {
-		result->ScreenConfig_m.resize(result->ScreenConfig_m_count);
+		result->ScreenConfig_m.resize(ScreenConfig_m_count);
 		memcpy(result->ScreenConfig_m.data(), buffer->data(),
-			result->ScreenConfig_m_count * sizeof(struct ScreenConfig));
+			ScreenConfig_m_count * sizeof(struct ScreenConfig));
 	}
 
 	log_result(state, res, __func__);
