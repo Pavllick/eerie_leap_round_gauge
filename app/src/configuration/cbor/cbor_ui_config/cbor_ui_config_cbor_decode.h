@@ -4,9 +4,9 @@
 #include <cstdbool>
 #include <cstddef>
 #include <cstring>
-#include "ui_config.h"
+#include "cbor_ui_config.h"
 
-int cbor_decode_UiConfig(
+int cbor_decode_CborUiConfig(
 		const uint8_t *payload, size_t payload_len,
-		struct UiConfig *result,
+		struct CborUiConfig *result,
 		size_t *payload_len_out);

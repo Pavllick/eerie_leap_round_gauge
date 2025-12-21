@@ -2,11 +2,11 @@
 
 #include "utilities/cbor/cbor_size_builder.hpp"
 
-#include "system_config.h"
+#include "cbor_system_config.h"
 
 using namespace eerie_leap::utilities::cbor;
 
-static size_t cbor_get_size_CborSystemConfig(const SystemConfig& config) {
+static size_t cbor_get_size_CborSystemConfig(const CborSystemConfig& config) {
     CborSizeBuilder builder;
     builder.AddIndefiniteArrayStart();
 

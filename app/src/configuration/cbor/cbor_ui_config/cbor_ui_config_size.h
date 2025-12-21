@@ -2,27 +2,27 @@
 
 #include "utilities/cbor/cbor_size_builder.hpp"
 
-#include "ui_config.h"
+#include "cbor_ui_config.h"
 
 using namespace eerie_leap::utilities::cbor;
 
-static size_t GetPropertyValueTypeSize(const PropertyValueType_r& value) {
+static size_t GetCborPropertyValueTypeSize(const CborPropertyValueType_r& value) {
     CborSizeBuilder builder;
 
-    switch (value.PropertyValueType_choice) {
-        case PropertyValueType_r::PropertyValueType_int_c:
+    switch (value.CborPropertyValueType_choice) {
+        case CborPropertyValueType_r::CborPropertyValueType_int_c:
             builder.AddInt(std::get<int32_t>(value.value));
             break;
-        case PropertyValueType_r::PropertyValueType_float_c:
+        case CborPropertyValueType_r::CborPropertyValueType_float_c:
             builder.AddDouble(std::get<double>(value.value));
             break;
-        case PropertyValueType_r::PropertyValueType_tstr_c:
+        case CborPropertyValueType_r::CborPropertyValueType_tstr_c:
             builder.AddTstr(std::get<zcbor_string>(value.value));
             break;
-        case PropertyValueType_r::PropertyValueType_bool_c:
+        case CborPropertyValueType_r::CborPropertyValueType_bool_c:
             builder.AddBool(std::get<bool>(value.value));
             break;
-        case PropertyValueType_r::PropertyValueType_int_l_c: {
+        case CborPropertyValueType_r::CborPropertyValueType_int_l_c: {
             const auto& vec = std::get<std::vector<int32_t>>(value.value);
             builder.AddIndefiniteArrayStart();
             for(const auto& item : vec)
@@ -30,7 +30,7 @@ static size_t GetPropertyValueTypeSize(const PropertyValueType_r& value) {
 
             break;
         }
-        case PropertyValueType_r::PropertyValueType_tstr_l_c: {
+        case CborPropertyValueType_r::CborPropertyValueType_tstr_l_c: {
             const auto& vec = std::get<std::vector<zcbor_string>>(value.value);
             builder.AddIndefiniteArrayStart();
             for(const auto& item : vec)
@@ -38,7 +38,7 @@ static size_t GetPropertyValueTypeSize(const PropertyValueType_r& value) {
 
             break;
         }
-        case PropertyValueType_r::PropertyValueType_map_c: {
+        case CborPropertyValueType_r::CborPropertyValueType_map_c: {
             const auto& vec = std::get<std::vector<map_tstrtstr>>(value.value);
             builder.AddIndefiniteArrayStart();
             for(const auto& item : vec) {
@@ -54,7 +54,7 @@ static size_t GetPropertyValueTypeSize(const PropertyValueType_r& value) {
     return builder.Build();
 }
 
-static size_t cbor_get_size_CborUiConfig(const UiConfig& config) {
+static size_t cbor_get_size_CborUiConfig(const CborUiConfig& config) {
     CborSizeBuilder builder;
     builder.AddIndefiniteArrayStart();
 
@@ -63,27 +63,27 @@ static size_t cbor_get_size_CborUiConfig(const UiConfig& config) {
 
     builder.AddOptional(config.properties_present,
         config.properties,
-        [](const PropertiesConfig& properties) {
+        [](const CborPropertiesConfig& properties) {
 
         CborSizeBuilder builder;
         builder.AddIndefiniteArrayStart();
 
-        for(const auto& property : properties.PropertyValueType_m) {
-            builder.AddTstr(property.PropertyValueType_m_key)
-                .AddSize(GetPropertyValueTypeSize(property.PropertyValueType_m));
+        for(const auto& property : properties.CborPropertyValueType_m) {
+            builder.AddTstr(property.CborPropertyValueType_m_key)
+                .AddSize(GetCborPropertyValueTypeSize(property.CborPropertyValueType_m));
         }
 
         return builder.Build();
     });
 
     builder.AddIndefiniteArrayStart();
-    for(const auto& screen : config.ScreenConfig_m) {
+    for(const auto& screen : config.CborScreenConfig_m) {
         builder.AddIndefiniteArrayStart();
 
         builder.AddUint(screen.id)
             .AddUint(screen.type);
 
-        // GridSettingsConfig
+        // CborGridSettingsConfig
         builder.AddIndefiniteArrayStart();
         builder.AddBool(screen.grid.snap_enabled)
             .AddUint(screen.grid.width)
@@ -91,32 +91,32 @@ static size_t cbor_get_size_CborUiConfig(const UiConfig& config) {
             .AddUint(screen.grid.spacing_px);
 
         builder.AddIndefiniteArrayStart();
-        for(const auto& widget : screen.WidgetConfig_m) {
+        for(const auto& widget : screen.CborWidgetConfig_m) {
             builder.AddIndefiniteArrayStart();
 
             builder.AddUint(widget.type)
                 .AddUint(widget.id);
 
-            // WidgetPositionConfig
+            // CborWidgetPositionConfig
             builder.AddIndefiniteArrayStart();
             builder.AddInt(widget.position.x)
                 .AddInt(widget.position.y);
 
-            // WidgetSizeConfig
+            // CborWidgetSizeConfig
             builder.AddIndefiniteArrayStart();
             builder.AddUint(widget.size.width)
                 .AddUint(widget.size.height);
 
             builder.AddOptional(widget.properties_present,
                 widget.properties,
-                [](const PropertiesConfig& properties) {
+                [](const CborPropertiesConfig& properties) {
 
                 CborSizeBuilder builder;
                 builder.AddIndefiniteArrayStart();
 
-                for(const auto& property : properties.PropertyValueType_m) {
-                    builder.AddTstr(property.PropertyValueType_m_key)
-                        .AddSize(GetPropertyValueTypeSize(property.PropertyValueType_m));
+                for(const auto& property : properties.CborPropertyValueType_m) {
+                    builder.AddTstr(property.CborPropertyValueType_m_key)
+                        .AddSize(GetCborPropertyValueTypeSize(property.CborPropertyValueType_m));
                 }
 
                 return builder.Build();

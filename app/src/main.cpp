@@ -115,10 +115,10 @@ int main() {
     // auto reading_processor = make_shared_ext<ReadingProcessor>();
     // auto status_processor = make_shared_ext<StatusProcessor>();
 
-    auto system_config_service = std::make_unique<ConfigurationService<SystemConfig>>("system_config", fs_service);
+    auto system_config_service = std::make_unique<ConfigurationService<CborSystemConfig>>("system_config", fs_service);
     auto system_configuration_manager = make_shared_ext<SystemConfigurationManager>(std::move(system_config_service));
 
-    auto ui_config_service = std::make_unique<ConfigurationService<UiConfig>>("ui_config", fs_service);
+    auto ui_config_service = std::make_unique<ConfigurationService<CborUiConfig>>("ui_config", fs_service);
     auto ui_configuration_manager = make_shared_ext<UiConfigurationManager>(std::move(ui_config_service));
 
     std::shared_ptr<CanChannelConfiguration> can_channel_configuration =

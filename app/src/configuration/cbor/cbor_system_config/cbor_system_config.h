@@ -25,7 +25,7 @@ extern "C" {
  */
 #define DEFAULT_MAX_QTY 24
 
-struct SystemConfig {
+struct CborSystemConfig {
 	uint64_t device_id;
 	uint32_t hw_version;
 	uint32_t sw_version;

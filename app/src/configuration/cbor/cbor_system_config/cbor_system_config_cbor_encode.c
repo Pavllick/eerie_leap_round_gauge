@@ -9,7 +9,7 @@
 #include <stddef.h>
 #include <string.h>
 #include "zcbor_encode.h"
-#include "system_config_cbor_encode.h"
+#include "cbor_system_config_cbor_encode.h"
 #include "zcbor_print.h"
 
 #if DEFAULT_MAX_QTY != 24
@@ -25,11 +25,11 @@
 	} \
 } while(0)
 
-static bool encode_SystemConfig(zcbor_state_t *state, const struct SystemConfig *input);
+static bool encode_CborSystemConfig(zcbor_state_t *state, const struct CborSystemConfig *input);
 
 
-static bool encode_SystemConfig(
-		zcbor_state_t *state, const struct SystemConfig *input)
+static bool encode_CborSystemConfig(
+		zcbor_state_t *state, const struct CborSystemConfig *input)
 {
 	zcbor_log("%s\r\n", __func__);
 
@@ -45,13 +45,13 @@ static bool encode_SystemConfig(
 
 
 
-int cbor_encode_SystemConfig(
+int cbor_encode_CborSystemConfig(
 		uint8_t *payload, size_t payload_len,
-		const struct SystemConfig *input,
+		const struct CborSystemConfig *input,
 		size_t *payload_len_out)
 {
 	zcbor_state_t states[3];
 
 	return zcbor_entry_function(payload, payload_len, (void *)input, payload_len_out, states,
-		(zcbor_decoder_t *)encode_SystemConfig, sizeof(states) / sizeof(zcbor_state_t), 1);
+		(zcbor_decoder_t *)encode_CborSystemConfig, sizeof(states) / sizeof(zcbor_state_t), 1);
 }
