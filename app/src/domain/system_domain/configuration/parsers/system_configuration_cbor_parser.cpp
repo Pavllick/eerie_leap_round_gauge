@@ -9,7 +9,6 @@ pmr_unique_ptr<CborSystemConfig> SystemConfigurationCborParser::Serialize(const 
     SystemConfigurationValidator::Validate(configuration);
 
     auto config = make_unique_pmr<CborSystemConfig>(Mrm::GetExtPmr());
-    memset(config.get(), 0, sizeof(CborSystemConfig));
 
     config->device_id = configuration.device_id;
     config->hw_version = configuration.hw_version;

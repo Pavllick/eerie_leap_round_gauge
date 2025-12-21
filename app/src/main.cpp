@@ -375,7 +375,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
 
     ui_configuration->screen_configurations.push_back(screen_configuration);
 
-    ui_configuration_manager->Update(ui_configuration);
+    ui_configuration_manager->Update(*ui_configuration);
 
     return ui_configuration;
 }
