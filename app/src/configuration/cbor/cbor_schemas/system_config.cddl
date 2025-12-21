@@ -1,4 +1,4 @@
-SystemConfig = [
+CborSystemConfig = [
   device_id: uint .size 8,
   hw_version: uint,
   sw_version: uint,

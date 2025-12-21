@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 
-namespace eerie_leap::domain::system_domain {
+namespace eerie_leap::domain::system_domain::models {
 
 struct SystemConfiguration {
     uint64_t device_id;
@@ -49,4 +49,4 @@ struct SystemConfiguration {
     }
 };
 
-} // namespace eerie_leap::domain::system_domain
+} // namespace eerie_leap::domain::system_domain::models

@@ -1,0 +1,44 @@
+CborUiConfig = [
+    version: uint,
+    active_screen_index: uint,
+    ? properties: CborPropertiesConfig,
+    screen_configurations: [0*10 CborScreenConfig]
+]
+
+CborScreenConfig = [
+    id: uint,
+    type: uint,
+    grid: CborGridSettingsConfig,
+    widget_configurations: [* CborWidgetConfig]
+]
+
+CborGridSettingsConfig = [
+    snap_enabled: bool,
+    width: uint,
+    height: uint,
+    spacing_px: uint
+]
+
+CborWidgetConfig = [
+    type: uint,
+    id: uint,
+    position: CborWidgetPositionConfig,
+    size: CborWidgetSizeConfig,
+    ? properties: CborPropertiesConfig
+]
+
+CborPropertiesConfig = {
+    * tstr => CborPropertyValueType
+}
+
+CborWidgetPositionConfig = [
+    x: int,
+    y: int
+]
+
+CborWidgetSizeConfig = [
+    width: uint,
+    height: uint
+]
+
+CborPropertyValueType = int / float / tstr / bool / [* int] / [* tstr] / { * tstr => tstr }
