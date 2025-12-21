@@ -10,7 +10,7 @@ using namespace eerie_leap::utilities::memory;
 
 LOG_MODULE_REGISTER(ui_config_ctrl_logger);
 
-UiConfigurationManager::UiConfigurationManager(ext_unique_ptr<ConfigurationService<UiConfig>> ui_configuration_service) :
+UiConfigurationManager::UiConfigurationManager(std::unique_ptr<ConfigurationService<UiConfig>> ui_configuration_service) :
     ui_configuration_service_(std::move(ui_configuration_service)),
     ui_config_(nullptr),
     ui_configuration_(nullptr) {
@@ -118,8 +118,7 @@ bool UiConfigurationManager::Update(std::shared_ptr<UiConfiguration> ui_configur
     if(!ui_configuration_service_->Save(ui_config.get()))
         return false;
 
-    ui_config_ = std::move(ui_config);
-    ui_configuration_ = ui_configuration;
+    Get(true);
 
     return true;
 }
