@@ -15,13 +15,8 @@ LOG_MODULE_REGISTER(reading_processor_logger);
 ReadingProcessor::ReadingProcessor() : service_running_(ATOMIC_INIT(0)) { }
 
 void ReadingProcessor::SubmitToEventBus(const SensorReadingDto& reading) {
-    if(reading.status != ReadingStatus::PROCESSED) {
-        LOG_DBG("Reading status not PROCESSED for sensor: %lu", reading.sensor_id_hash);
-        return;
-    }
-
     UiEventPayload payload;
-    payload[UiPayloadType::SensorId] = reading.sensor_id_hash;
+    payload[UiPayloadType::SensorId] = reading.id_hash;
     payload[UiPayloadType::Value] = reading.value;
 
     UiEventBus::GetInstance().PublishAsync({

@@ -2,12 +2,12 @@
 
 #include <zephyr/sys/atomic.h>
 
-#include "domain/interface_domain/types/sensor_reading_dto.h"
+#include "domain/sensor_domain/models/sensor_reading_dto.h"
 #include "i_interface_processor.h"
 
 namespace eerie_leap::domain::interface_domain::processors {
 
-using namespace eerie_leap::domain::interface_domain::types;
+using namespace eerie_leap::domain::sensor_domain::models;
 
 class ReadingProcessor : public IInterfaceProcessor<SensorReadingDto> {
 private:

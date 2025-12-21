@@ -43,6 +43,7 @@ public:
         if(res == 0)
             res = ApplyTheme();
 
+        k_msleep(10); // Allow LVGL to render before invalidation
         container_->Invalidate();
 
         is_ready_ = res == 0;

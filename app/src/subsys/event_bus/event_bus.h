@@ -27,7 +27,7 @@ private:
 
     using EventBusTaskType = EventBusTask<EventTypeEnum, PayloadTypeEnum>;
 
-    static constexpr int k_stack_size_ = 1024;
+    int k_stack_size_;
     static constexpr int k_priority_ = K_PRIO_COOP(10);
 
     k_thread_stack_t* stack_area_;
@@ -45,7 +45,7 @@ private:
         const Event<EventTypeEnum, PayloadTypeEnum>& event);
 
 protected:
-    EventBus(std::string bus_name);
+    EventBus(std::string bus_name, int k_stack_size);
 
 public:
     virtual ~EventBus();

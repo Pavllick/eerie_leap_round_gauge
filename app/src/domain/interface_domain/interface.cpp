@@ -1,12 +1,13 @@
 #include <zephyr/logging/log.h>
 
 #include "domain/ui_domain/event_bus/ui_event_bus.h"
-#include "types/sensor_reading_dto.h"
+#include "domain/sensor_domain/models/sensor_reading_dto.h"
 
 #include "interface.h"
 
 namespace eerie_leap::domain::interface_domain {
 
+using namespace eerie_leap::domain::sensor_domain::models;
 using namespace eerie_leap::domain::ui_domain::event_bus;
 
 LOG_MODULE_REGISTER(interface_logger);

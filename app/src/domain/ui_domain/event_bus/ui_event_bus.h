@@ -15,7 +15,9 @@ using UiSubscriptionHandle = SubscriptionHandle<UiEventType>;
 
 class UiEventBus : public EventBus<UiEventType, UiPayloadType> {
 private:
-    UiEventBus() : EventBus<UiEventType, UiPayloadType>("ui_event_bus") { }
+    static constexpr int event_bus_stack_size_ = 4096;
+
+    UiEventBus() : EventBus<UiEventType, UiPayloadType>("ui_event_bus", event_bus_stack_size_) { }
 
 public:
     static UiEventBus& GetInstance() {

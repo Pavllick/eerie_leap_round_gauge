@@ -5,8 +5,8 @@
 namespace eerie_leap::subsys::event_bus {
 
 template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
-EventBus<EventTypeEnum, PayloadTypeEnum>::EventBus(std::string bus_name)
-    : bus_name_(std::move(bus_name)) {
+EventBus<EventTypeEnum, PayloadTypeEnum>::EventBus(std::string bus_name, int k_stack_size)
+    : bus_name_(std::move(bus_name)), k_stack_size_(k_stack_size) {
 
     subscribers_ = std::make_shared<std::unordered_map<EventTypeEnum, std::vector<std::unique_ptr<Subscription<EventTypeEnum, PayloadTypeEnum>>>>>();
     k_sem_init(&processing_semaphore_, 1, 1);

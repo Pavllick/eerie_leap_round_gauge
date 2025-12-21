@@ -21,20 +21,20 @@
 #include "subsys/time/time_service.h"
 #include "subsys/time/rtc_provider.h"
 #include "subsys/time/boot_elapsed_time_provider.h"
-
-#include "domain/ui_domain/ui_renderer.h"
-#include "domain/sensor_domain/models/sensor.h"
-#include "domain/canbus_domain/sensor_readers/canbus_sensor_reader.h"
-#include "domain/canbus_domain/services/canbus_service.h"
-
-#include "controllers/ui_controller.h"
-#include "controllers/logging_controller.h"
+#include "subsys/event_bus/event_bus.h"
 
 #include "configuration/services/configuration_service.h"
 #include "configuration/system_config/system_config.h"
 
 #include "domain/system_domain/configuration/system_configuration_manager.h"
+
+#include "domain/sensor_domain/utilities/sensor_readings_frame.hpp"
+#include "domain/canbus_domain/services/canbus_service.h"
+#include "domain/sensor_domain/readers/canbus_sensors_reader.h"
+
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
+#include "domain/ui_domain/services/ui_renderer_service.h"
+#include "domain/ui_domain/services/sensors_rendering_service.h"
 
 #include "domain/ui_domain/models/ui_configuration.h"
 #include "domain/ui_domain/models/screen_configuration.h"
@@ -47,7 +47,9 @@
 #include "domain/ui_domain/models/icon_type.h"
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 
-#include "subsys/event_bus/event_bus.h"
+#include "controllers/ui_controller.h"
+#include "controllers/logging_controller.h"
+
 #include "views/themes/theme_manager.h"
 #include "views/themes/dark_theme.h"
 
@@ -71,20 +73,20 @@ using namespace eerie_leap::domain::system_domain::configuration;
 using namespace eerie_leap::domain::ui_domain;
 using namespace eerie_leap::domain::ui_domain::configuration;
 using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::domain::sensor_domain::models;
+using namespace eerie_leap::domain::ui_domain::services;
 using namespace eerie_leap::configuration::services;
+using namespace eerie_leap::domain::sensor_domain::utilities;
+using namespace eerie_leap::domain::sensor_domain::readers;
 using namespace eerie_leap::domain::canbus_domain::services;
 using namespace eerie_leap::domain::canbus_domain::models;
-using namespace eerie_leap::domain::canbus_domain::sensor_readers;
 
 using namespace eerie_leap::controllers;
 using namespace eerie_leap::views::themes;
 
 LOG_MODULE_REGISTER(main_logger);
 
-constexpr uint32_t SLEEP_TIME_MS = 200;
+constexpr uint32_t SLEEP_TIME_MS = 5000;
 
-std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> SetupTestSensors();
 std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager);
 
 int main() {
@@ -93,10 +95,10 @@ int main() {
     auto dark_theme = make_shared_ext<DarkTheme>();
     ThemeManager::GetInstance().SetTheme(dark_theme);
 
-    auto ui_renderer = make_shared_ext<UiRenderer>();
-    if(ui_renderer->Initialize() != 0)
+    auto ui_renderer_service = make_shared_ext<UiRendererService>();
+    if(ui_renderer_service->Initialize() != 0)
         return -1;
-    ui_renderer->Start();
+    ui_renderer_service->Start();
 
     auto fs_service = make_shared_ext<FsService>(DtFs::GetInternalFsMp().value());
     if(!fs_service->Initialize()) {
@@ -144,13 +146,20 @@ int main() {
     message_configuration_0->signal_configurations.emplace_back(std::move(signal_configuration_0));
     can_channel_configuration->message_configurations.emplace_back(std::move(message_configuration_0));
 
+    auto sensor_readings_frame = std::make_shared<SensorReadingsFrame>();
+
     auto canbus_service = std::make_shared<CanbusService>(can_channel_configuration);
 
-    CanbusSensorReader canbus_sensor_reader(
+    auto canbus_sensors_reader = std::make_shared<CanbusSensorsReader>(
         time_service,
-        guid_generator,
         canbus_service->GetCanbus(can_channel_configuration->bus_channel),
-        can_channel_configuration->dbc);
+        can_channel_configuration->dbc,
+        sensor_readings_frame);
+
+    auto sensors_rendering_service = std::make_shared<SensorsRenderingService>(
+        sensor_readings_frame, canbus_sensors_reader);
+    sensors_rendering_service->Initialize();
+    sensors_rendering_service->Start();
 
     // std::shared_ptr<Interface> interface = nullptr;
     // if(DtModbus::Get() != nullptr) {
@@ -166,8 +175,6 @@ int main() {
     //     interface->RegisterProcessor<UserStatus>(status_processor);
     // }
 
-    // NOTE: This is a temporary solution.
-    // auto sensors = SetupTestSensors();
     SetupTestUiConfig(ui_configuration_manager);
 
     auto ui_controller = make_shared_ext<UiController>(ui_configuration_manager);
@@ -197,11 +204,9 @@ int main() {
 
 #ifdef CONFIG_BOARD_NATIVE_SIM
     SensorReadingDto reading;
-    reading.id = guid_generator->Generate();
-    reading.sensor_id_hash = 2348664336;
+    reading.id_hash = 2348664336;
     reading.timestamp_ms = std::chrono::milliseconds(static_cast<int64_t>(k_uptime_get()));
     reading.value = 0;
-    reading.status = ReadingStatus::PROCESSED;
 #endif // CONFIG_BOARD_NATIVE_SIM
 
 	while (true) {
@@ -217,89 +222,6 @@ int main() {
 	}
 
 	return 0;
-}
-
-std::shared_ptr<std::vector<std::shared_ptr<Sensor>>> SetupTestSensors() {
-    Sensor sensor_1 {
-        .id = "sensor_1",
-        .id_hash = static_cast<uint32_t>(4634802150965772288),
-        .metadata = {
-            .name = "Sensor 1",
-            .unit = "km/h",
-            .description = "Test Sensor 1"
-        },
-        .configuration = {
-            .type = SensorType::PHYSICAL_ANALOG,
-            .channel = 0,
-            .sampling_rate_ms = 10
-        }
-    };
-
-    Sensor sensor_2 {
-        .id = "sensor_2",
-        .metadata = {
-            .name = "Sensor 2",
-            .unit = "km/h",
-            .description = "Test Sensor 2"
-        },
-        .configuration = {
-            .type = SensorType::PHYSICAL_ANALOG,
-            .channel = 1,
-            .sampling_rate_ms = 500
-        }
-    };
-
-    Sensor sensor_3 {
-        .id = "sensor_3",
-        .metadata = {
-            .name = "Sensor 3",
-            .unit = "km/h",
-            .description = "Test Sensor 3"
-        },
-        .configuration = {
-            .type = SensorType::VIRTUAL_ANALOG,
-            .sampling_rate_ms = 2000
-        }
-    };
-
-    Sensor sensor_4 {
-        .id = "sensor_4",
-        .metadata = {
-            .name = "Sensor 4",
-            .unit = "",
-            .description = "Test Sensor 4"
-        },
-        .configuration = {
-            .type = SensorType::PHYSICAL_INDICATOR,
-            .channel = 1,
-            .sampling_rate_ms = 1000
-        }
-    };
-
-    Sensor sensor_5 {
-        .id = "sensor_5",
-        .metadata = {
-            .name = "Sensor 5",
-            .unit = "",
-            .description = "Test Sensor 5"
-        },
-        .configuration = {
-            .type = SensorType::VIRTUAL_INDICATOR,
-            .sampling_rate_ms = 1000
-        }
-    };
-
-    std::vector<std::shared_ptr<Sensor>> sensors = {
-        make_shared_ext<Sensor>(sensor_1),
-        make_shared_ext<Sensor>(sensor_2),
-        make_shared_ext<Sensor>(sensor_3),
-        // make_shared_ext<Sensor>(sensor_4),
-        // make_shared_ext<Sensor>(sensor_5)
-    };
-
-    auto sensors_ptr = make_shared_ext<std::vector<std::shared_ptr<Sensor>>>(sensors);
-
-    return sensors_ptr;
 }
 
 std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager) {

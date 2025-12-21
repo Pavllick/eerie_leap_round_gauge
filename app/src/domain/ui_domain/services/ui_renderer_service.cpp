@@ -6,9 +6,9 @@
 
 #include "subsys/device_tree/dt_display.h"
 
-#include "ui_renderer.h"
+#include "ui_renderer_service.h"
 
-namespace eerie_leap::domain::ui_domain {
+namespace eerie_leap::domain::ui_domain::services {
 
 using namespace eerie_leap::subsys::device_tree;
 
@@ -16,9 +16,9 @@ LOG_MODULE_REGISTER(renderer_logger);
 
 // NOTE: Should be allocated on internal RAM to take an advantage of DMA for rendering
 // NOTE: Dinamic allocation causes issues with LVGL rendering memory access
-K_KERNEL_STACK_MEMBER(UiRenderer::stack_area_, UiRenderer::k_stack_size_);
+K_KERNEL_STACK_MEMBER(UiRendererService::stack_area_, UiRendererService::k_stack_size_);
 
-int UiRenderer::Initialize() {
+int UiRendererService::Initialize() {
     if(DtDisplay::Get() == nullptr) {
         LOG_ERR("Display not found, aborting test");
         return -1;
@@ -38,7 +38,7 @@ int UiRenderer::Initialize() {
     return 0;
 }
 
-k_tid_t UiRenderer::Start() {
+k_tid_t UiRendererService::Start() {
     running_ = true;
 
     thread_id_ = k_thread_create(
@@ -46,35 +46,35 @@ k_tid_t UiRenderer::Start() {
         stack_area_,
         K_KERNEL_STACK_SIZEOF(stack_area_),
         [](void* instance, void* p2, void* p3) {
-            static_cast<UiRenderer*>(instance)->UiRendererThreadEntry(); },
+            static_cast<UiRendererService*>(instance)->UiRendererThreadEntry(); },
         this, nullptr, nullptr,
         k_priority_, 0, K_NO_WAIT);
 
-    k_thread_name_set(&thread_data_, "ui_renderer");
+    k_thread_name_set(&thread_data_, "ui_renderer_service");
 
-    LOG_INF("UI renderer started.");
+    LOG_INF("UI renderer service started.");
 
     return thread_id_;
 }
 
-void UiRenderer::Stop() {
+void UiRendererService::Stop() {
     running_ = false;
     k_thread_join(thread_id_, K_MSEC(100));
 }
 
-void UiRenderer::UiRendererThreadEntry() {
+void UiRendererService::UiRendererThreadEntry() {
     while(running_)
         Render();
 }
 
-void UiRenderer::Render() {
+void UiRendererService::Render() {
     uint32_t sleep_ms = lv_timer_handler();
     k_msleep(MIN(sleep_ms, INT32_MAX));
 }
 
 // NOTE: Fixes incorrect invalidation of redrawn area
 // https://forum.lvgl.io/t/lvgl-9-2-esp32-s3-display-axs15321b/19735/5
-void UiRenderer::DisplayInvalidateCb(lv_event_t* e) {
+void UiRendererService::DisplayInvalidateCb(lv_event_t* e) {
     auto* area = (lv_area_t*)lv_event_get_param(e);
 
     // Round down to even
@@ -86,4 +86,4 @@ void UiRenderer::DisplayInvalidateCb(lv_event_t* e) {
     area->y2 |= 1;
 }
 
-} // namespace eerie_leap::domain::ui_domain
+} // namespace eerie_leap::domain::ui_domain::services
