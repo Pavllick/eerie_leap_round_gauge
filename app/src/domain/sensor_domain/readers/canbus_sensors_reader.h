@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include <unordered_set>
 #include <unordered_map>
 #include <chrono>
@@ -34,6 +35,8 @@ protected:
     std::shared_ptr<Dbc> dbc_;
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame_;
 
+    std::unordered_map<uint32_t, std::vector<int>> registered_handler_ids_;
+
     std::unordered_map<uint32_t, std::unordered_set<size_t>> frames_signals_map_;
 
     void UpdateReadings(const CanFrame& frame);
@@ -44,7 +47,7 @@ public:
         std::shared_ptr<Canbus> canbus,
         std::shared_ptr<Dbc> dbc,
         std::shared_ptr<SensorReadingsFrame> sensor_readings_frame);
-    virtual ~CanbusSensorsReader() = default;
+    virtual ~CanbusSensorsReader();
 };
 
 } // namespace eerie_leap::domain::sensor_domain::readers

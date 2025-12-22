@@ -14,11 +14,14 @@ using namespace eerie_leap::domain::ui_domain::event_bus;
 LOG_MODULE_REGISTER(processing_scheduler_logger);
 
 SensorsRenderingService::SensorsRenderingService(
-    std::shared_ptr<SensorReadingsFrame> sensor_readings_frame,
-    std::shared_ptr<CanbusSensorsReader> canbus_sensors_reader)
+    std::shared_ptr<TimeService> time_service,
+    std::shared_ptr<CanbusConfigurationManager> canbus_configuration_manager,
+    std::shared_ptr<CanbusService> canbus_service)
         : work_queue_thread_(nullptr),
-        sensor_readings_frame_(std::move(sensor_readings_frame)),
-        canbus_sensors_reader_(std::move(canbus_sensors_reader)) {};
+        time_service_(std::move(time_service)),
+        canbus_configuration_manager_(std::move(canbus_configuration_manager)),
+        canbus_service_(std::move(canbus_service)),
+        sensor_readings_frame_(std::make_shared<SensorReadingsFrame>()) {};
 
 void SensorsRenderingService::Initialize() {
     work_queue_thread_ = std::make_unique<WorkQueueThread>(
@@ -62,6 +65,19 @@ void SensorsRenderingService::SubmitToEventBus(const SensorReadingDto& reading) 
 }
 
 void SensorsRenderingService::Start() {
+    canbus_sensors_readers_.clear();
+
+    auto canbus_configurations = canbus_configuration_manager_->Get();
+    for(const auto& [bus_channel, channel_configuration] : canbus_configurations->channel_configurations) {
+        auto canbus = std::make_unique<CanbusSensorsReader>(
+            time_service_,
+            canbus_service_->GetCanbus(bus_channel),
+            channel_configuration.dbc,
+            sensor_readings_frame_);
+
+        canbus_sensors_readers_.emplace_back(std::move(canbus));
+    }
+
     work_queue_thread_->ScheduleTask(work_queue_task_.value());
 
     LOG_INF("Processing Scheduler Service started.");

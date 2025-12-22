@@ -20,12 +20,25 @@ CanbusSensorsReader::CanbusSensorsReader(
         frames_signals_map_.emplace(frame_id, dbc_message.GetSignalNameHashes());
 
     for(const auto& [frame_id, _] : frames_signals_map_) {
-        canbus_->RegisterFrameReceivedHandler(
+        int handler_id = canbus_->RegisterFrameReceivedHandler(
             frame_id,
             [this, frame_id](const CanFrame& frame) {
                 UpdateReadings(frame);
             });
+
+        if(handler_id < 0)
+            throw std::runtime_error("Failed to register CAN frame handler for frame ID: " + std::to_string(frame_id));
+
+        if(!registered_handler_ids_.contains(frame_id))
+            registered_handler_ids_.insert({frame_id, {}});
+        registered_handler_ids_[frame_id].push_back(handler_id);
     }
+}
+
+CanbusSensorsReader::~CanbusSensorsReader() {
+    for(const auto& [frame_id, handler_ids] : registered_handler_ids_)
+        for(const auto& handler_id : handler_ids)
+            canbus_->RemoveFrameReceivedHandler(frame_id, handler_id);
 }
 
 void CanbusSensorsReader::UpdateReadings(const CanFrame& frame) {

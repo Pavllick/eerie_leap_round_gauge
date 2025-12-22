@@ -13,6 +13,7 @@
 #include "subsys/device_tree/dt_fs.h"
 #include "subsys/device_tree/dt_modbus.h"
 #include "subsys/device_tree/dt_gpio.h"
+#include "subsys/device_tree/dt_canbus.h"
 
 #include "subsys/random/rng.h"
 #include "subsys/fs/services/fs_service.h"
@@ -27,9 +28,8 @@
 
 #include "domain/system_domain/configuration/system_configuration_manager.h"
 
-#include "domain/sensor_domain/utilities/sensor_readings_frame.hpp"
+#include "domain/canbus_domain/configuration/canbus_configuration_manager.h"
 #include "domain/canbus_domain/services/canbus_service.h"
-#include "domain/sensor_domain/readers/canbus_sensors_reader.h"
 
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
 #include "domain/ui_domain/services/ui_renderer_service.h"
@@ -74,8 +74,7 @@ using namespace eerie_leap::domain::ui_domain::configuration;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::domain::ui_domain::services;
 using namespace eerie_leap::configuration::services;
-using namespace eerie_leap::domain::sensor_domain::utilities;
-using namespace eerie_leap::domain::sensor_domain::readers;
+using namespace eerie_leap::domain::canbus_domain::configuration;
 using namespace eerie_leap::domain::canbus_domain::services;
 using namespace eerie_leap::domain::canbus_domain::models;
 
@@ -86,6 +85,7 @@ LOG_MODULE_REGISTER(main_logger);
 
 constexpr uint32_t SLEEP_TIME_MS = 5000;
 
+void SetupCanbusConfiguration(std::shared_ptr<CanbusConfigurationManager> canbus_configuration_manager);
 std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager);
 
 int main() {
@@ -120,47 +120,26 @@ int main() {
     auto system_configuration_manager = make_shared_ext<SystemConfigurationManager>(
         std::move(system_config_service));
 
+    auto cbor_canbus_config_service = std::make_unique<CborConfigurationService<CborCanbusConfig>>(
+        "canbus_config", fs_service);
+    auto json_canbus_config_service = std::make_unique<JsonConfigurationService<JsonCanbusConfig>>(
+        "canbus_config", nullptr);
+    auto canbus_configuration_manager = std::make_shared<CanbusConfigurationManager>(
+        std::move(cbor_canbus_config_service), std::move(json_canbus_config_service), nullptr);
+
     auto ui_config_service = std::make_unique<CborConfigurationService<CborUiConfig>>(
         "ui_config", fs_service);
     auto ui_configuration_manager = make_shared_ext<UiConfigurationManager>(
         std::move(ui_config_service));
 
-    std::shared_ptr<CanChannelConfiguration> can_channel_configuration =
-        make_shared_pmr<CanChannelConfiguration>(Mrm::GetExtPmr());
+    // TODO: For test purposes only
+    SetupCanbusConfiguration(canbus_configuration_manager);
 
-    can_channel_configuration->type = CanbusType::CANFD;
-    can_channel_configuration->is_extended_id = false;
-    can_channel_configuration->bus_channel = 0;
-    can_channel_configuration->bitrate = 1000000;
-    can_channel_configuration->data_bitrate = 2000000;
-
-    auto message_configuration_0 = make_shared_pmr<CanMessageConfiguration>(Mrm::GetExtPmr());
-    message_configuration_0->name = "EL_FRAME_0";
-    message_configuration_0->message_size = 8;
-    message_configuration_0->frame_id = 790;
-    message_configuration_0->send_interval_ms = 10;
-
-    CanSignalConfiguration signal_configuration_0(std::allocator_arg, Mrm::GetExtPmr());
-    signal_configuration_0.start_bit = 16;
-    signal_configuration_0.size_bits = 16;
-    signal_configuration_0.name = "sensor_1";
-    signal_configuration_0.unit = "km/h";
-    signal_configuration_0.factor = 0.1;
-    message_configuration_0->signal_configurations.emplace_back(std::move(signal_configuration_0));
-    can_channel_configuration->message_configurations.emplace_back(std::move(message_configuration_0));
-
-    auto sensor_readings_frame = std::make_shared<SensorReadingsFrame>();
-
-    auto canbus_service = std::make_shared<CanbusService>(can_channel_configuration);
-
-    auto canbus_sensors_reader = std::make_shared<CanbusSensorsReader>(
-        time_service,
-        canbus_service->GetCanbus(can_channel_configuration->bus_channel),
-        can_channel_configuration->dbc,
-        sensor_readings_frame);
+    auto canbus_service = std::make_shared<CanbusService>(
+        DtCanbus::Get, canbus_configuration_manager);
 
     auto sensors_rendering_service = std::make_shared<SensorsRenderingService>(
-        sensor_readings_frame, canbus_sensors_reader);
+        time_service, canbus_configuration_manager, canbus_service);
     sensors_rendering_service->Initialize();
     sensors_rendering_service->Start();
 
@@ -225,6 +204,40 @@ int main() {
 	}
 
 	return 0;
+}
+
+
+void SetupCanbusConfiguration(std::shared_ptr<CanbusConfigurationManager> canbus_configuration_manager) {
+    auto canbus_configuration = make_shared_pmr<CanbusConfiguration>(Mrm::GetExtPmr());
+
+    CanChannelConfiguration canbus_channel_configuration_0(std::allocator_arg, Mrm::GetExtPmr());
+
+    canbus_channel_configuration_0.type = CanbusType::CANFD;
+    canbus_channel_configuration_0.is_extended_id = false;
+    canbus_channel_configuration_0.bus_channel = 0;
+    canbus_channel_configuration_0.bitrate = 1000000;
+    canbus_channel_configuration_0.data_bitrate = 2000000;
+
+    auto message_configuration_0 = make_shared_pmr<CanMessageConfiguration>(Mrm::GetExtPmr());
+    message_configuration_0->name = "EL_FRAME_0";
+    message_configuration_0->message_size = 8;
+    message_configuration_0->frame_id = 790;
+    message_configuration_0->send_interval_ms = 10;
+
+    CanSignalConfiguration signal_configuration_0(std::allocator_arg, Mrm::GetExtPmr());
+    signal_configuration_0.start_bit = 16;
+    signal_configuration_0.size_bits = 16;
+    signal_configuration_0.name = "sensor_1";
+    signal_configuration_0.unit = "km/h";
+    signal_configuration_0.factor = 0.1;
+    message_configuration_0->signal_configurations.emplace_back(std::move(signal_configuration_0));
+    canbus_channel_configuration_0.message_configurations.emplace_back(std::move(message_configuration_0));
+
+    canbus_configuration->channel_configurations.emplace(
+        canbus_channel_configuration_0.bus_channel,
+        std::move(canbus_channel_configuration_0));
+
+    canbus_configuration_manager->Update(*canbus_configuration);
 }
 
 std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager) {
