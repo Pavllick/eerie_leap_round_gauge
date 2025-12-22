@@ -68,11 +68,11 @@ std::optional<uint32_t> IndicatorBase::GetSensorId() const {
     return sensor_id_;
 }
 
-void IndicatorBase::Configure(const WidgetConfiguration& config) {
-    WidgetBase::Configure(config);
+void IndicatorBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
+    WidgetBase::Configure(configuration);
 
     auto sensor_id_str = GetConfigValue<std::string>(
-        config.properties,
+        configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID),
         "");
     if(!sensor_id_str.empty()) {
@@ -95,11 +95,11 @@ void IndicatorBase::Configure(const WidgetConfiguration& config) {
     }
 
     range_start_ = GetConfigValue<int>(
-        config.properties,
+        configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE),
         0);
     range_end_ = GetConfigValue<int>(
-        config.properties,
+        configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE),
         100);
     value_ = range_start_;

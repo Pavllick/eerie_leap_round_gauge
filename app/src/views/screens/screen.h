@@ -23,7 +23,7 @@ protected:
     std::shared_ptr<Frame> parent_;
 
     std::shared_ptr<std::vector<std::unique_ptr<IWidget>>> widgets_;
-    ScreenConfiguration configuration_;
+    std::shared_ptr<ScreenConfiguration> configuration_;
 
     void UpdateWidgetSize(IWidget& widget, GridSettings& grid_settings);
     void UpdateWidgetPosition(IWidget& widget, GridSettings& grid_settings);
@@ -34,8 +34,8 @@ protected:
 public:
     Screen(uint32_t id, std::shared_ptr<Frame> parent);
 
-    void Configure(const ScreenConfiguration& config) override;
-    ScreenConfiguration GetConfiguration() const override;
+    void Configure(std::shared_ptr<ScreenConfiguration> configuration) override;
+    std::shared_ptr<ScreenConfiguration> GetConfiguration() const override;
 
     std::shared_ptr<std::vector<std::unique_ptr<IWidget>>> GetWidgets() const override;
 };

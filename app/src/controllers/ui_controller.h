@@ -33,7 +33,7 @@ private:
 
     int Configure(std::shared_ptr<UiConfiguration> config);
 
-    std::shared_ptr<IScreen> CreateScreen(const ScreenConfiguration& config);
+    std::shared_ptr<IScreen> CreateScreen(std::shared_ptr<ScreenConfiguration> configuration);
 
 public:
     UiController(std::shared_ptr<UiConfigurationManager> ui_configuration_manager);

@@ -23,7 +23,7 @@ protected:
 
     virtual void Create();
     int DoRender() override;
-    void Configure(const WidgetConfiguration& config) override;
+    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
     int ApplyTheme() override;
 
 public:

@@ -69,11 +69,11 @@ lv_obj_t* LabelIcon::Create(lv_obj_t* parent) {
     return lv_icon;
 }
 
-void LabelIcon::Configure(const WidgetConfiguration& config) {
-    IconBase::Configure(config);
+void LabelIcon::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
+    IconBase::Configure(configuration);
 
     label_ = GetConfigValue<std::string>(
-        configuration_.properties,
+        configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::LABEL),
         "");
 }

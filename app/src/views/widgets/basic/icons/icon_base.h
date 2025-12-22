@@ -18,7 +18,7 @@ using namespace eerie_leap::views;
 class IconBase : public RenderableBase, public IIcon {
 protected:
     std::shared_ptr<Frame> parent_;
-    WidgetConfiguration configuration_;
+    std::shared_ptr<WidgetConfiguration> configuration_;
     bool is_active_;
     bool is_animated_;
 
@@ -27,7 +27,7 @@ public:
     virtual ~IconBase() = default;
 
     void SetIsActive(bool is_active) override;
-    void Configure(const WidgetConfiguration& config) override;
+    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
 };
 
 } // namespace eerie_leap::views::widgets::basic::icons

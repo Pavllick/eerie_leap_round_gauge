@@ -35,7 +35,7 @@ public:
     void RegisterWidget(const WidgetType type, WidgetCreator creator);
 
     std::unique_ptr<IWidget> CreateWidget(const WidgetType type, const uint32_t id, std::shared_ptr<Frame> parent);
-    std::unique_ptr<IWidget> CreateWidget(const WidgetConfiguration& config, std::shared_ptr<Frame> parent);
+    std::unique_ptr<IWidget> CreateWidget(std::shared_ptr<WidgetConfiguration> configuration, std::shared_ptr<Frame> parent);
 
     std::vector<WidgetType> GetAvailableTypes() const;
 };

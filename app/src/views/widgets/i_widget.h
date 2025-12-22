@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <lvgl.h>
 
 #include "views/i_renderable.h"
@@ -23,8 +24,8 @@ public:
     virtual bool IsVisible() const = 0;
 
     // Configuration
-    virtual void Configure(const WidgetConfiguration& config) = 0;
-    virtual WidgetConfiguration GetConfiguration() const = 0;
+    virtual void Configure(std::shared_ptr<WidgetConfiguration> configuration) = 0;
+    virtual std::shared_ptr<WidgetConfiguration> GetConfiguration() const = 0;
     virtual bool IsAnimated() const = 0;
 
     // Layout

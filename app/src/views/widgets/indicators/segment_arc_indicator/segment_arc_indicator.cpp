@@ -92,16 +92,16 @@ void SegmentArcIndicator::UpdateIndicator(float value) {
     }
 }
 
-void SegmentArcIndicator::Configure(const WidgetConfiguration& config) {
-    IndicatorBase::Configure(config);
+void SegmentArcIndicator::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
+    IndicatorBase::Configure(configuration);
 
     start_angle_ = GetConfigValue<int>(
-        config.properties,
+        configuration->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE),
         45);
 
     end_angle_ = GetConfigValue<int>(
-        config.properties,
+        configuration->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE),
         315);
 }

@@ -31,21 +31,21 @@ int Screen::ApplyTheme() {
     return 0;
 }
 
-void Screen::Configure(const ScreenConfiguration& config) {
-    configuration_ = config;
+void Screen::Configure(std::shared_ptr<ScreenConfiguration> configuration) {
+    configuration_ = std::move(configuration);
 
     widgets_->clear();
 
-    for(auto& widget_config : configuration_.widget_configurations) {
+    for(const auto& widget_config : configuration_->widget_configurations) {
         auto widget = WidgetFactory::GetInstance().CreateWidget(widget_config, container_);
-        UpdateWidgetSize(*widget, configuration_.grid);
-        UpdateWidgetPosition(*widget, configuration_.grid);
+        UpdateWidgetSize(*widget, configuration_->grid);
+        UpdateWidgetPosition(*widget, configuration_->grid);
 
         widgets_->push_back(std::move(widget));
     }
 }
 
-ScreenConfiguration Screen::GetConfiguration() const {
+std::shared_ptr<ScreenConfiguration> Screen::GetConfiguration() const {
     return configuration_;
 }
 
@@ -58,19 +58,19 @@ void Screen::UpdateWidgetSize(IWidget& widget, GridSettings& grid_settings) {
     int32_t screen_width = lv_obj_get_width(active_screen);
     int32_t screen_height = lv_obj_get_height(active_screen);
 
-    auto widget_config = widget.GetConfiguration();
+    const auto& widget_config = widget.GetConfiguration();
 
     uint32_t width = 0;
-    if(grid_settings.width == widget_config.size_grid.width)
+    if(grid_settings.width == widget_config->size_grid.width)
         width = screen_width;
     else
-        width = (screen_width / grid_settings.width) * widget_config.size_grid.width - grid_settings.spacing_px * 2;
+        width = (screen_width / grid_settings.width) * widget_config->size_grid.width - grid_settings.spacing_px * 2;
 
     uint32_t height = 0;
-    if(grid_settings.height == widget_config.size_grid.height)
+    if(grid_settings.height == widget_config->size_grid.height)
         height = screen_height;
     else
-        height = (screen_height / grid_settings.height) * widget_config.size_grid.height - grid_settings.spacing_px * 2;
+        height = (screen_height / grid_settings.height) * widget_config->size_grid.height - grid_settings.spacing_px * 2;
 
     widget.SetSizePx({.width = width, .height = height});
 }
@@ -80,7 +80,7 @@ void Screen::UpdateWidgetPosition(IWidget& widget, GridSettings& grid_settings) 
     int32_t screen_width = lv_obj_get_width(active_screen);
     int32_t screen_height = lv_obj_get_height(active_screen);
 
-    auto widget_config = widget.GetConfiguration();
+    const auto& widget_config = widget.GetConfiguration();
 
     auto size_px = widget.GetSizePx();
     if(size_px.width == 0 || size_px.height == 0)
@@ -89,8 +89,8 @@ void Screen::UpdateWidgetPosition(IWidget& widget, GridSettings& grid_settings) 
     uint32_t cell_width = (screen_width / grid_settings.width) + (grid_settings.spacing_px * 2);
     uint32_t cell_height = (screen_height / grid_settings.height) + (grid_settings.spacing_px * 2);
 
-    int x = cell_width * widget_config.position_grid.x;
-    int y = screen_height - cell_height * widget_config.position_grid.y - size_px.height;
+    int x = cell_width * widget_config->position_grid.x;
+    int y = screen_height - cell_height * widget_config->position_grid.y - size_px.height;
     y = std::abs(y);
 
     widget.SetPositionPx({.x = x, .y = y});

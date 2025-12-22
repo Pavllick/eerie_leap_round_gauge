@@ -53,11 +53,11 @@ void DigitalIndicator::UpdateIndicator(float value) {
     lv_label_set_text(lv_label_, value_str);
 }
 
-void DigitalIndicator::Configure(const WidgetConfiguration& config) {
-    IndicatorBase::Configure(config);
+void DigitalIndicator::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
+    IndicatorBase::Configure(configuration);
 
     value_precision_ = GetConfigValue<int>(
-        config.properties,
+        configuration->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_PRECISION),
         0);
 }

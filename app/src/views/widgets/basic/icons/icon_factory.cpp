@@ -27,13 +27,13 @@ void IconFactory::Register(const IconType type, IconCreator creator) {
     creators_[type] = std::move(creator);
 }
 
-std::unique_ptr<IIcon> IconFactory::Create(const IconType type, const WidgetConfiguration& config, std::shared_ptr<Frame> parent) {
+std::unique_ptr<IIcon> IconFactory::Create(const IconType type, std::shared_ptr<WidgetConfiguration> configuration, std::shared_ptr<Frame> parent) {
     auto it = creators_.find(type);
     if (it == creators_.end())
         throw std::runtime_error("Unknown widget type");
 
     auto icon = it->second(parent);
-    icon->Configure(config);
+    icon->Configure(configuration);
 
     return icon;
 }

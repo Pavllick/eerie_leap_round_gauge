@@ -21,7 +21,7 @@ class WidgetBase : public IWidget, public RenderableBase {
 protected:
     uint32_t id_;
 
-    WidgetConfiguration configuration_;
+    std::shared_ptr<WidgetConfiguration> configuration_;
     WidgetPosition position_px_;
     WidgetSize size_px_;
 
@@ -39,8 +39,8 @@ public:
     bool IsAnimated() const override;
     bool IsVisible() const override;
 
-    void Configure(const WidgetConfiguration& config) override;
-    WidgetConfiguration GetConfiguration() const override;
+    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
+    std::shared_ptr<WidgetConfiguration> GetConfiguration() const override;
 
     WidgetPosition GetPositionPx() const override;
     void SetPositionPx(const WidgetPosition& pos) override;

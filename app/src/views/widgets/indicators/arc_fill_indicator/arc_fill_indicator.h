@@ -20,7 +20,7 @@ private:
     int DoRender() override;
     int ApplyTheme() override;
 
-    void Configure(const WidgetConfiguration& config) override;
+    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
 
 public:
     explicit ArcFillIndicator(uint32_t id, std::shared_ptr<Frame> parent);

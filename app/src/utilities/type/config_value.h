@@ -5,6 +5,7 @@
 #include <variant>
 #include <vector>
 #include <type_traits>
+#include <memory_resource>
 
 namespace eerie_leap::utilities::type {
 
@@ -21,8 +22,8 @@ using ConfigValue = std::variant<
 
 template<typename T>
 T GetConfigValue(
-    const std::unordered_map<std::string, ConfigValue>& config,
-    const std::string& key,
+    const std::pmr::unordered_map<std::pmr::string, ConfigValue>& config,
+    const std::pmr::string& key,
     const T& default_value) {
 
     auto it = config.find(key);

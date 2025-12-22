@@ -21,7 +21,7 @@ public:
     int ApplyTheme() override;
     int DoRender() override;
     IconType GetIconType() const override { return IconType::Label; }
-    void Configure(const WidgetConfiguration& config) override;
+    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
 };
 
 } // namespace eerie_leap::views::widgets::basic::icons

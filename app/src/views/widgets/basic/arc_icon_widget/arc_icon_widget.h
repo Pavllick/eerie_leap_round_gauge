@@ -23,7 +23,7 @@ public:
     explicit ArcIconWidget(uint32_t id, std::shared_ptr<Frame> parent);
     WidgetType GetType() const override { return WidgetType::BasicArcIcon; }
 
-    void Configure(const WidgetConfiguration& config) override;
+    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
 };
 
 } // namespace eerie_leap::views::widgets::basic

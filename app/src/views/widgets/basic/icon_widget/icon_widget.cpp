@@ -40,27 +40,27 @@ void IconWidget::Create() {
     lv_obj_set_y(container_->GetObject(), position_y_);
 }
 
-void IconWidget::Configure(const WidgetConfiguration& config) {
-    WidgetBase::Configure(config);
+void IconWidget::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
+    WidgetBase::Configure(configuration);
 
     auto icon_type_raw = GetConfigValue<int>(
-        configuration_.properties,
+        configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE),
         0);
     icon_type_ = static_cast<IconType>(icon_type_raw);
 
     position_x_ = GetConfigValue<int>(
-        configuration_.properties,
+        configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X),
         0);
 
     position_y_ = GetConfigValue<int>(
-        configuration_.properties,
+        configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y),
         0);
 
     auto event_type_raw = GetConfigValue<int>(
-        configuration_.properties,
+        configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::UI_EVENT_TYPE),
         0);
     auto event_type = static_cast<UiEventType>(event_type_raw);

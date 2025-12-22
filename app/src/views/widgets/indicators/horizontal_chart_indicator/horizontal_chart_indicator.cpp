@@ -78,16 +78,16 @@ void HorizontalChartIndicator::UpdateIndicator(float value) {
     lv_chart_set_next_value(lv_chart_, ser, static_cast<int32_t>(value));
 }
 
-void HorizontalChartIndicator::Configure(const WidgetConfiguration& config) {
-    IndicatorBase::Configure(config);
+void HorizontalChartIndicator::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
+    IndicatorBase::Configure(configuration);
 
     point_count_ = GetConfigValue<int>(
-        config.properties,
+        configuration->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::CHART_POINT_COUNT),
         30);
 
     chart_type_ = static_cast<HorizontalChartIndicatorType>(GetConfigValue<int>(
-        config.properties,
+        configuration->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE),
         static_cast<std::uint16_t>(HorizontalChartIndicatorType::Bar)));
 }

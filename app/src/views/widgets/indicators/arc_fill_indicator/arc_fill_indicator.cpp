@@ -56,16 +56,16 @@ void ArcFillIndicator::UpdateIndicator(float value) {
     lv_arc_set_value(lv_arc_, static_cast<int32_t>(value));
 }
 
-void ArcFillIndicator::Configure(const WidgetConfiguration& config) {
-    IndicatorBase::Configure(config);
+void ArcFillIndicator::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
+    IndicatorBase::Configure(configuration);
 
     start_angle_ = GetConfigValue<int>(
-        config.properties,
+        configuration->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE),
         45);
 
     end_angle_ = GetConfigValue<int>(
-        config.properties,
+        configuration->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE),
         315);
 }

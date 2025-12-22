@@ -14,16 +14,16 @@ void IconBase::SetIsActive(bool is_active) {
     is_active_ = is_active;
 }
 
-void IconBase::Configure(const WidgetConfiguration& config) {
-    configuration_ = config;
+void IconBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
+    configuration_ = std::move(configuration);
 
     is_active_ = GetConfigValue<bool>(
-        configuration_.properties,
+        configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE),
         false);
 
     is_animated_ = GetConfigValue<bool>(
-        configuration_.properties,
+        configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED),
         false);
 }

@@ -16,7 +16,7 @@ public:
     virtual ~IIcon() = default;
 
     virtual IconType GetIconType() const = 0;
-    virtual void Configure(const WidgetConfiguration& config) = 0;
+    virtual void Configure(std::shared_ptr<WidgetConfiguration> configuration) = 0;
     virtual void SetIsActive(bool is_active) = 0;
 };
 

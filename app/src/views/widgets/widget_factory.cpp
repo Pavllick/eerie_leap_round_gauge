@@ -41,9 +41,9 @@ std::unique_ptr<IWidget> WidgetFactory::CreateWidget(const WidgetType type, cons
     return it->second(id, parent);
 }
 
-std::unique_ptr<IWidget> WidgetFactory::CreateWidget(const WidgetConfiguration& config, std::shared_ptr<Frame> parent) {
-    auto widget = CreateWidget(config.type, config.id, parent);
-    widget->Configure(config);
+std::unique_ptr<IWidget> WidgetFactory::CreateWidget(std::shared_ptr<WidgetConfiguration> configuration, std::shared_ptr<Frame> parent) {
+    auto widget = CreateWidget(configuration->type, configuration->id, parent);
+    widget->Configure(configuration);
 
     return widget;
 }

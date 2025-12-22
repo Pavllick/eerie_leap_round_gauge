@@ -19,8 +19,8 @@ int UiController::Configure(std::shared_ptr<UiConfiguration> config) {
     for(auto& screen_config : configuration_->screen_configurations) {
         auto screen = CreateScreen(screen_config);
 
-        screens_.insert({ screen_config.id, screen });
-        main_view_->AddScreen(screen_config.id, screen);
+        screens_.emplace(screen_config->id, screen);
+        main_view_->AddScreen(screen_config->id, screen);
     }
 
     main_view_->SetActiveScreen(configuration_->active_screen_index);
@@ -34,9 +34,9 @@ int UiController::Render() {
     return 0;
 }
 
-std::shared_ptr<IScreen> UiController::CreateScreen(const ScreenConfiguration& config) {
-    auto screen = make_unique_ext<Screen>(config.id, main_view_->GetContainer());
-    screen->Configure(config);
+std::shared_ptr<IScreen> UiController::CreateScreen(std::shared_ptr<ScreenConfiguration> configuration) {
+    auto screen = std::make_shared<Screen>(configuration->id, main_view_->GetContainer());
+    screen->Configure(configuration);
 
     return screen;
 }

@@ -6,9 +6,9 @@
 namespace eerie_leap::views::widgets {
 
 WidgetBase::WidgetBase(uint32_t id, std::shared_ptr<Frame> parent)
-    : id_(id), parent_(parent) {
+    : id_(id), parent_(std::move(parent)) {
 
-    container_ = std::make_shared<Frame>(Frame::CreateWrapped(parent->GetObject())
+    container_ = std::make_shared<Frame>(Frame::CreateWrapped(parent_->GetObject())
         .SetWidth(100, false)
         .SetHeight(100, false)
         .Build());
@@ -23,13 +23,13 @@ uint32_t WidgetBase::GetId() const {
     return id_;
 }
 
-void WidgetBase::Configure(const WidgetConfiguration& config) {
-    configuration_ = config;
+void WidgetBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
+    configuration_ = std::move(configuration);
 
     SetVisibility(IsVisible());
 }
 
-WidgetConfiguration WidgetBase::GetConfiguration() const {
+std::shared_ptr<WidgetConfiguration> WidgetBase::GetConfiguration() const {
     return configuration_;
 }
 
@@ -44,14 +44,14 @@ int WidgetBase::SetVisibility(bool is_visible) {
 
 bool WidgetBase::IsVisible() const {
     return GetConfigValue<bool>(
-        configuration_.properties,
+        configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE),
         false);
 }
 
 bool WidgetBase::IsAnimated() const {
     return GetConfigValue<bool>(
-        configuration_.properties,
+        configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED),
         false);
 }

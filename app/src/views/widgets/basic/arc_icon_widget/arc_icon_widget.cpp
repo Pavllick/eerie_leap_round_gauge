@@ -30,16 +30,16 @@ int ArcIconWidget::ApplyTheme() {
     return 0;
 }
 
-void ArcIconWidget::Configure(const WidgetConfiguration& config) {
-    IconWidget::Configure(config);
+void ArcIconWidget::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
+    IconWidget::Configure(configuration);
 
     position_angle_ = GetConfigValue<double>(
-        configuration_.properties,
+        configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_ANGLE),
         0.0);
 
     edge_offset_px_ = GetConfigValue<int>(
-        configuration_.properties,
+        configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::EDGE_OFFSET),
         0);
 }

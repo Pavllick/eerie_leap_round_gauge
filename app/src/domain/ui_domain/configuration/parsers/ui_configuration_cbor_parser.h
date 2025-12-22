@@ -11,8 +11,8 @@ using namespace eerie_leap::domain::ui_domain::models;
 
 class UiConfigurationCborParser {
 private:
-    void ValueTypeToCborPropertyValueType(CborPropertiesConfig& properties_config, const std::unordered_map<std::string, ConfigValue>& properties);
-    void CborPropertyValueTypeToValueType(std::unordered_map<std::string, ConfigValue>& properties, const CborPropertiesConfig& properties_config);
+    void ValueTypeToCborPropertyValueType(CborPropertiesConfig& properties_config, const std::pmr::unordered_map<std::pmr::string, ConfigValue>& properties);
+    void CborPropertyValueTypeToValueType(std::pmr::unordered_map<std::pmr::string, ConfigValue>& properties, const CborPropertiesConfig& properties_config);
 
 public:
     UiConfigurationCborParser() = default;
