@@ -113,7 +113,7 @@ void UiConfigurationCborParser::ValueTypeToCborPropertyValueType(CborPropertiesC
             } else if constexpr (std::is_same_v<T, double>) {
                 prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_float_c;
                 prop.value = static_cast<double>(arg);
-            } else if constexpr (std::is_same_v<T, std::string>) {
+            } else if constexpr (std::is_same_v<T, std::pmr::string>) {
                 prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_tstr_c;
                 prop.value = CborHelpers::ToZcborString(arg);
             }

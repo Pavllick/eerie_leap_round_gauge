@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.20.0)
 
+set(EXTRA_ZEPHYR_MODULES
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../modules/eerie_leap_common")
+
 # Use Zephyr's build system
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(test_guid_generator)
@@ -21,14 +24,6 @@ file(GLOB_RECURSE APP_SRC_CONFIGURATION
 set(APP_SRC_SUBSYS_DIR ${APP_SRC_DIR}/subsys)
 file(GLOB_RECURSE APP_SRC_SUBSYS
   ${APP_SRC_SUBSYS_DIR}/device_tree/dt_fs.cpp
-  ${APP_SRC_SUBSYS_DIR}/fs/fs_service.cpp
-  ${APP_SRC_SUBSYS_DIR}/random/*.cpp
-)
-
-set(APP_SRC_UTILITIES_DIR ${APP_SRC_DIR}/utilities/memory)
-file(GLOB_RECURSE APP_SRC_UTILITIES_MEMORY
-  ${APP_SRC_UTILITIES_DIR}/*.c
-  ${APP_SRC_UTILITIES_DIR}/*.cpp
 )
 
 file(GLOB_RECURSE TEST_SOURCES src/*.c src/*.cpp)
@@ -37,6 +32,5 @@ file(GLOB_RECURSE TEST_SOURCES src/*.c src/*.cpp)
 target_sources(app PRIVATE
   ${APP_SRC_CONFIGURATION}
   ${APP_SRC_SUBSYS}
-  ${APP_SRC_UTILITIES_MEMORY}
   ${TEST_SOURCES}
 )

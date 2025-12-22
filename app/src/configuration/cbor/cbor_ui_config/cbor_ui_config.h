@@ -150,7 +150,7 @@ struct CborScreenConfig {
     uint32_t type{};
 	CborGridSettingsConfig grid{};
 	std::pmr::vector<CborWidgetConfig> CborWidgetConfig_m;
-	allocator_type allocator;  // Store for creating new widgets
+	allocator_type allocator;
 
 	CborScreenConfig(std::allocator_arg_t, allocator_type alloc)
         : CborWidgetConfig_m(alloc), allocator(alloc) {}
@@ -177,7 +177,7 @@ struct CborUiConfig {
 	CborPropertiesConfig properties;
 	bool properties_present{};
 	std::pmr::vector<CborScreenConfig> CborScreenConfig_m;
-	allocator_type allocator;  // Store for creating new screens
+	allocator_type allocator;
 
 	CborUiConfig(std::allocator_arg_t, allocator_type alloc)
         : properties(std::allocator_arg, alloc),

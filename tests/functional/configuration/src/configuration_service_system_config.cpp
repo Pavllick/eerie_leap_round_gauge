@@ -2,7 +2,7 @@
 #include <zephyr/ztest.h>
 
 #include "utilities/cbor/cbor_helpers.hpp"
-#include "configuration/system_config/system_config.h"
+#include "configuration/cbor/cbor_system_config/cbor_system_config.h"
 #include "configuration/services/cbor_configuration_service.h"
 
 #include "subsys/device_tree/dt_fs.h"
@@ -16,8 +16,8 @@ using namespace eerie_leap::subsys::device_tree;
 
 ZTEST_SUITE(configuration_service_system_config, NULL, NULL, NULL, NULL, NULL);
 
-ZTEST(configuration_service_system_config, test_SystemConfig_Save_config_successfully_saved) {
-    SystemConfig system_config;
+ZTEST(configuration_service_system_config, test_CborSystemConfig_Save_config_successfully_saved) {
+    CborSystemConfig system_config;
     memset(&system_config, 0, sizeof(system_config));
 
     system_config.device_id = 12;
@@ -28,14 +28,14 @@ ZTEST(configuration_service_system_config, test_SystemConfig_Save_config_success
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto system_config_service = std::make_shared<CborConfigurationService<SystemConfig>>("system_config", fs_service);
+    auto system_config_service = std::make_shared<CborConfigurationService<CborSystemConfig>>("system_config", fs_service);
 
     auto save_res = system_config_service->Save(&system_config);
     zassert_true(save_res);
 }
 
-ZTEST(configuration_service_system_config, test_SystemConfig_Load_config_successfully_saved_and_loaded) {
-    SystemConfig system_config;
+ZTEST(configuration_service_system_config, test_CborSystemConfig_Load_config_successfully_saved_and_loaded) {
+    CborSystemConfig system_config;
     memset(&system_config, 0, sizeof(system_config));
 
     system_config.device_id = 14;
@@ -46,7 +46,7 @@ ZTEST(configuration_service_system_config, test_SystemConfig_Load_config_success
     auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
 
     fs_service->Format();
-    auto system_config_service = std::make_shared<CborConfigurationService<SystemConfig>>("system_config", fs_service);
+    auto system_config_service = std::make_shared<CborConfigurationService<CborSystemConfig>>("system_config", fs_service);
 
     auto save_res = system_config_service->Save(&system_config);
     zassert_true(save_res);
