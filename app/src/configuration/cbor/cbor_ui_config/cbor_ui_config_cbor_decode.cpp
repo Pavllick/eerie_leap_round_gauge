@@ -97,7 +97,7 @@ static bool decode_CborPropertyValueType(
 		*state = backup_state;
 		// Try list of int32_t
 		if (zcbor_list_start_decode(state)) {
-			std::vector<int32_t> vec;
+			std::pmr::vector<int32_t> vec(result->allocator);
 			bool list_success = true;
 
 			while (!zcbor_array_at_end(state)) {
@@ -122,7 +122,7 @@ static bool decode_CborPropertyValueType(
 		*state = backup_state;
 		// Try list of strings
 		if (zcbor_list_start_decode(state)) {
-			std::vector<zcbor_string> vec;
+			std::pmr::vector<zcbor_string> vec(result->allocator);
 			bool list_success = true;
 
 			while (!zcbor_array_at_end(state)) {
@@ -147,7 +147,7 @@ static bool decode_CborPropertyValueType(
 		*state = backup_state;
 		// Try map (vector of map_tstrtstr)
 		if (zcbor_map_start_decode(state)) {
-			std::vector<map_tstrtstr> vec;
+			std::pmr::vector<map_tstrtstr> vec(result->allocator);
 			bool map_success = true;
 
 			while (!zcbor_array_at_end(state)) {
@@ -280,7 +280,6 @@ static bool decode_CborWidgetConfig(
 		return false;
 	}
 
-	// Properties are optional - try to decode, set flag accordingly
 	result->properties_present = decode_CborPropertiesConfig(state, &result->properties);
 
 	if (!zcbor_list_end_decode(state)) {

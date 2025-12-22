@@ -23,7 +23,7 @@ static size_t GetCborPropertyValueTypeSize(const CborPropertyValueType_r& value)
             builder.AddBool(std::get<bool>(value.value));
             break;
         case CborPropertyValueType_r::CborPropertyValueType_int_l_c: {
-            const auto& vec = std::get<std::vector<int32_t>>(value.value);
+            const auto& vec = std::get<std::pmr::vector<int32_t>>(value.value);
             builder.AddIndefiniteArrayStart();
             for(const auto& item : vec)
                 builder.AddInt(item);
@@ -31,7 +31,7 @@ static size_t GetCborPropertyValueTypeSize(const CborPropertyValueType_r& value)
             break;
         }
         case CborPropertyValueType_r::CborPropertyValueType_tstr_l_c: {
-            const auto& vec = std::get<std::vector<zcbor_string>>(value.value);
+            const auto& vec = std::get<std::pmr::vector<zcbor_string>>(value.value);
             builder.AddIndefiniteArrayStart();
             for(const auto& item : vec)
                 builder.AddTstr(item);
@@ -39,7 +39,7 @@ static size_t GetCborPropertyValueTypeSize(const CborPropertyValueType_r& value)
             break;
         }
         case CborPropertyValueType_r::CborPropertyValueType_map_c: {
-            const auto& vec = std::get<std::vector<map_tstrtstr>>(value.value);
+            const auto& vec = std::get<std::pmr::vector<map_tstrtstr>>(value.value);
             builder.AddIndefiniteArrayStart();
             for(const auto& item : vec) {
                 builder.AddTstr(item.tstrtstr_key)

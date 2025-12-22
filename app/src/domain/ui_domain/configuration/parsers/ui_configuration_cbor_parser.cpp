@@ -101,7 +101,7 @@ pmr_unique_ptr<UiConfiguration> UiConfigurationCborParser::Deserialize(
 void UiConfigurationCborParser::ValueTypeToCborPropertyValueType(CborPropertiesConfig& properties_config, const std::unordered_map<std::string, ConfigValue>& properties) {
     size_t i = 0;
     for(auto& [key, value] : properties) {
-        CborPropertiesConfig_CborPropertyValueType_m property_value;
+        CborPropertiesConfig_CborPropertyValueType_m property_value(std::allocator_arg, Mrm::GetExtPmr());
         property_value.CborPropertyValueType_m_key = CborHelpers::ToZcborString(key);
 
         auto& prop = property_value.CborPropertyValueType_m;
@@ -123,19 +123,22 @@ void UiConfigurationCborParser::ValueTypeToCborPropertyValueType(CborPropertiesC
                 prop.value = arg;
             } else if constexpr (std::is_same_v<T, std::vector<int>>) {
                 prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_int_l_c;
-                prop.value = arg;
+
+                prop.value = std::pmr::vector<int32_t>(Mrm::GetExtPmr());
+                for (auto it = arg.begin(); it != arg.end(); ++it)
+                    std::get<std::pmr::vector<int32_t>>(prop.value).push_back(*it);
             } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
                 prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_tstr_l_c;
 
-                prop.value = std::vector<zcbor_string>();
+                prop.value = std::pmr::vector<zcbor_string>(Mrm::GetExtPmr());
                 for (auto it = arg.begin(); it != arg.end(); ++it)
-                    std::get<std::vector<zcbor_string>>(prop.value).push_back(CborHelpers::ToZcborString(*it));
+                    std::get<std::pmr::vector<zcbor_string>>(prop.value).push_back(CborHelpers::ToZcborString(*it));
             } else if constexpr (std::is_same_v<T, std::unordered_map<std::string, std::string>>) {
                 prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_map_c;
 
-                prop.value = std::vector<map_tstrtstr>();
+                prop.value = std::pmr::vector<map_tstrtstr>(Mrm::GetExtPmr());
                 for (auto it = arg.begin(); it != arg.end(); ++it) {
-                    std::get<std::vector<map_tstrtstr>>(prop.value).push_back({
+                    std::get<std::pmr::vector<map_tstrtstr>>(prop.value).push_back({
                         .tstrtstr_key = CborHelpers::ToZcborString(it->first),
                         .tstrtstr = CborHelpers::ToZcborString(it->second)
                     });
@@ -145,7 +148,7 @@ void UiConfigurationCborParser::ValueTypeToCborPropertyValueType(CborPropertiesC
             }
         }, value);
 
-        properties_config.CborPropertyValueType_m.push_back(property_value);
+        properties_config.CborPropertyValueType_m.push_back(std::move(property_value));
 
         ++i;
     }
@@ -168,15 +171,15 @@ void UiConfigurationCborParser::CborPropertyValueTypeToValueType(std::unordered_
                 value = CborHelpers::ToStdString(arg);
             } else if constexpr (std::is_same_v<T, bool>) {
                 value = arg;
-            } else if constexpr (std::is_same_v<T, std::vector<int32_t>>) {
+            } else if constexpr (std::is_same_v<T, std::pmr::vector<int32_t>>) {
                 value = std::vector<int>();
                 for (const auto& it : arg)
                     std::get<std::vector<int>>(value).push_back(it);
-            } else if constexpr (std::is_same_v<T, std::vector<zcbor_string>>) {
+            } else if constexpr (std::is_same_v<T, std::pmr::vector<zcbor_string>>) {
                 value = std::vector<std::string>();
                 for (const auto& it : arg)
                     std::get<std::vector<std::string>>(value).push_back(CborHelpers::ToStdString(it));
-            } else if constexpr (std::is_same_v<T, std::unordered_map<zcbor_string, zcbor_string>>) {
+            } else if constexpr (std::is_same_v<T, std::pmr::unordered_map<zcbor_string, zcbor_string>>) {
                 value = std::unordered_map<std::string, std::string>();
                 for (const auto& it : arg) {
                     std::get<std::unordered_map<std::string, std::string>>(value).insert({

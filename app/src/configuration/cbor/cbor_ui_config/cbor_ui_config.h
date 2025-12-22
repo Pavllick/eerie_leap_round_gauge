@@ -20,12 +20,14 @@ using CborPropertyValueType = std::variant<
     double,
     zcbor_string,
     bool,
-    std::vector<int32_t>,
-    std::vector<zcbor_string>,
-    std::vector<map_tstrtstr>
+    std::pmr::vector<int32_t>,
+    std::pmr::vector<zcbor_string>,
+    std::pmr::vector<map_tstrtstr>
 >;
 
 struct CborPropertyValueType_r {
+	using allocator_type = std::pmr::polymorphic_allocator<>;
+
 	CborPropertyValueType value{};
 
 	enum {
@@ -37,20 +39,53 @@ struct CborPropertyValueType_r {
 		CborPropertyValueType_tstr_l_c,
 		CborPropertyValueType_map_c,
 	} CborPropertyValueType_choice;
+
+    allocator_type allocator;
+
+	CborPropertyValueType_r(std::allocator_arg_t, allocator_type alloc)
+		: allocator(alloc) {}
+
+    CborPropertyValueType_r(const CborPropertyValueType_r&) = delete;
+	CborPropertyValueType_r& operator=(const CborPropertyValueType_r&) noexcept = default;
+	CborPropertyValueType_r& operator=(CborPropertyValueType_r&&) noexcept = default;
+	CborPropertyValueType_r(CborPropertyValueType_r&&) noexcept = default;
+	~CborPropertyValueType_r() = default;
+
+	CborPropertyValueType_r(CborPropertyValueType_r&& other, allocator_type alloc)
+        : value(std::move(other.value)),
+        CborPropertyValueType_choice(other.CborPropertyValueType_choice),
+        allocator(alloc) {}
 };
 
 struct CborPropertiesConfig_CborPropertyValueType_m {
+	using allocator_type = std::pmr::polymorphic_allocator<>;
+
 	zcbor_string CborPropertyValueType_m_key{};
-	CborPropertyValueType_r CborPropertyValueType_m{};
+	CborPropertyValueType_r CborPropertyValueType_m;
+
+	CborPropertiesConfig_CborPropertyValueType_m(std::allocator_arg_t, allocator_type alloc)
+		: CborPropertyValueType_m(std::allocator_arg, alloc) {}
+
+    CborPropertiesConfig_CborPropertyValueType_m(const CborPropertiesConfig_CborPropertyValueType_m&) = delete;
+	CborPropertiesConfig_CborPropertyValueType_m& operator=(const CborPropertiesConfig_CborPropertyValueType_m&) noexcept = default;
+	CborPropertiesConfig_CborPropertyValueType_m& operator=(CborPropertiesConfig_CborPropertyValueType_m&&) noexcept = default;
+	CborPropertiesConfig_CborPropertyValueType_m(CborPropertiesConfig_CborPropertyValueType_m&&) noexcept = default;
+	~CborPropertiesConfig_CborPropertyValueType_m() = default;
+
+	CborPropertiesConfig_CborPropertyValueType_m(CborPropertiesConfig_CborPropertyValueType_m&& other, allocator_type alloc)
+        : CborPropertyValueType_m_key(std::move(other.CborPropertyValueType_m_key)),
+		  CborPropertyValueType_m(std::move(other.CborPropertyValueType_m), alloc) {}
 };
 
 struct CborPropertiesConfig {
 	using allocator_type = std::pmr::polymorphic_allocator<>;
 
 	std::pmr::vector<CborPropertiesConfig_CborPropertyValueType_m> CborPropertyValueType_m;
+	allocator_type allocator;
 
 	CborPropertiesConfig(std::allocator_arg_t, allocator_type alloc)
-        : CborPropertyValueType_m(alloc) {}
+        : CborPropertyValueType_m(alloc),
+        allocator(alloc) {}
 
     CborPropertiesConfig(const CborPropertiesConfig&) = delete;
 	CborPropertiesConfig& operator=(const CborPropertiesConfig&) noexcept = default;
@@ -59,7 +94,8 @@ struct CborPropertiesConfig {
 	~CborPropertiesConfig() = default;
 
 	CborPropertiesConfig(CborPropertiesConfig&& other, allocator_type alloc)
-        : CborPropertyValueType_m(std::move(other.CborPropertyValueType_m), alloc) {}
+        : CborPropertyValueType_m(std::move(other.CborPropertyValueType_m), alloc),
+		  allocator(alloc) {}
 };
 
 struct CborGridSettingsConfig {
@@ -114,9 +150,10 @@ struct CborScreenConfig {
     uint32_t type{};
 	CborGridSettingsConfig grid{};
 	std::pmr::vector<CborWidgetConfig> CborWidgetConfig_m;
+	allocator_type allocator;  // Store for creating new widgets
 
 	CborScreenConfig(std::allocator_arg_t, allocator_type alloc)
-        : CborWidgetConfig_m(alloc) {}
+        : CborWidgetConfig_m(alloc), allocator(alloc) {}
 
     CborScreenConfig(const CborScreenConfig&) = delete;
 	CborScreenConfig& operator=(const CborScreenConfig&) noexcept = default;
@@ -128,7 +165,8 @@ struct CborScreenConfig {
         : id(other.id),
 		type(other.type),
 		grid(other.grid),
-		CborWidgetConfig_m(std::move(other.CborWidgetConfig_m), alloc) {}
+		CborWidgetConfig_m(std::move(other.CborWidgetConfig_m), alloc),
+		allocator(alloc) {}
 };
 
 struct CborUiConfig {
@@ -139,10 +177,12 @@ struct CborUiConfig {
 	CborPropertiesConfig properties;
 	bool properties_present{};
 	std::pmr::vector<CborScreenConfig> CborScreenConfig_m;
+	allocator_type allocator;  // Store for creating new screens
 
 	CborUiConfig(std::allocator_arg_t, allocator_type alloc)
         : properties(std::allocator_arg, alloc),
-		CborScreenConfig_m(alloc) {}
+		CborScreenConfig_m(alloc),
+		allocator(alloc) {}
 
     CborUiConfig(const CborUiConfig&) = delete;
 	CborUiConfig& operator=(const CborUiConfig&) noexcept = default;
@@ -155,5 +195,6 @@ struct CborUiConfig {
 		active_screen_index(other.active_screen_index),
 		properties(std::move(other.properties), alloc),
 		properties_present(other.properties_present),
-		CborScreenConfig_m(std::move(other.CborScreenConfig_m), alloc) {}
+		CborScreenConfig_m(std::move(other.CborScreenConfig_m), alloc),
+		allocator(alloc) {}
 };
