@@ -15,9 +15,9 @@ using ConfigValue = std::variant<
     double,
     std::string,
     bool,
-    std::vector<int>,
-    std::vector<std::string>,
-    std::unordered_map<std::string, std::string>
+    std::pmr::vector<int>,
+    std::pmr::vector<std::pmr::string>,
+    std::pmr::unordered_map<std::pmr::string, std::pmr::string>
 >;
 
 template<typename T>

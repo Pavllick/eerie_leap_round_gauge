@@ -63,7 +63,7 @@ pmr_unique_ptr<UiConfiguration> UiConfigurationCborParser::Deserialize(
     configuration->active_screen_index = config.active_screen_index;
 
     if(config.properties_present)
-        CborPropertyValueTypeToValueType(configuration->properties, config.properties);
+        CborPropertyValueTypeToValueType(mr, configuration->properties, config.properties);
 
     for(int i = 0; i < config.CborScreenConfig_m.size(); i++) {
         auto screen_configuration = make_shared_pmr<ScreenConfiguration>(mr);
@@ -85,7 +85,7 @@ pmr_unique_ptr<UiConfiguration> UiConfigurationCborParser::Deserialize(
             widget_configuration->size_grid.height = config.CborScreenConfig_m[i].CborWidgetConfig_m[j].size.height;
 
             if(config.CborScreenConfig_m[i].CborWidgetConfig_m[j].properties_present)
-                CborPropertyValueTypeToValueType(widget_configuration->properties, config.CborScreenConfig_m[i].CborWidgetConfig_m[j].properties);
+                CborPropertyValueTypeToValueType(mr, widget_configuration->properties, config.CborScreenConfig_m[i].CborWidgetConfig_m[j].properties);
             screen_configuration->widget_configurations.push_back(std::move(widget_configuration));
         }
 
@@ -120,19 +120,19 @@ void UiConfigurationCborParser::ValueTypeToCborPropertyValueType(CborPropertiesC
             else if constexpr (std::is_same_v<T, bool>) {
                 prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_bool_c;
                 prop.value = arg;
-            } else if constexpr (std::is_same_v<T, std::vector<int>>) {
+            } else if constexpr (std::is_same_v<T, std::pmr::vector<int>>) {
                 prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_int_l_c;
 
                 prop.value = std::pmr::vector<int32_t>(Mrm::GetExtPmr());
                 for (auto it = arg.begin(); it != arg.end(); ++it)
                     std::get<std::pmr::vector<int32_t>>(prop.value).push_back(*it);
-            } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
+            } else if constexpr (std::is_same_v<T, std::pmr::vector<std::pmr::string>>) {
                 prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_tstr_l_c;
 
                 prop.value = std::pmr::vector<zcbor_string>(Mrm::GetExtPmr());
                 for (auto it = arg.begin(); it != arg.end(); ++it)
                     std::get<std::pmr::vector<zcbor_string>>(prop.value).push_back(CborHelpers::ToZcborString(*it));
-            } else if constexpr (std::is_same_v<T, std::unordered_map<std::string, std::string>>) {
+            } else if constexpr (std::is_same_v<T, std::pmr::unordered_map<std::pmr::string, std::pmr::string>>) {
                 prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_map_c;
 
                 prop.value = std::pmr::vector<map_tstrtstr>(Mrm::GetExtPmr());
@@ -153,7 +153,11 @@ void UiConfigurationCborParser::ValueTypeToCborPropertyValueType(CborPropertiesC
     }
 }
 
-void UiConfigurationCborParser::CborPropertyValueTypeToValueType(std::pmr::unordered_map<std::pmr::string, ConfigValue>& properties, const CborPropertiesConfig& properties_config) {
+void UiConfigurationCborParser::CborPropertyValueTypeToValueType(
+    std::pmr::memory_resource* mr,
+    std::pmr::unordered_map<std::pmr::string, ConfigValue>& properties,
+    const CborPropertiesConfig& properties_config) {
+
     if(properties_config.CborPropertyValueType_m.size() == 0)
         return;
 
@@ -171,19 +175,19 @@ void UiConfigurationCborParser::CborPropertyValueTypeToValueType(std::pmr::unord
             } else if constexpr (std::is_same_v<T, bool>) {
                 value = arg;
             } else if constexpr (std::is_same_v<T, std::pmr::vector<int32_t>>) {
-                value = std::vector<int>();
+                value = std::pmr::vector<int>(mr);
                 for (const auto& it : arg)
-                    std::get<std::vector<int>>(value).push_back(it);
+                    std::get<std::pmr::vector<int>>(value).push_back(it);
             } else if constexpr (std::is_same_v<T, std::pmr::vector<zcbor_string>>) {
-                value = std::vector<std::string>();
+                value = std::pmr::vector<std::pmr::string>(mr);
                 for (const auto& it : arg)
-                    std::get<std::vector<std::string>>(value).push_back(CborHelpers::ToStdString(it));
+                    std::get<std::pmr::vector<std::pmr::string>>(value).push_back(CborHelpers::ToPmrString(mr, it));
             } else if constexpr (std::is_same_v<T, std::pmr::unordered_map<zcbor_string, zcbor_string>>) {
-                value = std::unordered_map<std::string, std::string>();
+                value = std::pmr::unordered_map<std::pmr::string, std::pmr::string>(mr);
                 for (const auto& it : arg) {
-                    std::get<std::unordered_map<std::string, std::string>>(value).insert({
-                        CborHelpers::ToStdString(it.tstrtstr_key),
-                        CborHelpers::ToStdString(it.tstrtstr)
+                    std::get<std::pmr::unordered_map<std::pmr::string, std::pmr::string>>(value).insert({
+                        CborHelpers::ToPmrString(mr, it.tstrtstr_key),
+                        CborHelpers::ToPmrString(mr, it.tstrtstr)
                     });
                 }
             } else {
