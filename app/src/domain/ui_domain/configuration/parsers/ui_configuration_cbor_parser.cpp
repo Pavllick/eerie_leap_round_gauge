@@ -22,7 +22,7 @@ pmr_unique_ptr<CborUiConfig> UiConfigurationCborParser::Serialize(const UiConfig
 
     config->CborScreenConfig_m.clear();
     for(int i = 0; i < configuration.screen_configurations.size(); i++) {
-        CborScreenConfig screen_config;
+        CborScreenConfig screen_config(std::allocator_arg, Mrm::GetExtPmr());;
 
         screen_config.id = configuration.screen_configurations[i].id;
         screen_config.type = static_cast<uint32_t>(configuration.screen_configurations[i].type);
@@ -33,7 +33,7 @@ pmr_unique_ptr<CborUiConfig> UiConfigurationCborParser::Serialize(const UiConfig
 
         screen_config.CborWidgetConfig_m.clear();
         for(int j = 0; j < configuration.screen_configurations[i].widget_configurations.size(); j++) {
-            CborWidgetConfig widget_config;
+            CborWidgetConfig widget_config(std::allocator_arg, Mrm::GetExtPmr());;
 
             widget_config.id = configuration.screen_configurations[i].widget_configurations[j].id;
             widget_config.type = static_cast<uint32_t>(configuration.screen_configurations[i].widget_configurations[j].type);
@@ -46,10 +46,10 @@ pmr_unique_ptr<CborUiConfig> UiConfigurationCborParser::Serialize(const UiConfig
             if(configuration.screen_configurations[i].widget_configurations[j].properties.size() > 0)
                 ValueTypeToCborPropertyValueType(widget_config.properties, configuration.screen_configurations[i].widget_configurations[j].properties);
 
-            screen_config.CborWidgetConfig_m.push_back(widget_config);
+            screen_config.CborWidgetConfig_m.push_back(std::move(widget_config));
         }
 
-        config->CborScreenConfig_m.push_back(screen_config);
+        config->CborScreenConfig_m.push_back(std::move(screen_config));
     }
 
     return config;

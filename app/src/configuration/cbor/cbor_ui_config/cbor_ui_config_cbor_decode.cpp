@@ -6,11 +6,6 @@
 #include "cbor_ui_config_cbor_decode.h"
 #include "zcbor_print.h"
 
-#include <zephyr/kernel.h>
-#include "utilities/memory/heap_allocator.h"
-
-using namespace eerie_leap::utilities::memory;
-
 #define log_result(state, result, func) do { \
 	if (!result) { \
 		zcbor_trace_file(state); \
@@ -102,14 +97,20 @@ static bool decode_CborPropertyValueType(
 		*state = backup_state;
 		// Try list of int32_t
 		if (zcbor_list_start_decode(state)) {
-			auto buffer = make_shared_ext<ExtVector>(sizeof(int32_t) * UI_CONFIG_MAX_PROPERTIES_COUNT);
-			size_t count = 0;
+			std::vector<int32_t> vec;
+			bool list_success = true;
 
-			if (zcbor_multi_decode(0, UI_CONFIG_MAX_PROPERTIES_COUNT, &count, (zcbor_decoder_t*)zcbor_int32_decode,
-					state, buffer->data(), sizeof(int32_t)) && zcbor_list_end_decode(state)) {
+			while (!zcbor_array_at_end(state)) {
+				int32_t val;
+				if (!zcbor_int32_decode(state, &val)) {
+					list_success = false;
+					zcbor_list_map_end_force_decode(state);
+					break;
+				}
+				vec.push_back(val);
+			}
 
-				std::vector<int32_t> vec(count);
-				memcpy(vec.data(), buffer->data(), count * sizeof(int32_t));
+			if (list_success && zcbor_list_end_decode(state)) {
 				result->value = std::move(vec);
 				result->CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_int_l_c;
 				res = true;
@@ -121,14 +122,20 @@ static bool decode_CborPropertyValueType(
 		*state = backup_state;
 		// Try list of strings
 		if (zcbor_list_start_decode(state)) {
-			auto buffer = make_shared_ext<ExtVector>(sizeof(zcbor_string) * UI_CONFIG_MAX_PROPERTIES_COUNT);
-			size_t count = 0;
+			std::vector<zcbor_string> vec;
+			bool list_success = true;
 
-			if (zcbor_multi_decode(0, UI_CONFIG_MAX_PROPERTIES_COUNT, &count, (zcbor_decoder_t*)zcbor_tstr_decode,
-				state, buffer->data(), sizeof(zcbor_string)) && zcbor_list_end_decode(state)) {
+			while (!zcbor_array_at_end(state)) {
+				zcbor_string val;
+				if (!zcbor_tstr_decode(state, &val)) {
+					list_success = false;
+					zcbor_list_map_end_force_decode(state);
+					break;
+				}
+				vec.push_back(val);
+			}
 
-				std::vector<zcbor_string> vec(count);
-				memcpy(vec.data(), buffer->data(), count * sizeof(zcbor_string));
+			if (list_success && zcbor_list_end_decode(state)) {
 				result->value = std::move(vec);
 				result->CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_tstr_l_c;
 				res = true;
@@ -140,14 +147,20 @@ static bool decode_CborPropertyValueType(
 		*state = backup_state;
 		// Try map (vector of map_tstrtstr)
 		if (zcbor_map_start_decode(state)) {
-			auto buffer = make_shared_ext<ExtVector>(sizeof(map_tstrtstr) * UI_CONFIG_MAX_PROPERTIES_COUNT);
-			size_t count = 0;
+			std::vector<map_tstrtstr> vec;
+			bool map_success = true;
 
-			if (zcbor_multi_decode(0, UI_CONFIG_MAX_PROPERTIES_COUNT, &count, (zcbor_decoder_t*)decode_repeated_map_tstrtstr,
-				state, buffer->data(), sizeof(map_tstrtstr)) && zcbor_map_end_decode(state)) {
+			while (!zcbor_array_at_end(state)) {
+				map_tstrtstr val;
+				if (!decode_repeated_map_tstrtstr(state, &val)) {
+					map_success = false;
+					zcbor_list_map_end_force_decode(state);
+					break;
+				}
+				vec.push_back(val);
+			}
 
-				std::vector<map_tstrtstr> vec(count);
-				memcpy(vec.data(), buffer->data(), count * sizeof(map_tstrtstr));
+			if (map_success && zcbor_map_end_decode(state)) {
 				result->value = std::move(vec);
 				result->CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_map_c;
 				res = true;
@@ -176,24 +189,28 @@ static bool decode_CborPropertiesConfig(
 {
 	zcbor_log("%s\r\n", __func__);
 
-    size_t CborPropertyValueType_m_count = 0;
-	result->CborPropertyValueType_m.clear();
-
-	auto buffer = make_shared_ext<ExtVector>(sizeof(CborPropertiesConfig_CborPropertyValueType_m) * UI_CONFIG_MAX_PROPERTIES_COUNT);
-
-	bool res = zcbor_map_start_decode(state)
-		&& ((zcbor_multi_decode(0, UI_CONFIG_MAX_PROPERTIES_COUNT, &CborPropertyValueType_m_count, (zcbor_decoder_t *)decode_repeated_CborPropertiesConfig_CborPropertyValueType_m, state, buffer->data(), sizeof(struct CborPropertiesConfig_CborPropertyValueType_m))) ||
-			(zcbor_list_map_end_force_decode(state), false))
-		&& zcbor_map_end_decode(state);
-
-	if (res) {
-		result->CborPropertyValueType_m.resize(CborPropertyValueType_m_count);
-		memcpy(result->CborPropertyValueType_m.data(), buffer->data(),
-			CborPropertyValueType_m_count * sizeof(struct CborPropertiesConfig_CborPropertyValueType_m));
+	if (!zcbor_map_start_decode(state)) {
+		return false;
 	}
 
-	log_result(state, res, __func__);
-	return res;
+	result->CborPropertyValueType_m.clear();
+
+	while (!zcbor_array_at_end(state)) {
+		result->CborPropertyValueType_m.emplace_back();
+		if (!decode_repeated_CborPropertiesConfig_CborPropertyValueType_m(state, &result->CborPropertyValueType_m.back())) {
+			result->CborPropertyValueType_m.pop_back();
+			zcbor_list_map_end_force_decode(state);
+			zcbor_map_end_decode(state);
+			return false;
+		}
+	}
+
+	if (!zcbor_map_end_decode(state)) {
+		return false;
+	}
+
+	log_result(state, true, __func__);
+	return true;
 }
 
 static bool decode_CborGridSettingsConfig(
@@ -239,14 +256,39 @@ static bool decode_CborWidgetConfig(
 {
 	zcbor_log("%s\r\n", __func__);
 
-	bool res = (((zcbor_list_start_decode(state) && ((((zcbor_uint32_decode(state, (&(*result).type))))
-	&& ((zcbor_uint32_decode(state, (&(*result).id))))
-	&& ((decode_CborWidgetPositionConfig(state, (&(*result).position))))
-	&& ((decode_CborWidgetSizeConfig(state, (&(*result).size))))
-	&& ((*result).properties_present = ((decode_CborPropertiesConfig(state, (&(*result).properties)))), 1)) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
+	if (!zcbor_list_start_decode(state)) {
+		return false;
+	}
 
-	log_result(state, res, __func__);
-	return res;
+	if (!zcbor_uint32_decode(state, &result->type)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	if (!zcbor_uint32_decode(state, &result->id)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	if (!decode_CborWidgetPositionConfig(state, &result->position)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	if (!decode_CborWidgetSizeConfig(state, &result->size)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	// Properties are optional - try to decode, set flag accordingly
+	result->properties_present = decode_CborPropertiesConfig(state, &result->properties);
+
+	if (!zcbor_list_end_decode(state)) {
+		return false;
+	}
+
+	log_result(state, true, __func__);
+	return true;
 }
 
 static bool decode_CborScreenConfig(
@@ -254,23 +296,54 @@ static bool decode_CborScreenConfig(
 {
 	zcbor_log("%s\r\n", __func__);
 
-	auto buffer = make_shared_ext<ExtVector>(sizeof(CborWidgetConfig) * UI_CONFIG_MAX_WIDGET_CONFIGURATIONS_COUNT);
-    size_t CborWidgetConfig_m_count = 0;
-
-	bool res = (((zcbor_list_start_decode(state) && ((
-       ((zcbor_uint32_decode(state, (&(*result).id))))
-    && ((zcbor_uint32_decode(state, (&(*result).type))))
-	&& ((decode_CborGridSettingsConfig(state, (&(*result).grid))))
-	&& ((zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, UI_CONFIG_MAX_WIDGET_CONFIGURATIONS_COUNT, &CborWidgetConfig_m_count, (zcbor_decoder_t *)decode_CborWidgetConfig, state, buffer->data(), sizeof(struct CborWidgetConfig))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state)))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
-
-	if (res) {
-		result->CborWidgetConfig_m.resize(CborWidgetConfig_m_count);
-		memcpy(result->CborWidgetConfig_m.data(), buffer->data(),
-			CborWidgetConfig_m_count * sizeof(struct CborWidgetConfig));
+	if (!zcbor_list_start_decode(state)) {
+		return false;
 	}
 
-	log_result(state, res, __func__);
-	return res;
+	if (!zcbor_uint32_decode(state, &result->id)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	if (!zcbor_uint32_decode(state, &result->type)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	if (!decode_CborGridSettingsConfig(state, &result->grid)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	if (!zcbor_list_start_decode(state)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	result->CborWidgetConfig_m.clear();
+
+	while (!zcbor_array_at_end(state)) {
+		result->CborWidgetConfig_m.emplace_back();
+		if (!decode_CborWidgetConfig(state, &result->CborWidgetConfig_m.back())) {
+			result->CborWidgetConfig_m.pop_back();
+			zcbor_list_map_end_force_decode(state);
+			zcbor_list_end_decode(state);
+			zcbor_list_end_decode(state);
+			return false;
+		}
+	}
+
+	if (!zcbor_list_end_decode(state)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	if (!zcbor_list_end_decode(state)) {
+		return false;
+	}
+
+	log_result(state, true, __func__);
+	return true;
 }
 
 static bool decode_CborUiConfig(
@@ -278,23 +351,51 @@ static bool decode_CborUiConfig(
 {
 	zcbor_log("%s\r\n", __func__);
 
-	auto buffer = make_shared_ext<ExtVector>(sizeof(CborScreenConfig) * UI_CONFIG_MAX_SCREEN_CONFIGURATIONS_COUNT);
-    size_t CborScreenConfig_m_count = 0;
-
-	bool res = (((zcbor_list_start_decode(state) && ((((zcbor_uint32_decode(state, (&(*result).version))))
-	&& ((zcbor_uint32_decode(state, (&(*result).active_screen_index))))
-	&& ((*result).properties_present = ((decode_CborPropertiesConfig(state, (&(*result).properties)))), 1)
-	&& ((zcbor_list_start_decode(state) && ((zcbor_multi_decode(0, UI_CONFIG_MAX_SCREEN_CONFIGURATIONS_COUNT, &CborScreenConfig_m_count, (zcbor_decoder_t *)decode_CborScreenConfig, state, buffer->data(), sizeof(struct CborScreenConfig))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))))
-	|| (zcbor_list_map_end_force_decode(state), false))) && zcbor_list_end_decode(state)));
-
-	if (res) {
-		result->CborScreenConfig_m.resize(CborScreenConfig_m_count);
-		memcpy(result->CborScreenConfig_m.data(), buffer->data(),
-			CborScreenConfig_m_count * sizeof(struct CborScreenConfig));
+	if (!zcbor_list_start_decode(state)) {
+		return false;
 	}
 
-	log_result(state, res, __func__);
-	return res;
+	if (!zcbor_uint32_decode(state, &result->version)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	if (!zcbor_uint32_decode(state, &result->active_screen_index)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	result->properties_present = decode_CborPropertiesConfig(state, &result->properties);
+
+	if (!zcbor_list_start_decode(state)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	result->CborScreenConfig_m.clear();
+
+	while (!zcbor_array_at_end(state)) {
+		result->CborScreenConfig_m.emplace_back();
+		if (!decode_CborScreenConfig(state, &result->CborScreenConfig_m.back())) {
+			result->CborScreenConfig_m.pop_back();
+			zcbor_list_map_end_force_decode(state);
+			zcbor_list_end_decode(state);
+			zcbor_list_end_decode(state);
+			return false;
+		}
+	}
+
+	if (!zcbor_list_end_decode(state)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	if (!zcbor_list_end_decode(state)) {
+		return false;
+	}
+
+	log_result(state, true, __func__);
+	return true;
 }
 
 

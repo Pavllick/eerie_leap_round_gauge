@@ -228,7 +228,7 @@ int main() {
 }
 
 std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager) {
-    auto ui_configuration = make_shared_ext<UiConfiguration>();
+    auto ui_configuration = make_shared_pmr<UiConfiguration>(Mrm::GetExtPmr());
     ui_configuration->active_screen_index = 0;
 
     ScreenConfiguration screen_configuration;

@@ -7,10 +7,7 @@
 
 #include <vector>
 #include <variant>
-
-#define UI_CONFIG_MAX_PROPERTIES_COUNT 40
-#define UI_CONFIG_MAX_SCREEN_CONFIGURATIONS_COUNT 10
-#define UI_CONFIG_MAX_WIDGET_CONFIGURATIONS_COUNT 20
+#include <memory_resource>
 
 struct map_tstrtstr {
 	struct zcbor_string tstrtstr_key;
@@ -29,7 +26,7 @@ using CborPropertyValueType = std::variant<
 >;
 
 struct CborPropertyValueType_r {
-	CborPropertyValueType value;
+	CborPropertyValueType value{};
 
 	enum {
 		CborPropertyValueType_int_c,
@@ -43,51 +40,120 @@ struct CborPropertyValueType_r {
 };
 
 struct CborPropertiesConfig_CborPropertyValueType_m {
-	zcbor_string CborPropertyValueType_m_key;
-	CborPropertyValueType_r CborPropertyValueType_m;
+	zcbor_string CborPropertyValueType_m_key{};
+	CborPropertyValueType_r CborPropertyValueType_m{};
 };
 
 struct CborPropertiesConfig {
-	std::vector<CborPropertiesConfig_CborPropertyValueType_m> CborPropertyValueType_m;
+	using allocator_type = std::pmr::polymorphic_allocator<>;
+
+	std::pmr::vector<CborPropertiesConfig_CborPropertyValueType_m> CborPropertyValueType_m;
+
+	CborPropertiesConfig(std::allocator_arg_t, allocator_type alloc)
+        : CborPropertyValueType_m(alloc) {}
+
+    CborPropertiesConfig(const CborPropertiesConfig&) = delete;
+	CborPropertiesConfig& operator=(const CborPropertiesConfig&) noexcept = default;
+	CborPropertiesConfig& operator=(CborPropertiesConfig&&) noexcept = default;
+	CborPropertiesConfig(CborPropertiesConfig&&) noexcept = default;
+	~CborPropertiesConfig() = default;
+
+	CborPropertiesConfig(CborPropertiesConfig&& other, allocator_type alloc)
+        : CborPropertyValueType_m(std::move(other.CborPropertyValueType_m), alloc) {}
 };
 
 struct CborGridSettingsConfig {
-	bool snap_enabled;
-	uint32_t width;
-	uint32_t height;
-	uint32_t spacing_px;
+	bool snap_enabled{};
+	uint32_t width{};
+	uint32_t height{};
+	uint32_t spacing_px{};
 };
 
 struct CborWidgetPositionConfig {
-	int32_t x;
-	int32_t y;
+	int32_t x{};
+	int32_t y{};
 };
 
 struct CborWidgetSizeConfig {
-	uint32_t width;
-	uint32_t height;
+	uint32_t width{};
+	uint32_t height{};
 };
 
 struct CborWidgetConfig {
-	uint32_t type;
-	uint32_t id;
-	CborWidgetPositionConfig position;
-	CborWidgetSizeConfig size;
+	using allocator_type = std::pmr::polymorphic_allocator<>;
+
+	uint32_t type{};
+	uint32_t id{};
+	CborWidgetPositionConfig position{};
+	CborWidgetSizeConfig size{};
 	CborPropertiesConfig properties;
-	bool properties_present;
+	bool properties_present{};
+
+	CborWidgetConfig(std::allocator_arg_t, allocator_type alloc)
+        : properties(std::allocator_arg, alloc) {}
+
+    CborWidgetConfig(const CborWidgetConfig&) = delete;
+	CborWidgetConfig& operator=(const CborWidgetConfig&) noexcept = default;
+	CborWidgetConfig& operator=(CborWidgetConfig&&) noexcept = default;
+	CborWidgetConfig(CborWidgetConfig&&) noexcept = default;
+	~CborWidgetConfig() = default;
+
+	CborWidgetConfig(CborWidgetConfig&& other, allocator_type alloc)
+        : type(other.type),
+		id(other.id),
+		position(other.position),
+		size(other.size),
+		properties(std::move(other.properties), alloc),
+		properties_present(other.properties_present) {}
 };
 
 struct CborScreenConfig {
-	uint32_t id;
-    uint32_t type;
-	CborGridSettingsConfig grid;
-	std::vector<CborWidgetConfig> CborWidgetConfig_m;
+	using allocator_type = std::pmr::polymorphic_allocator<>;
+
+	uint32_t id{};
+    uint32_t type{};
+	CborGridSettingsConfig grid{};
+	std::pmr::vector<CborWidgetConfig> CborWidgetConfig_m;
+
+	CborScreenConfig(std::allocator_arg_t, allocator_type alloc)
+        : CborWidgetConfig_m(alloc) {}
+
+    CborScreenConfig(const CborScreenConfig&) = delete;
+	CborScreenConfig& operator=(const CborScreenConfig&) noexcept = default;
+	CborScreenConfig& operator=(CborScreenConfig&&) noexcept = default;
+	CborScreenConfig(CborScreenConfig&&) noexcept = default;
+	~CborScreenConfig() = default;
+
+	CborScreenConfig(CborScreenConfig&& other, allocator_type alloc)
+        : id(other.id),
+		type(other.type),
+		grid(other.grid),
+		CborWidgetConfig_m(std::move(other.CborWidgetConfig_m), alloc) {}
 };
 
 struct CborUiConfig {
-	uint32_t version;
-	uint32_t active_screen_index;
+	using allocator_type = std::pmr::polymorphic_allocator<>;
+
+	uint32_t version{};
+	uint32_t active_screen_index{};
 	CborPropertiesConfig properties;
-	bool properties_present;
-	std::vector<CborScreenConfig> CborScreenConfig_m;
+	bool properties_present{};
+	std::pmr::vector<CborScreenConfig> CborScreenConfig_m;
+
+	CborUiConfig(std::allocator_arg_t, allocator_type alloc)
+        : properties(std::allocator_arg, alloc),
+		CborScreenConfig_m(alloc) {}
+
+    CborUiConfig(const CborUiConfig&) = delete;
+	CborUiConfig& operator=(const CborUiConfig&) noexcept = default;
+	CborUiConfig& operator=(CborUiConfig&&) noexcept = default;
+	CborUiConfig(CborUiConfig&&) noexcept = default;
+	~CborUiConfig() = default;
+
+	CborUiConfig(CborUiConfig&& other, allocator_type alloc)
+        : version(other.version),
+		active_screen_index(other.active_screen_index),
+		properties(std::move(other.properties), alloc),
+		properties_present(other.properties_present),
+		CborScreenConfig_m(std::move(other.CborScreenConfig_m), alloc) {}
 };
