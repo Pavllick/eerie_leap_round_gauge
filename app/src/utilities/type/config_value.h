@@ -13,7 +13,7 @@ using ConfigValue = std::variant<
     std::monostate,
     int,
     double,
-    std::string,
+    std::pmr::string,
     bool,
     std::pmr::vector<int>,
     std::pmr::vector<std::pmr::string>,

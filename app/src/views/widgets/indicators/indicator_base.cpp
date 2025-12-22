@@ -71,12 +71,12 @@ std::optional<uint32_t> IndicatorBase::GetSensorId() const {
 void IndicatorBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
     WidgetBase::Configure(configuration);
 
-    auto sensor_id_str = GetConfigValue<std::string>(
+    auto sensor_id_str = GetConfigValue<std::pmr::string>(
         configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID),
         "");
     if(!sensor_id_str.empty()) {
-        sensor_id_ = std::stoul(sensor_id_str);
+        sensor_id_ = std::stoul(sensor_id_str.c_str());
 
         auto result = UiEventBus::GetInstance().Subscribe(
             UiEventType::SensorDataUpdated,

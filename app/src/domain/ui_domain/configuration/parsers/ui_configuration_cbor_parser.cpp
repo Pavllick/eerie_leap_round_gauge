@@ -171,7 +171,7 @@ void UiConfigurationCborParser::CborPropertyValueTypeToValueType(
             } else if constexpr (std::is_same_v<T, double>) {
                 value = static_cast<double>(arg);
             } else if constexpr (std::is_same_v<T, zcbor_string>) {
-                value = CborHelpers::ToStdString(arg);
+                value = CborHelpers::ToPmrString(mr, arg);
             } else if constexpr (std::is_same_v<T, bool>) {
                 value = arg;
             } else if constexpr (std::is_same_v<T, std::pmr::vector<int32_t>>) {
@@ -195,7 +195,7 @@ void UiConfigurationCborParser::CborPropertyValueTypeToValueType(
             }
         }, property.CborPropertyValueType_m.value);
 
-        properties.emplace(CborHelpers::ToStdString(property.CborPropertyValueType_m_key), std::move(value));
+        properties.emplace(CborHelpers::ToPmrString(mr, property.CborPropertyValueType_m_key), std::move(value));
     }
 }
 
