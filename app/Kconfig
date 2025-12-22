@@ -32,6 +32,10 @@ config EERIE_LEAP_SW_VERSION_PATCH
 	range 0 65535
 	default 0
 
+config EERIE_LEAP_SD_CARD_USER_CONFIG_DIR
+	string "User config directory"
+	default "configuration"
+
 config EERIE_LEAP_UI_RENDERER_THREAD_STACK_SIZE
 	int "UI renderer thread stack size"
 	default 8192
