@@ -53,7 +53,7 @@ void IndicatorBase::Update(float value) {
     if(!IsReady())
         return;
 
-    if(IsAnimated()) {
+    if(IsSmoothed()) {
         ValueChangeAnimation(
             value_change_animation_,
             range_end_ - range_start_,

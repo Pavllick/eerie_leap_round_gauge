@@ -262,7 +262,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget1->size_grid.width = 3;
     widget1->size_grid.height = 1;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
-    widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED)] = true;
+    widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "2348664336";
@@ -278,7 +278,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget2->size_grid.width = 3;
     widget2->size_grid.height = 1;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
-    widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED)] = false;
+    widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = false;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "2348664336";
@@ -295,7 +295,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget3->size_grid.width = 3;
     widget3->size_grid.height = 1;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
-    widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED)] = true;
+    widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "2348664336";
@@ -310,7 +310,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     // widget4->size_grid.width = 3;
     // widget4->size_grid.height = 1;
     // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
-    // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED)] = true;
+    // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "2348664336";
@@ -325,7 +325,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget5->size_grid.width = 3;
     widget5->size_grid.height = 3;
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
-    widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED)] = true;
+    widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "2348664336";
@@ -341,7 +341,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     // widget6->size_grid.width = 3;
     // widget6->size_grid.height = 3;
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
-    // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED)] = true;
+    // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "2348664336";
@@ -360,7 +360,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE)] = static_cast<int>(IconType::Dot);
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE)] = false;
-    widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED)] = true;
+    widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X)] = 0;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y)] = 0;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_ANGLE)] = 90.0F;

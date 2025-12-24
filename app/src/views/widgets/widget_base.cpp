@@ -49,10 +49,10 @@ bool WidgetBase::IsVisible() const {
         false);
 }
 
-bool WidgetBase::IsAnimated() const {
+bool WidgetBase::IsSmoothed() const {
     return GetConfigValue<bool>(
         configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::IS_ANIMATED),
+        WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED),
         false);
 }
 

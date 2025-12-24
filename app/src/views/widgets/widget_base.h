@@ -36,7 +36,7 @@ public:
     ~WidgetBase() override;
 
     uint32_t GetId() const override;
-    bool IsAnimated() const override;
+    bool IsSmoothed() const override;
     bool IsVisible() const override;
 
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;

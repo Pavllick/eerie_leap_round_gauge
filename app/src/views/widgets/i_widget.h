@@ -26,7 +26,7 @@ public:
     // Configuration
     virtual void Configure(std::shared_ptr<WidgetConfiguration> configuration) = 0;
     virtual std::shared_ptr<WidgetConfiguration> GetConfiguration() const = 0;
-    virtual bool IsAnimated() const = 0;
+    virtual bool IsSmoothed() const = 0;
 
     // Layout
     virtual WidgetPosition GetPositionPx() const = 0;
