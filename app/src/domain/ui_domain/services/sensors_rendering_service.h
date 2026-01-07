@@ -28,6 +28,7 @@ private:
     static constexpr int thread_stack_size_ = 4096;
     static constexpr int thread_priority_ = 6;
     std::unique_ptr<WorkQueueThread> work_queue_thread_;
+    std::optional<WorkQueueTask<SensorsRenderingTask>> work_queue_task_;
 
     static constexpr uint32_t SENSORS_REFRESH_RATE_MS = 30;
 
@@ -36,8 +37,6 @@ private:
     std::shared_ptr<CanbusService> canbus_service_;
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame_;
     std::vector<std::unique_ptr<CanbusSensorsReader>> canbus_sensors_readers_;
-
-    std::optional<WorkQueueTask<SensorsRenderingTask>> work_queue_task_;
 
     static WorkQueueTaskResult ProcessWorkTask(SensorsRenderingTask* task);
     static void SubmitToEventBus(const SensorReadingDto& reading);

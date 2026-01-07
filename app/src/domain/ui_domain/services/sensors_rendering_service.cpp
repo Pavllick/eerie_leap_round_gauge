@@ -78,7 +78,7 @@ void SensorsRenderingService::Start() {
         canbus_sensors_readers_.emplace_back(std::move(canbus));
     }
 
-    work_queue_thread_->ScheduleTask(work_queue_task_.value());
+    work_queue_task_.value().Schedule();
 
     LOG_INF("Processing Scheduler Service started.");
 }
@@ -90,7 +90,7 @@ void SensorsRenderingService::Restart() {
 }
 
 void SensorsRenderingService::Pause() {
-    while(work_queue_thread_->CancelTask(work_queue_task_.value()))
+    while(work_queue_task_.value().Cancel())
         k_sleep(K_MSEC(1));
 
     LOG_INF("Processing Scheduler Service stopped.");

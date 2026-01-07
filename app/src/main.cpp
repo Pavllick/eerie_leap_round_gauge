@@ -23,6 +23,7 @@
 #include "subsys/time/rtc_provider.h"
 #include "subsys/time/boot_elapsed_time_provider.h"
 #include "subsys/event_bus/event_bus.h"
+#include "subsys/cdmp/services/cdmp_service.h"
 
 #include "configuration/services/cbor_configuration_service.h"
 
@@ -52,14 +53,9 @@
 #include "views/themes/theme_manager.h"
 #include "views/themes/dark_theme.h"
 
-using namespace eerie_leap::views::widgets;
-using namespace eerie_leap::views::widgets::indicators;
-
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::utilities::dev_tools;
 using namespace eerie_leap::utilities::guid;
-
-using namespace eerie_leap::controllers;
 
 using namespace eerie_leap::subsys::random;
 using namespace eerie_leap::subsys::device_tree;
@@ -67,19 +63,24 @@ using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::modbus;
 using namespace eerie_leap::subsys::gpio;
 using namespace eerie_leap::subsys::time;
+using namespace eerie_leap::subsys::cdmp::services;
+
+using namespace eerie_leap::configuration::services;
 
 using namespace eerie_leap::domain::system_domain::configuration;
 using namespace eerie_leap::domain::ui_domain;
 using namespace eerie_leap::domain::ui_domain::configuration;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::domain::ui_domain::services;
-using namespace eerie_leap::configuration::services;
 using namespace eerie_leap::domain::canbus_domain::configuration;
 using namespace eerie_leap::domain::canbus_domain::services;
 using namespace eerie_leap::domain::canbus_domain::models;
 
 using namespace eerie_leap::controllers;
+
 using namespace eerie_leap::views::themes;
+using namespace eerie_leap::views::widgets;
+using namespace eerie_leap::views::widgets::indicators;
 
 LOG_MODULE_REGISTER(main_logger);
 
@@ -137,6 +138,14 @@ int main() {
 
     auto canbus_service = std::make_shared<CanbusService>(
         DtCanbus::Get, canbus_configuration_manager);
+
+    auto cdmp_service = std::make_shared<CdmpService>(
+        time_service,
+        canbus_service->GetCanbus(0),
+        CdmpDeviceType::DISPLAY,
+        0xABCE);
+    cdmp_service->Initialize();
+    cdmp_service->Start();
 
     auto sensors_rendering_service = std::make_shared<SensorsRenderingService>(
         time_service, canbus_configuration_manager, canbus_service);
@@ -199,8 +208,8 @@ int main() {
 
         k_msleep(SLEEP_TIME_MS);
 
-        // SystemInfo::PrintHeapInfo();
-        // SystemInfo::PrintStackInfo();
+        SystemInfo::PrintHeapInfo();
+        SystemInfo::PrintStackInfo();
 	}
 
 	return 0;
@@ -212,11 +221,11 @@ void SetupCanbusConfiguration(std::shared_ptr<CanbusConfigurationManager> canbus
 
     CanChannelConfiguration canbus_channel_configuration_0(std::allocator_arg, Mrm::GetExtPmr());
 
-    canbus_channel_configuration_0.type = CanbusType::CANFD;
+    canbus_channel_configuration_0.type = CanbusType::CLASSICAL_CAN;
     canbus_channel_configuration_0.is_extended_id = false;
     canbus_channel_configuration_0.bus_channel = 0;
     canbus_channel_configuration_0.bitrate = 1000000;
-    canbus_channel_configuration_0.data_bitrate = 2000000;
+    // canbus_channel_configuration_0.data_bitrate = 2000000;
 
     auto message_configuration_0 = make_shared_pmr<CanMessageConfiguration>(Mrm::GetExtPmr());
     message_configuration_0->name = "EL_FRAME_0";
