@@ -15,11 +15,24 @@ UiConfigurationManager::UiConfigurationManager(std::unique_ptr<CborConfiguration
     configuration_(nullptr) {
 
     cbor_parser_ = std::make_unique<UiConfigurationCborParser>();
+    std::shared_ptr<UiConfiguration> configuration = nullptr;
 
-    if(Get(true) == nullptr)
+    try {
+        configuration = Get(true);
+    } catch(...) {
         LOG_ERR("Failed to load UI configuration.");
-    else
-        LOG_INF("UI Configuration Controller initialized successfully.");
+    }
+
+    if(configuration == nullptr) {
+        if(!CreateDefaultConfiguration()) {
+            LOG_ERR("Failed to create default UI configuration.");
+            return;
+        }
+
+        LOG_INF("Default UI configuration loaded successfully.");
+    }
+
+    LOG_INF("UI Configuration Manager initialized successfully.");
 }
 
 bool UiConfigurationManager::Update(const UiConfiguration& configuration) {
@@ -33,9 +46,7 @@ bool UiConfigurationManager::Update(const UiConfiguration& configuration) {
         return false;
     }
 
-    Get(true);
-
-    return true;
+    return Get(true) != nullptr;
 }
 
 std::shared_ptr<UiConfiguration> UiConfigurationManager::Get(bool force_load) {
@@ -52,6 +63,12 @@ std::shared_ptr<UiConfiguration> UiConfigurationManager::Get(bool force_load) {
     configuration_ = std::make_shared<UiConfiguration>(std::move(*configuration));
 
     return configuration_;
+}
+
+bool UiConfigurationManager::CreateDefaultConfiguration() {
+    auto configuration = make_unique_pmr<UiConfiguration>(Mrm::GetExtPmr());
+
+    return Update(*configuration);
 }
 
 } // namespace eerie_leap::domain::ui_domain::configuration

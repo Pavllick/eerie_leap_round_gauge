@@ -199,8 +199,8 @@ int main() {
 
         k_msleep(SLEEP_TIME_MS);
 
-        SystemInfo::PrintHeapInfo();
-        SystemInfo::PrintStackInfo();
+        // SystemInfo::PrintHeapInfo();
+        // SystemInfo::PrintStackInfo();
 	}
 
 	return 0;
@@ -208,9 +208,9 @@ int main() {
 
 void SetupCanbusConfiguration(std::shared_ptr<CanbusConfigurationManager> canbus_configuration_manager) {
     auto canbus_configuration = make_shared_pmr<CanbusConfiguration>(Mrm::GetExtPmr());
+    canbus_configuration->com_bus_channel = 0;
 
     CanChannelConfiguration canbus_channel_configuration_0(std::allocator_arg, Mrm::GetExtPmr());
-
     canbus_channel_configuration_0.type = CanbusType::CLASSICAL_CAN;
     canbus_channel_configuration_0.is_extended_id = false;
     canbus_channel_configuration_0.bus_channel = 0;
@@ -221,7 +221,6 @@ void SetupCanbusConfiguration(std::shared_ptr<CanbusConfigurationManager> canbus
     message_configuration_0->name = "EL_FRAME_0";
     message_configuration_0->message_size = 8;
     message_configuration_0->frame_id = 790;
-    message_configuration_0->send_interval_ms = 10;
 
     CanSignalConfiguration signal_configuration_0(std::allocator_arg, Mrm::GetExtPmr());
     signal_configuration_0.start_bit = 16;

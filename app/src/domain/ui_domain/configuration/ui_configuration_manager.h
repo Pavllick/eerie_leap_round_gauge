@@ -24,6 +24,8 @@ private:
 
     std::shared_ptr<UiConfiguration> configuration_;
 
+    bool CreateDefaultConfiguration();
+
 public:
     explicit UiConfigurationManager(std::unique_ptr<CborConfigurationService<CborUiConfig>> cbor_configuration_service);
     bool Update(const UiConfiguration& configuration);
