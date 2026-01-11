@@ -23,7 +23,6 @@
 #include "subsys/time/rtc_provider.h"
 #include "subsys/time/boot_elapsed_time_provider.h"
 #include "subsys/event_bus/event_bus.h"
-#include "subsys/cdmp/services/cdmp_service.h"
 
 #include "configuration/services/cbor_configuration_service.h"
 
@@ -45,13 +44,14 @@
 #include "domain/ui_domain/models/widget_position.h"
 #include "domain/ui_domain/models/widget_property.h"
 #include "domain/ui_domain/models/icon_type.h"
-#include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
+#include "domain/canbus_com_domain/services/canbus_com_service.h"
 
 #include "controllers/ui_controller.h"
 #include "controllers/logging_controller.h"
 
 #include "views/themes/theme_manager.h"
 #include "views/themes/dark_theme.h"
+#include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::utilities::dev_tools;
@@ -63,7 +63,6 @@ using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::modbus;
 using namespace eerie_leap::subsys::gpio;
 using namespace eerie_leap::subsys::time;
-using namespace eerie_leap::subsys::cdmp::services;
 
 using namespace eerie_leap::configuration::services;
 
@@ -75,6 +74,7 @@ using namespace eerie_leap::domain::ui_domain::services;
 using namespace eerie_leap::domain::canbus_domain::configuration;
 using namespace eerie_leap::domain::canbus_domain::services;
 using namespace eerie_leap::domain::canbus_domain::models;
+using namespace eerie_leap::domain::canbus_com_domain::services;
 
 using namespace eerie_leap::controllers;
 
@@ -133,65 +133,56 @@ int main() {
     auto ui_configuration_manager = make_shared_ext<UiConfigurationManager>(
         std::move(ui_config_service));
 
+    int input_work_queue_stack_size = 4096;
+    int input_work_queue_priority = 5;
+    auto input_work_queue_thread = std::make_shared<WorkQueueThread>(
+        "input_work_queue",
+        input_work_queue_stack_size,
+        input_work_queue_priority);
+    input_work_queue_thread->Initialize();
+
     // TODO: For test purposes only
     SetupCanbusConfiguration(canbus_configuration_manager);
 
     auto canbus_service = std::make_shared<CanbusService>(
         DtCanbus::Get, canbus_configuration_manager);
 
-    auto cdmp_service = std::make_shared<CdmpService>(
-        time_service,
-        canbus_service->GetCanbus(0),
-        CdmpDeviceType::DISPLAY,
-        0xABCE);
-    cdmp_service->Initialize();
-    cdmp_service->Start();
+    auto canbus_com_service = std::make_shared<CanbusComService>(canbus_service);
+    canbus_com_service->Initialize();
+    canbus_com_service->Start();
 
     auto sensors_rendering_service = std::make_shared<SensorsRenderingService>(
         time_service, canbus_configuration_manager, canbus_service);
     sensors_rendering_service->Initialize();
     sensors_rendering_service->Start();
 
-    // std::shared_ptr<Interface> interface = nullptr;
-    // if(DtModbus::Get() != nullptr) {
-    //     auto modbus = make_unique_ext<Modbus>(
-    //         DtModbus::Get(),
-    //         system_configuration_manager->Get()->interface_channel);
-
-    //     interface = make_shared_ext<Interface>(std::move(modbus), system_configuration_manager);
-    //     if(interface->Initialize() != 0)
-    //         return -1;
-
-    //     interface->RegisterProcessor<SensorReadingDto>(reading_processor);
-    //     interface->RegisterProcessor<UserStatus>(status_processor);
-    // }
-
     SetupTestUiConfig(ui_configuration_manager);
 
     auto ui_controller = make_shared_ext<UiController>(ui_configuration_manager);
     ui_controller->Render();
 
-    // std::shared_ptr<LoggingController> logging_controller;
-    // do {
-    //     if(interface == nullptr) {
-    //         LOG_WRN("No interface configured.");
-    //         break;
-    //     }
+    std::shared_ptr<LoggingController> logging_controller;
+    do {
+        if(canbus_com_service == nullptr) {
+            LOG_WRN("CANBus COM service not configured.");
+            break;
+        }
 
-    //     if(!DtGpio::GetButtons().has_value()) {
-    //         LOG_WRN("No buttons configured.");
-    //         break;
-    //     }
+        if(!DtGpio::GetButtons().has_value()) {
+            LOG_WRN("No buttons configured.");
+            break;
+        }
 
-    //     auto gpio_buttons = make_shared_ext<GpioButtons>(DtGpio::GetButtons().value());
-    //     if(gpio_buttons->Initialize() != 0) {
-    //         LOG_ERR("Failed to initialize buttons.");
-    //         break;
-    //     }
+        auto gpio_buttons = make_shared_ext<GpioButtons>(DtGpio::GetButtons().value());
+        if(gpio_buttons->Initialize() != 0) {
+            LOG_ERR("Failed to initialize buttons.");
+            break;
+        }
 
-    //     logging_controller = make_shared_ext<LoggingController>(gpio_buttons, interface);
-    //     logging_controller->Initialize();
-    // } while(false);
+        logging_controller = make_shared_ext<LoggingController>(
+            gpio_buttons, input_work_queue_thread, canbus_com_service);
+        logging_controller->Initialize();
+    } while(false);
 
 #ifdef CONFIG_BOARD_NATIVE_SIM
     SensorReadingDto reading;
@@ -214,7 +205,6 @@ int main() {
 
 	return 0;
 }
-
 
 void SetupCanbusConfiguration(std::shared_ptr<CanbusConfigurationManager> canbus_configuration_manager) {
     auto canbus_configuration = make_shared_pmr<CanbusConfiguration>(Mrm::GetExtPmr());
