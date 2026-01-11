@@ -1,6 +1,7 @@
 [submodule "modules/eerie_leap_common"]
 	path = modules/eerie_leap_common
 	url = https://github.com/Pavllick/eerie_leap_common.git
+    branch = main
 [submodule "modules/eerie_leap_lua"]
 	path = modules/eerie_leap_lua
 	url = https://github.com/Pavllick/eerie_leap_lua.git
