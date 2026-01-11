@@ -11,13 +11,11 @@
 
 #include "subsys/device_tree/dt_configurator.h"
 #include "subsys/device_tree/dt_fs.h"
-#include "subsys/device_tree/dt_modbus.h"
 #include "subsys/device_tree/dt_gpio.h"
 #include "subsys/device_tree/dt_canbus.h"
 
 #include "subsys/random/rng.h"
 #include "subsys/fs/services/fs_service.h"
-#include "subsys/modbus/modbus.h"
 #include "subsys/gpio/gpio_buttons.h"
 #include "subsys/time/time_service.h"
 #include "subsys/time/rtc_provider.h"
@@ -60,7 +58,6 @@ using namespace eerie_leap::utilities::guid;
 using namespace eerie_leap::subsys::random;
 using namespace eerie_leap::subsys::device_tree;
 using namespace eerie_leap::subsys::fs::services;
-using namespace eerie_leap::subsys::modbus;
 using namespace eerie_leap::subsys::gpio;
 using namespace eerie_leap::subsys::time;
 

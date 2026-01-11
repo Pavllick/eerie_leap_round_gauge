@@ -32,41 +32,13 @@ config EERIE_LEAP_SW_VERSION_PATCH
 	range 0 65535
 	default 0
 
-config EERIE_LEAP_SD_CARD_USER_CONFIG_DIR
-	string "User config directory"
-	default "configuration"
-
 config EERIE_LEAP_UI_RENDERER_THREAD_STACK_SIZE
 	int "UI renderer thread stack size"
 	default 8192
 
-config EERIE_LEAP_FS_SD_THREAD_STACK_SIZE
-	int "SD thread stack size"
-	default 2048
-
-config EERIE_LEAP_SD_CHECK_INTERVAL_MS
-	int "SD check interval ms"
-	default 1000
-
-config EERIE_LEAP_SD_DRIVE_NAME
-	string "SD drive name"
-	default "SD"
-
-config EERIE_LEAP_SD_MOUNT_POINT
-	string "SD mount point"
-	default "/ext"
-
-config EERIE_LEAP_MODBUS_BAUD_RATE
-	int "Modbus baud rate"
-	default 115200
-
 config EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS
 	int "Floating point significant digits"
 	default 4
-
-config EERIE_LEAP_CANBUS_AUTO_DETECT_INTERVAL_MS
-	int "Canbus auto detect activity check interval ms"
-	default 5000
 
 module = APP
 module-str = APP
