@@ -29,6 +29,9 @@
 #include "domain/canbus_domain/configuration/canbus_configuration_manager.h"
 #include "domain/canbus_domain/services/canbus_service.h"
 
+#include "domain/sensor_domain/sensor_readers/sensor_reader_factory.h"
+#include "domain/sensor_domain/services/processing_scheduler_service.h"
+
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
 #include "domain/ui_domain/services/ui_renderer_service.h"
 #include "domain/ui_domain/services/sensors_rendering_service.h"
@@ -72,6 +75,8 @@ using namespace eerie_leap::domain::canbus_domain::configuration;
 using namespace eerie_leap::domain::canbus_domain::services;
 using namespace eerie_leap::domain::canbus_domain::models;
 using namespace eerie_leap::domain::canbus_com_domain::services;
+using namespace eerie_leap::domain::sensor_domain::services;
+using namespace eerie_leap::domain::sensor_domain::sensor_readers;
 
 using namespace eerie_leap::controllers;
 
@@ -84,6 +89,7 @@ LOG_MODULE_REGISTER(main_logger);
 constexpr uint32_t SLEEP_TIME_MS = 5000;
 
 void SetupCanbusConfiguration(std::shared_ptr<CanbusConfigurationManager> canbus_configuration_manager);
+void SetupTestSensors(std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager);
 std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager);
 
 int main() {
@@ -110,9 +116,6 @@ int main() {
 
     auto guid_generator = make_shared_ext<GuidGenerator>();
 
-    // auto reading_processor = make_shared_ext<ReadingProcessor>();
-    // auto status_processor = make_shared_ext<StatusProcessor>();
-
     auto system_config_service = std::make_unique<CborConfigurationService<CborSystemConfig>>(
         "system_config", fs_service);
     auto system_configuration_manager = make_shared_ext<SystemConfigurationManager>(
@@ -124,6 +127,16 @@ int main() {
         "canbus_config", nullptr);
     auto canbus_configuration_manager = std::make_shared<CanbusConfigurationManager>(
         std::move(cbor_canbus_config_service), std::move(json_canbus_config_service), nullptr);
+
+    auto cbor_sensors_config_service = std::make_unique<CborConfigurationService<CborSensorsConfig>>(
+        "sensors_config", fs_service);
+    auto json_sensors_config_service = std::make_unique<JsonConfigurationService<JsonSensorsConfig>>(
+        "sensors_config", nullptr);
+    auto sensors_configuration_manager = std::make_shared<SensorsConfigurationManager>(
+        nullptr,
+        std::move(cbor_sensors_config_service),
+        std::move(json_sensors_config_service),
+        0, 0);
 
     auto ui_config_service = std::make_unique<CborConfigurationService<CborUiConfig>>(
         "ui_config", fs_service);
@@ -148,8 +161,30 @@ int main() {
     canbus_com_service->Initialize();
     canbus_com_service->Start();
 
+    auto sensor_readings_frame = std::make_shared<SensorReadingsFrame>();
+
+    auto sensor_reader_factory = std::make_shared<SensorReaderFactory>(
+        time_service,
+        guid_generator,
+        nullptr,
+        nullptr,
+        sensor_readings_frame,
+        canbus_service);
+
+    auto processing_scheduler_service = std::make_shared<ProcessingSchedulerService>(
+        sensors_configuration_manager,
+        sensor_readings_frame,
+        sensor_reader_factory);
+    processing_scheduler_service->Initialize();
+
+    // TODO: For test purposes only
+    SetupTestSensors(sensors_configuration_manager);
+
     auto sensors_rendering_service = std::make_shared<SensorsRenderingService>(
-        time_service, canbus_configuration_manager, canbus_service);
+        time_service,
+        canbus_configuration_manager,
+        canbus_service,
+        sensor_readings_frame);
     sensors_rendering_service->Initialize();
     sensors_rendering_service->Start();
 
@@ -181,19 +216,9 @@ int main() {
         logging_controller->Initialize();
     } while(false);
 
-#ifdef CONFIG_BOARD_NATIVE_SIM
-    SensorReadingDto reading;
-    reading.id_hash = 2348664336;
-    reading.timestamp_ms = std::chrono::milliseconds(static_cast<int64_t>(k_uptime_get()));
-    reading.value = 0;
-#endif // CONFIG_BOARD_NATIVE_SIM
+    processing_scheduler_service->Start();
 
 	while (true) {
-    // #ifdef CONFIG_BOARD_NATIVE_SIM
-    //     reading.value = (Rng::Get32() / static_cast<float>(UINT32_MAX)) * 100;
-    //     reading_processor->Process(reading);
-    // #endif // CONFIG_BOARD_NATIVE_SIM
-
         k_msleep(SLEEP_TIME_MS);
 
         // SystemInfo::PrintHeapInfo();
@@ -222,8 +247,8 @@ void SetupCanbusConfiguration(std::shared_ptr<CanbusConfigurationManager> canbus
     CanSignalConfiguration signal_configuration_0(std::allocator_arg, Mrm::GetExtPmr());
     signal_configuration_0.start_bit = 16;
     signal_configuration_0.size_bits = 16;
-    signal_configuration_0.name = "sensor_1";
-    signal_configuration_0.unit = "km/h";
+    signal_configuration_0.name = "RPM";
+    signal_configuration_0.unit = "rpm";
     signal_configuration_0.factor = 0.1;
     message_configuration_0->signal_configurations.emplace_back(std::move(signal_configuration_0));
     canbus_channel_configuration_0.message_configurations.emplace_back(std::move(message_configuration_0));
@@ -233,6 +258,27 @@ void SetupCanbusConfiguration(std::shared_ptr<CanbusConfigurationManager> canbus
         std::move(canbus_channel_configuration_0));
 
     canbus_configuration_manager->Update(*canbus_configuration);
+}
+
+void SetupTestSensors(std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager) {
+    // Test Sensors
+
+    auto sensor_1 = make_shared_pmr<Sensor>(Mrm::GetExtPmr(), "sensor_1");
+
+    sensor_1->metadata.name = "Sensor 1";
+    sensor_1->metadata.unit = "";
+    sensor_1->metadata.description = "Test Sensor 1";
+
+    sensor_1->configuration.type = SensorType::CANBUS_ANALOG;
+    // TODO: Get rid of the sampling rate for CANBus sensors
+    sensor_1->configuration.sampling_rate_ms = 20;
+    sensor_1->configuration.canbus_source = make_unique_pmr<CanbusSource>(Mrm::GetExtPmr(), 0, 790, "RPM");
+
+    std::vector<std::shared_ptr<Sensor>> sensors = {
+        sensor_1
+    };
+
+    sensors_configuration_manager->Update(sensors);
 }
 
 std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager) {

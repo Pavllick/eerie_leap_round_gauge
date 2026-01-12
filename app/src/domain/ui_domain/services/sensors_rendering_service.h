@@ -10,7 +10,6 @@
 #include "domain/canbus_domain/configuration/canbus_configuration_manager.h"
 #include "domain/canbus_domain/services/canbus_service.h"
 #include "domain/sensor_domain/utilities/sensor_readings_frame.hpp"
-#include "domain/sensor_domain/readers/canbus_sensors_reader.h"
 
 #include "sensors_rendering_task.hpp"
 
@@ -21,7 +20,6 @@ using namespace eerie_leap::subsys::time;
 using namespace eerie_leap::domain::canbus_domain::configuration;
 using namespace eerie_leap::domain::canbus_domain::services;
 using namespace eerie_leap::domain::sensor_domain::utilities;
-using namespace eerie_leap::domain::sensor_domain::readers;
 
 class SensorsRenderingService {
 private:
@@ -36,16 +34,16 @@ private:
     std::shared_ptr<CanbusConfigurationManager> canbus_configuration_manager_;
     std::shared_ptr<CanbusService> canbus_service_;
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame_;
-    std::vector<std::unique_ptr<CanbusSensorsReader>> canbus_sensors_readers_;
 
     static WorkQueueTaskResult ProcessWorkTask(SensorsRenderingTask* task);
-    static void SubmitToEventBus(const SensorReadingDto& reading);
+    static void SubmitToEventBus(const SensorReading& reading);
 
 public:
     SensorsRenderingService(
         std::shared_ptr<TimeService> time_service,
         std::shared_ptr<CanbusConfigurationManager> canbus_configuration_manager,
-        std::shared_ptr<CanbusService> canbus_service);
+        std::shared_ptr<CanbusService> canbus_service,
+        std::shared_ptr<SensorReadingsFrame> sensor_readings_frame);
     ~SensorsRenderingService() = default;
 
     void Initialize();
