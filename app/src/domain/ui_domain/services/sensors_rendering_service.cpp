@@ -41,7 +41,7 @@ void SensorsRenderingService::Initialize() {
 WorkQueueTaskResult SensorsRenderingService::ProcessWorkTask(SensorsRenderingTask* task) {
     try {
         for(const auto& [_, reading] : task->sensor_readings_frame->GetReadings())
-            SubmitToEventBus(*reading);
+            SubmitToEventBus(reading);
 
         task->sensor_readings_frame->ClearReadings();
     } catch (const std::exception& e) {

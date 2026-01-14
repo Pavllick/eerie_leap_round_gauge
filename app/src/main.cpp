@@ -30,7 +30,8 @@
 #include "domain/canbus_domain/services/canbus_service.h"
 
 #include "domain/sensor_domain/sensor_readers/sensor_reader_factory.h"
-#include "domain/sensor_domain/services/processing_scheduler_service.h"
+#include "domain/sensor_domain/isr_sensor_readers/isr_sensor_reader_factory.h"
+#include "domain/sensor_domain/services/sensors_processing_service.h"
 
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
 #include "domain/ui_domain/services/ui_renderer_service.h"
@@ -77,6 +78,7 @@ using namespace eerie_leap::domain::canbus_domain::models;
 using namespace eerie_leap::domain::canbus_com_domain::services;
 using namespace eerie_leap::domain::sensor_domain::services;
 using namespace eerie_leap::domain::sensor_domain::sensor_readers;
+using namespace eerie_leap::domain::sensor_domain::isr_sensor_readers;
 
 using namespace eerie_leap::controllers;
 
@@ -161,21 +163,27 @@ int main() {
     canbus_com_service->Initialize();
     canbus_com_service->Start();
 
-    auto sensor_readings_frame = std::make_shared<SensorReadingsFrame>();
+    auto sensor_readings_frame = make_shared_pmr<SensorReadingsFrame>(Mrm::GetExtPmr());
 
     auto sensor_reader_factory = std::make_shared<SensorReaderFactory>(
         time_service,
         guid_generator,
         nullptr,
         nullptr,
+        sensor_readings_frame);
+
+    auto isr_sensor_reader_factory = std::make_shared<IsrSensorReaderFactory>(
+        time_service,
+        guid_generator,
         sensor_readings_frame,
         canbus_service);
 
-    auto processing_scheduler_service = std::make_shared<ProcessingSchedulerService>(
+    auto sensors_processing_service = std::make_shared<SensorsProcessingService>(
         sensors_configuration_manager,
         sensor_readings_frame,
-        sensor_reader_factory);
-    processing_scheduler_service->Initialize();
+        sensor_reader_factory,
+        isr_sensor_reader_factory);
+    sensors_processing_service->Initialize();
 
     // TODO: For test purposes only
     SetupTestSensors(sensors_configuration_manager);
@@ -216,7 +224,7 @@ int main() {
         logging_controller->Initialize();
     } while(false);
 
-    processing_scheduler_service->Start();
+    sensors_processing_service->Start();
 
 	while (true) {
         k_msleep(SLEEP_TIME_MS);
@@ -270,8 +278,6 @@ void SetupTestSensors(std::shared_ptr<SensorsConfigurationManager> sensors_confi
     sensor_1->metadata.description = "Test Sensor 1";
 
     sensor_1->configuration.type = SensorType::CANBUS_ANALOG;
-    // TODO: Get rid of the sampling rate for CANBus sensors
-    sensor_1->configuration.sampling_rate_ms = 20;
     sensor_1->configuration.canbus_source = make_unique_pmr<CanbusSource>(Mrm::GetExtPmr(), 0, 790, "RPM");
 
     std::vector<std::shared_ptr<Sensor>> sensors = {
