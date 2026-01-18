@@ -277,7 +277,6 @@ void SetupCanbusConfiguration(std::shared_ptr<CanbusConfigurationManager> canbus
     canbus_configuration_manager->Update(*canbus_configuration);
 }
 
-// TODO: Test case when there are sensors with invalid CanbusSource config
 void SetupTestSensors(std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager) {
     // Test Sensors
 
