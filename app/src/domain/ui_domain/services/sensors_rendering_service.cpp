@@ -40,10 +40,10 @@ void SensorsRenderingService::Initialize() {
 
 WorkQueueTaskResult SensorsRenderingService::ProcessWorkTask(SensorsRenderingTask* task) {
     try {
-        for(const auto& [_, reading] : task->sensor_readings_frame->GetReadings())
+        for(const auto& [_, reading] : task->sensor_readings_frame->GetProcessedReadings())
             SubmitToEventBus(reading);
 
-        task->sensor_readings_frame->ClearReadings();
+        task->sensor_readings_frame->ClearProcessedReadings();
     } catch (const std::exception& e) {
         LOG_DBG("Failed to render sensors. Error: %s", e.what());
     }

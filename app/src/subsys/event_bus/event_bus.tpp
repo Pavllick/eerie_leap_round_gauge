@@ -1,4 +1,4 @@
-#pragma once
+#include <optional>
 
 #include "event_bus.h"
 
@@ -83,10 +83,8 @@ void EventBus<EventTypeEnum, PayloadTypeEnum>::Publish(const Event<EventTypeEnum
 
 template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
 void EventBus<EventTypeEnum, PayloadTypeEnum>::PublishAsync(const Event<EventTypeEnum, PayloadTypeEnum>& event) {
-    Event<EventTypeEnum, PayloadTypeEnum> event_copy = event;
-
     if(k_mutex_lock(&event_task_.queue_mutex, K_FOREVER) == 0) {
-        event_task_.event_queue.push(std::move(event_copy));
+        event_task_.event_queue.push(event);
         k_mutex_unlock(&event_task_.queue_mutex);
 
         k_work_submit_to_queue(&work_q, &event_task_.work);
@@ -111,27 +109,25 @@ template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
 void EventBus<EventTypeEnum, PayloadTypeEnum>::ProcessEventWork(k_work* work) {
     auto* task = CONTAINER_OF(work, EventBusTaskType, work);
 
-    if(k_sem_take(task->processing_semaphore, K_MSEC(200)) != 0)
+    if(k_sem_take(task->processing_semaphore, K_NO_WAIT) != 0)
         return;
 
     while(true) {
-        bool has_event = false;
-        Event<EventTypeEnum, PayloadTypeEnum> event;
+        std::optional<Event<EventTypeEnum, PayloadTypeEnum>> event;
 
         if(k_mutex_lock(&task->queue_mutex, K_FOREVER) == 0) {
             if(!task->event_queue.empty()) {
                 event = std::move(task->event_queue.front());
                 task->event_queue.pop();
-                has_event = true;
             }
 
             k_mutex_unlock(&task->queue_mutex);
         }
 
-        if(!has_event)
+        if(!event)
             break;
 
-        ProcessEvent(task->subscribers, event);
+        ProcessEvent(task->subscribers, event.value());
     }
 
     k_sem_give(task->processing_semaphore);
