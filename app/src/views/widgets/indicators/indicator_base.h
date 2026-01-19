@@ -14,7 +14,7 @@ private:
     static void UpdateIndicatorCallback(void* obj, int32_t value);
 
 protected:
-    std::optional<uint32_t> sensor_id_;
+    std::optional<size_t> sensor_id_hash_;
     lv_anim_t value_change_animation_;
     float range_start_;
     float range_end_;
@@ -29,7 +29,7 @@ public:
 
     void Update(float value) override;
 
-    std::optional<uint32_t> GetSensorId() const override;
+    std::optional<size_t> GetSensorIdHash() const override;
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
 };
 

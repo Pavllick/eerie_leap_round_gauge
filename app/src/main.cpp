@@ -93,6 +93,10 @@ constexpr uint32_t SLEEP_TIME_MS = 5000;
 void SetupCanbusConfiguration(std::shared_ptr<CanbusConfigurationManager> canbus_configuration_manager);
 void SetupTestSensors(std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager);
 std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager);
+void EmulateReadings(
+    std::shared_ptr<GuidGenerator> guid_generator,
+    std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager,
+    std::shared_ptr<SensorReadingsFrame> sensor_readings_frame);
 
 int main() {
     DtConfigurator::Initialize();
@@ -145,6 +149,7 @@ int main() {
     auto ui_configuration_manager = make_shared_ext<UiConfigurationManager>(
         std::move(ui_config_service));
 
+    // TODO: For test purposes only
     SetupTestUiConfig(ui_configuration_manager);
 
     auto ui_controller = make_shared_ext<UiController>(ui_configuration_manager);
@@ -222,11 +227,27 @@ int main() {
 	while (true) {
         // SystemInfo::PrintHeapInfo();
         // SystemInfo::PrintStackInfo();
-
         k_msleep(SLEEP_TIME_MS);
+
+        // EmulateReadings(guid_generator, sensors_configuration_manager, sensor_readings_frame);
+        // k_msleep(20);
 	}
 
 	return 0;
+}
+
+void EmulateReadings(
+    std::shared_ptr<GuidGenerator> guid_generator,
+    std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager,
+    std::shared_ptr<SensorReadingsFrame> sensor_readings_frame) {
+    for(auto sensor : *sensors_configuration_manager->Get()) {
+        SensorReading reading(std::allocator_arg, Mrm::GetDefaultPmr(), guid_generator->Generate(), sensor);
+        reading.source = ReadingSource::PROCESSING;
+        reading.status = ReadingStatus::PROCESSED;
+        reading.value = (Rng::Get32() / static_cast<float>(UINT32_MAX)) * 100.0F;
+
+        sensor_readings_frame->AddOrUpdateReading(reading);
+    }
 }
 
 void SetupCanbusConfiguration(std::shared_ptr<CanbusConfigurationManager> canbus_configuration_manager) {
@@ -336,7 +357,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
-    widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "2348664336";
+    widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
     // widget1.properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_PRECISION)] = 2;
     screen_configuration->widget_configurations.push_back(std::move(widget1));
 
@@ -352,7 +373,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = false;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
-    widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "2348664336";
+    widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::CHART_POINT_COUNT)] = 35;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE)] = static_cast<int>(HorizontalChartIndicatorType::Bar);
     screen_configuration->widget_configurations.push_back(std::move(widget2));
@@ -369,7 +390,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
-    widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "2348664336";
+    widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE)] = static_cast<int>(HorizontalChartIndicatorType::Line);
     screen_configuration->widget_configurations.push_back(std::move(widget3));
 
@@ -384,7 +405,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
-    // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "2348664336";
+    // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
     // screen_configuration->widget_configurations.push_back(std::move(widget4));
 
     // Widget: IndicatorArcFill
@@ -399,7 +420,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
-    widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "2348664336";
+    widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
     // widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE)] = 0;
     // widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE)] = 360;
     screen_configuration->widget_configurations.push_back(std::move(widget5));
@@ -415,7 +436,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
-    // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "2348664336";
+    // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
     // // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE)] = 0;
     // // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE)] = 360;
     // screen_configuration->widget_configurations.push_back(std::move(widget6));

@@ -1,5 +1,6 @@
 #include <variant>
 
+#include "utilities/string/string_helpers.h"
 #include "domain/ui_domain/event_bus/ui_event_bus.h"
 #include "domain/ui_domain/models/widget_property.h"
 #include "views/widgets/event_bus_filters/sensor_filter.h"
@@ -8,6 +9,7 @@
 
 namespace eerie_leap::views::widgets::indicators {
 
+using namespace eerie_leap::utilities::string;
 using namespace eerie_leap::domain::ui_domain::event_bus;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::widgets::event_bus_filters;
@@ -64,23 +66,23 @@ void IndicatorBase::Update(float value) {
     }
 }
 
-std::optional<uint32_t> IndicatorBase::GetSensorId() const {
-    return sensor_id_;
+std::optional<size_t> IndicatorBase::GetSensorIdHash() const {
+    return sensor_id_hash_;
 }
 
 void IndicatorBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
     WidgetBase::Configure(configuration);
 
-    auto sensor_id_str = GetConfigValue<std::pmr::string>(
+    auto sensor_id = GetConfigValue<std::pmr::string>(
         configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID),
         "");
-    if(!sensor_id_str.empty()) {
-        sensor_id_ = std::stoul(sensor_id_str.c_str());
+    if(!sensor_id.empty()) {
+        sensor_id_hash_ = StringHelpers::GetHash(sensor_id);
 
         auto result = UiEventBus::GetInstance().Subscribe(
             UiEventType::SensorDataUpdated,
-            SensorFilter { sensor_id_.value() },
+            SensorFilter { sensor_id_hash_.value() },
             [this](const UiEvent& event) {
                 if (auto it = event.payload.find(UiPayloadType::Value); it != event.payload.end()) {
                     if (auto* value = std::get_if<float>(&it->second)) {

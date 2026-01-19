@@ -11,7 +11,7 @@ using namespace eerie_leap::subsys::time;
 using namespace eerie_leap::domain::sensor_domain::models;
 using namespace eerie_leap::domain::ui_domain::event_bus;
 
-LOG_MODULE_REGISTER(processing_scheduler_logger);
+LOG_MODULE_REGISTER(sensors_rendering_logger);
 
 SensorsRenderingService::SensorsRenderingService(
     std::shared_ptr<TimeService> time_service,
