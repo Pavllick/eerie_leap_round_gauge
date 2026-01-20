@@ -4,21 +4,7 @@
  * Opts: --bpp 3 --size 20 --stride 1 --align 1 --font Rubik-Medium.ttf --symbols ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%()+-:_., --format lvgl -o lv_font_rubik_medium_20.c
  ******************************************************************************/
 
-#ifdef __has_include
-    #if __has_include("lvgl.h")
-        #ifndef LV_LVGL_H_INCLUDE_SIMPLE
-            #define LV_LVGL_H_INCLUDE_SIMPLE
-        #endif
-    #endif
-#endif
-
-#ifdef LV_LVGL_H_INCLUDE_SIMPLE
-    #include "lvgl.h"
-#else
-    #include "lvgl/lvgl.h"
-#endif
-
-
+#include <lvgl.h>
 
 #ifndef LV_FONT_RUBIK_MEDIUM_20
 #define LV_FONT_RUBIK_MEDIUM_20 1

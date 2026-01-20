@@ -36,8 +36,8 @@
     spim3_default: spim3_default {
 		group1 {
 			pinmux = <SPIM3_MISO_GPIO3>,
-				<SPIM3_SCLK_GPIO2>,
-				<SPIM3_CSEL_GPIO41>;
+                     <SPIM3_SCLK_GPIO2>,
+                     <SPIM3_CSEL_GPIO41>;
 		};
 		group2 {
 			pinmux = <SPIM3_MOSI_GPIO1>;

@@ -4,21 +4,7 @@
  * Opts: --bpp 3 --size 120 --stride 1 --align 1 --font Inconsolata-Bold.ttf --symbols 0123456789%+-.,: --format lvgl -o lv_font_inconsolata_bold_120.c
  ******************************************************************************/
 
-#ifdef __has_include
-    #if __has_include("lvgl.h")
-        #ifndef LV_LVGL_H_INCLUDE_SIMPLE
-            #define LV_LVGL_H_INCLUDE_SIMPLE
-        #endif
-    #endif
-#endif
-
-#ifdef LV_LVGL_H_INCLUDE_SIMPLE
-    #include "lvgl.h"
-#else
-    #include "lvgl/lvgl.h"
-#endif
-
-
+#include <lvgl.h>
 
 #ifndef LV_FONT_INCONSOLATA_BOLD_120
 #define LV_FONT_INCONSOLATA_BOLD_120 1
