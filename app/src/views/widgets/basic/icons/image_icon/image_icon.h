@@ -8,21 +8,21 @@
 
 namespace eerie_leap::views::widgets::basic::icons {
 
-class LabelIcon : public IconBase {
+class ImageIcon : public IconBase {
 private:
-    std::pmr::string label_;
-    lv_obj_t* lv_label_;
+    // std::pmr::string file_path_;
 
     lv_obj_t* Create(lv_obj_t* parent);
 
 public:
-    explicit LabelIcon(std::shared_ptr<Frame> parent);
+    explicit ImageIcon(std::shared_ptr<Frame> parent);
+    virtual ~ImageIcon() = default;
 
     int ApplyTheme() override;
     int DoRender() override;
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
 
-    IconType GetIconType() const override { return IconType::Label; }
+    IconType GetIconType() const override { return IconType::Image; }
 };
 
 } // namespace eerie_leap::views::widgets::basic::icons

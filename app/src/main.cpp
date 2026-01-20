@@ -53,6 +53,7 @@
 
 #include "views/themes/theme_manager.h"
 #include "views/themes/dark_theme.h"
+#include "views/themes/dark_bw_theme.h"
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 
 using namespace eerie_leap::utilities::memory;
@@ -101,7 +102,7 @@ void EmulateReadings(
 int main() {
     DtConfigurator::Initialize();
 
-    auto dark_theme = make_shared_ext<DarkTheme>();
+    auto dark_theme = make_shared_ext<DarkBWTheme>();
     ThemeManager::GetInstance().SetTheme(dark_theme);
 
     auto ui_renderer_service = make_shared_ext<UiRendererService>();
@@ -229,6 +230,7 @@ int main() {
         // SystemInfo::PrintStackInfo();
         k_msleep(SLEEP_TIME_MS);
 
+        // TODO: For test purposes only
         // EmulateReadings(guid_generator, sensors_configuration_manager, sensor_readings_frame);
         // k_msleep(20);
 	}
@@ -345,6 +347,21 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     screen_configuration->grid.height = 3;
     screen_configuration->grid.spacing_px = 0;
 
+    // Widget 0: BasicIcon - Background
+    auto widget0 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
+    widget0->type = WidgetType::BasicIcon;
+    widget0->id = 0;
+    widget0->position_grid.x = 0;
+    widget0->position_grid.y = 0;
+    widget0->size_grid.width = 3;
+    widget0->size_grid.height = 3;
+    widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE)] = static_cast<int>(IconType::Image);
+    widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
+    widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE)] = true;
+    widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X)] = 0;
+    widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y)] = 0;
+    screen_configuration->widget_configurations.push_back(std::move(widget0));
+
     // Widget 1: IndicatorDigital
     auto widget1 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
     widget1->type = WidgetType::IndicatorDigital;
@@ -411,7 +428,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     // Widget: IndicatorArcFill
     auto widget5 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
     widget5->type = WidgetType::IndicatorArcFill;
-    widget5->id = 0;
+    widget5->id = 5;
     widget5->position_grid.x = 0;
     widget5->position_grid.y = 0;
     widget5->size_grid.width = 3;
@@ -427,7 +444,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
 
     // auto widget6 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
     // widget6->type = WidgetType::IndicatorSegmentArc;
-    // widget6->id = 0;
+    // widget6->id = 6;
     // widget6->position_grid.x = 0;
     // widget6->position_grid.y = 0;
     // widget6->size_grid.width = 3;
@@ -444,7 +461,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     // Widget: BasicArcIcon
     auto widget7 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
     widget7->type = WidgetType::BasicArcIcon;
-    widget7->id = 5;
+    widget7->id = 7;
     widget7->position_grid.x = 0;
     widget7->position_grid.y = 0;
     widget7->size_grid.width = 3;
@@ -452,7 +469,6 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE)] = static_cast<int>(IconType::Dot);
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE)] = false;
-    widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X)] = 0;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y)] = 0;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_ANGLE)] = 90.0F;
@@ -462,7 +478,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
 
     // auto widget8 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
     // widget8->type = WidgetType::BasicArcIcon;
-    // widget8->id = 6;
+    // widget8->id = 8;
     // widget8->position_grid.x = 0;
     // widget8->position_grid.y = 0;
     // widget8->size_grid.width = 3;

@@ -53,7 +53,10 @@ void RenderCenterCrossHelperGuides(lv_obj_t* screen) {
     lv_obj_set_height(panel1, 466);
     lv_obj_set_align(panel1, LV_ALIGN_CENTER);
     lv_obj_remove_flag(panel1, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_style_border_color(panel1, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(
+        panel1,
+        ThemeManager::GetInstance().GetCurrentTheme()->GetPrimaryColor().ToLvColor(),
+        LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_opa(panel1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t * panel2 = lv_obj_create(screen);
@@ -61,7 +64,10 @@ void RenderCenterCrossHelperGuides(lv_obj_t* screen) {
     lv_obj_set_height(panel2, 2);
     lv_obj_set_align(panel2, LV_ALIGN_CENTER);
     lv_obj_remove_flag(panel2, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_style_border_color(panel2, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(
+        panel2,
+        ThemeManager::GetInstance().GetCurrentTheme()->GetPrimaryColor().ToLvColor(),
+        LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_opa(panel2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
