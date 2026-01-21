@@ -28,6 +28,9 @@ enum class WidgetPropertyType : std::uint16_t {
     ICON_TYPE,              // int (enum)
     START_ANGLE,            // int
     END_ANGLE,              // int
+    FILE_PATH,              // string
+    IMG_WIDTH,              // int
+    IMG_HEIGHT,             // int
 };
 
 class WidgetProperty {
@@ -52,6 +55,9 @@ private:
         "ICON_TYPE"sv,
         "START_ANGLE"sv,
         "END_ANGLE"sv,
+        "FILE_PATH"sv,
+        "IMG_WIDTH"sv,
+        "IMG_HEIGHT"sv,
     };
 
 public:

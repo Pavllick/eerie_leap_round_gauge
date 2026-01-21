@@ -11,7 +11,14 @@ namespace eerie_leap::views::screens {
 
 LOG_MODULE_REGISTER(screen_logger);
 
-Screen::Screen(uint32_t id, std::shared_ptr<Frame> parent) : id_(id), parent_(parent) {
+Screen::Screen(
+    std::shared_ptr<UiAssetsManager> ui_assets_manager,
+    uint32_t id,
+    std::shared_ptr<Frame> parent)
+        : ui_assets_manager_(std::move(ui_assets_manager)),
+        id_(id),
+        parent_(parent) {
+
     widgets_ = std::make_shared<std::vector<std::unique_ptr<IWidget>>>();
 
     container_ = std::make_shared<Frame>(Frame::CreateWrapped(parent->GetObject())
@@ -38,6 +45,7 @@ void Screen::Configure(std::shared_ptr<ScreenConfiguration> configuration) {
 
     for(const auto& widget_config : configuration_->widget_configurations) {
         auto widget = WidgetFactory::GetInstance().CreateWidget(widget_config, container_);
+        widget->SetAssetsManager(ui_assets_manager_);
         UpdateWidgetSize(*widget, configuration_->grid);
         UpdateWidgetPosition(*widget, configuration_->grid);
 

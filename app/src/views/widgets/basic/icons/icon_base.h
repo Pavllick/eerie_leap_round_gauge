@@ -21,9 +21,13 @@ protected:
     std::shared_ptr<WidgetConfiguration> configuration_;
     bool is_active_;
 
+    std::shared_ptr<UiAssetsManager> ui_assets_manager_ = nullptr;
+
 public:
     explicit IconBase(std::shared_ptr<Frame> parent);
     virtual ~IconBase() = default;
+
+    void SetAssetsManager(std::shared_ptr<UiAssetsManager> ui_assets_manager) override;
 
     void SetIsActive(bool is_active) override;
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;

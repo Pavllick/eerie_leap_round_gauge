@@ -10,7 +10,10 @@ namespace eerie_leap::views::widgets::basic::icons {
 
 class ImageIcon : public IconBase {
 private:
-    // std::pmr::string file_path_;
+    std::pmr::string file_path_;
+    int image_width_ = 0;
+    int image_height_ = 0;
+    lv_image_dsc_t lv_image_;
 
     lv_obj_t* Create(lv_obj_t* parent);
 

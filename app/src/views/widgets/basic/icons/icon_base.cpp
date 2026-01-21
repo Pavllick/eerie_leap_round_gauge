@@ -10,6 +10,10 @@ using namespace eerie_leap::views::utilitites;
 IconBase::IconBase(std::shared_ptr<Frame> parent)
     : parent_(std::move(parent)), is_active_(false) {}
 
+void IconBase::SetAssetsManager(std::shared_ptr<UiAssetsManager> ui_assets_manager) {
+    ui_assets_manager_ = std::move(ui_assets_manager);
+}
+
 void IconBase::SetIsActive(bool is_active) {
     is_active_ = is_active;
 }

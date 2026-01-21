@@ -14,7 +14,7 @@ using namespace eerie_leap::views::themes;
 using namespace eerie_leap::views::widgets::basic::icons;
 
 IconWidget::IconWidget(uint32_t id, std::shared_ptr<Frame> parent)
-    : WidgetBase(id, parent) { }
+    : WidgetBase(id, parent) {}
 
 int IconWidget::DoRender() {
     Create();
@@ -33,6 +33,7 @@ void IconWidget::Create() {
         throw std::runtime_error("Invalid icon type.");
 
     icon_ = IconFactory::GetInstance().Create(icon_type_, configuration_, container_);
+    icon_->SetAssetsManager(ui_assets_manager_);
     icon_->Render();
     icon_->ApplyTheme();
 

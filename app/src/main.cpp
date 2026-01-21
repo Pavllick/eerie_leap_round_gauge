@@ -46,6 +46,7 @@
 #include "domain/ui_domain/models/widget_position.h"
 #include "domain/ui_domain/models/widget_property.h"
 #include "domain/ui_domain/models/icon_type.h"
+#include "domain/ui_domain/assets_manager/ui_assets_manager.h"
 #include "domain/canbus_com_domain/services/canbus_com_service.h"
 
 #include "controllers/ui_controller.h"
@@ -55,6 +56,7 @@
 #include "views/themes/dark_theme.h"
 #include "views/themes/dark_bw_theme.h"
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
+#include "views/assets/images/images_register.h"
 
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::utilities::dev_tools;
@@ -73,6 +75,8 @@ using namespace eerie_leap::domain::ui_domain;
 using namespace eerie_leap::domain::ui_domain::configuration;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::domain::ui_domain::services;
+using namespace eerie_leap::domain::ui_domain::assets_manager;
+
 using namespace eerie_leap::domain::canbus_domain::configuration;
 using namespace eerie_leap::domain::canbus_domain::services;
 using namespace eerie_leap::domain::canbus_domain::models;
@@ -86,6 +90,7 @@ using namespace eerie_leap::controllers;
 using namespace eerie_leap::views::themes;
 using namespace eerie_leap::views::widgets;
 using namespace eerie_leap::views::widgets::indicators;
+using namespace eerie_leap::views::assets::images;
 
 LOG_MODULE_REGISTER(main_logger);
 
@@ -94,6 +99,7 @@ constexpr uint32_t SLEEP_TIME_MS = 5000;
 void SetupCanbusConfiguration(std::shared_ptr<CanbusConfigurationManager> canbus_configuration_manager);
 void SetupTestSensors(std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager);
 std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager);
+void SetupTestUiAssets(std::shared_ptr<UiAssetsManager> ui_assets_manager);
 void EmulateReadings(
     std::shared_ptr<GuidGenerator> guid_generator,
     std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager,
@@ -153,7 +159,12 @@ int main() {
     // TODO: For test purposes only
     SetupTestUiConfig(ui_configuration_manager);
 
-    auto ui_controller = make_shared_ext<UiController>(ui_configuration_manager);
+    auto ui_assets_manager = std::make_shared<UiAssetsManager>(fs_service);
+
+    // TODO: For test purposes only
+    SetupTestUiAssets(ui_assets_manager);
+
+    auto ui_controller = make_shared_ext<UiController>(ui_configuration_manager, ui_assets_manager);
     ui_controller->Render();
 
     int input_work_queue_stack_size = 4096;
@@ -356,6 +367,9 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget0->size_grid.width = 3;
     widget0->size_grid.height = 3;
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE)] = static_cast<int>(IconType::Image);
+    widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::FILE_PATH)] = "ui_img_norma_al88.bin";
+    widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IMG_WIDTH)] = 466;
+    widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IMG_HEIGHT)] = 466;
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE)] = true;
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X)] = 0;
@@ -499,4 +513,10 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     ui_configuration_manager->Update(*ui_configuration);
 
     return ui_configuration;
+}
+
+void SetupTestUiAssets(std::shared_ptr<UiAssetsManager> ui_assets_manager) {
+    ui_assets_manager->Save(
+        "ui_img_norma_al88.bin",
+        ui_img_norma_al88_data);
 }

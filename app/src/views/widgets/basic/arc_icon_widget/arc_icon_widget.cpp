@@ -11,7 +11,7 @@ using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::themes;
 
 ArcIconWidget::ArcIconWidget(uint32_t id, std::shared_ptr<Frame> parent)
-    : IconWidget(id, parent) { }
+    : IconWidget(id, parent) {}
 
 int ArcIconWidget::ApplyTheme() {
     IconWidget::ApplyTheme();

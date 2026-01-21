@@ -9,10 +9,12 @@
 #include "domain/ui_domain/models/widget_position.h"
 #include "domain/ui_domain/models/widget_size.h"
 #include "domain/ui_domain/models/widget_configuration.h"
+#include "domain/ui_domain/assets_manager/ui_assets_manager.h"
 
 namespace eerie_leap::views::widgets {
 
 using namespace eerie_leap::domain::ui_domain::models;
+using namespace eerie_leap::domain::ui_domain::assets_manager;
 using namespace eerie_leap::views;
 
 class IWidget : public virtual IRenderable {
@@ -24,6 +26,7 @@ public:
     virtual bool IsVisible() const = 0;
 
     // Configuration
+    virtual void SetAssetsManager(std::shared_ptr<UiAssetsManager> ui_assets_manager) = 0;
     virtual void Configure(std::shared_ptr<WidgetConfiguration> configuration) = 0;
     virtual std::shared_ptr<WidgetConfiguration> GetConfiguration() const = 0;
     virtual bool IsSmoothed() const = 0;

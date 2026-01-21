@@ -6,8 +6,11 @@ namespace eerie_leap::controllers {
 
 using namespace eerie_leap::views::screens;
 
-UiController::UiController(std::shared_ptr<UiConfigurationManager> ui_configuration_manager)
-    : ui_configuration_manager_(std::move(ui_configuration_manager)) {
+UiController::UiController(
+    std::shared_ptr<UiConfigurationManager> ui_configuration_manager,
+    std::shared_ptr<UiAssetsManager> ui_assets_manager)
+    : ui_configuration_manager_(std::move(ui_configuration_manager)),
+      ui_assets_manager_(std::move(ui_assets_manager)) {
 
     main_view_ = make_unique_ext<MainView>();
     Configure(ui_configuration_manager_->Get());
@@ -35,7 +38,7 @@ int UiController::Render() {
 }
 
 std::shared_ptr<IScreen> UiController::CreateScreen(std::shared_ptr<ScreenConfiguration> configuration) {
-    auto screen = std::make_shared<Screen>(configuration->id, main_view_->GetContainer());
+    auto screen = std::make_shared<Screen>(ui_assets_manager_, configuration->id, main_view_->GetContainer());
     screen->Configure(configuration);
 
     return screen;
