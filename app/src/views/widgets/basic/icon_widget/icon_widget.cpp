@@ -13,11 +13,17 @@ using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::themes;
 using namespace eerie_leap::views::widgets::basic::icons;
 
-IconWidget::IconWidget(uint32_t id, std::shared_ptr<Frame> parent)
-    : WidgetBase(id, parent) {}
+IconWidget::IconWidget(uint32_t id, std::shared_ptr<Frame> parent, IconType icon_type)
+    : WidgetBase(id, parent), icon_type_(icon_type) {}
 
 int IconWidget::DoRender() {
-    Create();
+    auto lv_obj = Create();
+    if(lv_obj == nullptr)
+        return -1;
+
+    auto child = std::make_shared<Frame>(
+        Frame::Create(lv_obj).Build());
+    container_->SetChild(child);
 
     return 0;
 }
@@ -28,27 +34,37 @@ int IconWidget::ApplyTheme() {
     return 0;
 }
 
-void IconWidget::Create() {
+lv_obj_t* IconWidget::Create() {
     if(icon_type_ == IconType::None)
         throw std::runtime_error("Invalid icon type.");
 
     icon_ = IconFactory::GetInstance().Create(icon_type_, configuration_, container_);
     icon_->SetAssetsManager(ui_assets_manager_);
-    icon_->Render();
+    if(icon_->Render() != 0)
+        return nullptr;
     icon_->ApplyTheme();
 
     lv_obj_set_x(container_->GetObject(), position_x_);
     lv_obj_set_y(container_->GetObject(), position_y_);
+
+    return icon_->GetContainer()->GetObject();
+}
+
+void IconWidget::SetIsActive(bool is_active) {
+    if(icon_ != nullptr)
+        icon_->SetIsActive(is_active);
 }
 
 void IconWidget::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
     WidgetBase::Configure(configuration);
 
-    auto icon_type_raw = GetConfigValue<int>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE),
-        0);
-    icon_type_ = static_cast<IconType>(icon_type_raw);
+    if(icon_type_ == IconType::None) {
+        auto icon_type_raw = GetConfigValue<int>(
+            configuration_->properties,
+            WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE),
+            0);
+        icon_type_ = static_cast<IconType>(icon_type_raw);
+    }
 
     position_x_ = GetConfigValue<int>(
         configuration_->properties,

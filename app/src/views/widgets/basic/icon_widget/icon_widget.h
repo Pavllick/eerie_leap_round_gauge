@@ -21,13 +21,16 @@ protected:
 
     std::unique_ptr<IIcon> icon_;
 
-    virtual void Create();
+    virtual lv_obj_t* Create();
     int DoRender() override;
-    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
-    int ApplyTheme() override;
 
 public:
-    explicit IconWidget(uint32_t id, std::shared_ptr<Frame> parent);
+    IconWidget(uint32_t id, std::shared_ptr<Frame> parent, IconType icon_type = IconType::None);
+
+    void SetIsActive(bool is_active);
+
+    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
+    int ApplyTheme() override;
 
     WidgetType GetType() const override { return WidgetType::BasicIcon; }
 };

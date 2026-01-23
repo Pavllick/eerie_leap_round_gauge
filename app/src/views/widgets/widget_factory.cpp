@@ -5,6 +5,7 @@
 #include "views/widgets/indicators/segment_arc_indicator/segment_arc_indicator.h"
 #include "views/widgets/indicators/digital_indicator/digital_indicator.h"
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
+#include "views/widgets/indicators/analog_indicator/analog_indicator.h"
 
 #include "widget_factory.h"
 
@@ -66,6 +67,7 @@ void WidgetFactory::RegisterTypes() {
     RegisterWidget<SegmentArcIndicator>(WidgetType::IndicatorSegmentArc);
     RegisterWidget<DigitalIndicator>(WidgetType::IndicatorDigital);
     RegisterWidget<HorizontalChartIndicator>(WidgetType::IndicatorHorizontalChart);
+    RegisterWidget<AnalogIndicator>(WidgetType::IndicatorAnalog);
 }
 
 } // namespace eerie_leap::views::widgets

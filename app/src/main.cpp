@@ -371,7 +371,6 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IMG_WIDTH)] = 466;
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IMG_HEIGHT)] = 466;
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
-    widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE)] = true;
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X)] = 0;
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y)] = 0;
     screen_configuration->widget_configurations.push_back(std::move(widget0));
@@ -454,7 +453,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
     // widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE)] = 0;
     // widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE)] = 360;
-    screen_configuration->widget_configurations.push_back(std::move(widget5));
+    // screen_configuration->widget_configurations.push_back(std::move(widget5));
 
     // auto widget6 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
     // widget6->type = WidgetType::IndicatorSegmentArc;
@@ -508,6 +507,30 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     // widget8->properties[WidgetProperty::GetTypeName(WidgetPropertyType::UI_EVENT_TYPE)] = static_cast<int>(UiEventType::LoggingStatusUpdated);
     // screen_configuration->widget_configurations.push_back(std::move(widget8));
 
+    // Widget: IndicatorArcFill
+    auto widget9 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
+    widget9->type = WidgetType::IndicatorAnalog;
+    widget9->id = 9;
+    widget9->position_grid.x = 0;
+    widget9->position_grid.y = 0;
+    widget9->size_grid.width = 3;
+    widget9->size_grid.height = 3;
+    widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::FILE_PATH)] = "ui_img_arrow_al88.bin";
+    widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IMG_WIDTH)] = 15;
+    widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IMG_HEIGHT)] = 220;
+    widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
+    widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
+    widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X)] = 0;
+    widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y)] = -104;
+    widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::PIVOT_X)] = 7;
+    widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::PIVOT_Y)] = 7;
+    widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
+    widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
+    widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    // widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE)] = 0;
+    // widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE)] = 360;
+    screen_configuration->widget_configurations.push_back(std::move(widget9));
+
     ui_configuration->screen_configurations.push_back(std::move(screen_configuration));
 
     ui_configuration_manager->Update(*ui_configuration);
@@ -519,4 +542,8 @@ void SetupTestUiAssets(std::shared_ptr<UiAssetsManager> ui_assets_manager) {
     ui_assets_manager->Save(
         "ui_img_norma_al88.bin",
         ui_img_norma_al88_data);
+
+    ui_assets_manager->Save(
+        "ui_img_arrow_al88.bin",
+        ui_img_arrow_al88_data);
 }

@@ -62,12 +62,12 @@ void ArcFillIndicator::Configure(std::shared_ptr<WidgetConfiguration> configurat
     start_angle_ = GetConfigValue<int>(
         configuration->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE),
-        45);
+        DEFAULT_START_ANGLE);
 
     end_angle_ = GetConfigValue<int>(
         configuration->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE),
-        315);
+        DEFAULT_END_ANGLE);
 }
 
 } // namespace eerie_leap::views::widgets::indicators

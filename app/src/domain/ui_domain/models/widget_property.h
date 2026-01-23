@@ -31,6 +31,8 @@ enum class WidgetPropertyType : std::uint16_t {
     FILE_PATH,              // string
     IMG_WIDTH,              // int
     IMG_HEIGHT,             // int
+    PIVOT_X,                // int
+    PIVOT_Y,                // int
 };
 
 class WidgetProperty {
@@ -58,6 +60,8 @@ private:
         "FILE_PATH"sv,
         "IMG_WIDTH"sv,
         "IMG_HEIGHT"sv,
+        "PIVOT_X"sv,
+        "PIVOT_Y"sv,
     };
 
 public:

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <optional>
+#include <memory_resource>
 
 #include <lvgl.h>
 
@@ -13,7 +15,11 @@ private:
     std::pmr::string file_path_;
     int image_width_ = 0;
     int image_height_ = 0;
-    lv_image_dsc_t lv_image_;
+    int pivot_x_;
+    int pivot_y_;
+
+    lv_image_dsc_t lv_image_descriptor_;
+    std::optional<std::pmr::vector<uint8_t>> image_data_;
 
     lv_obj_t* Create(lv_obj_t* parent);
 

@@ -1,0 +1,205 @@
+diff --git a/src/draw/sw/lv_draw_sw_img.c b/src/draw/sw/lv_draw_sw_img.c
+index 3cf1f1967..05458454d 100644
+--- a/src/draw/sw/lv_draw_sw_img.c
++++ b/src/draw/sw/lv_draw_sw_img.c
+@@ -529,6 +529,15 @@ static void transform_and_recolor(lv_draw_task_t * t, const lv_draw_image_dsc_t
+         blend_dsc.mask_stride = blend_w;
+         blend_dsc.src_color_format = LV_COLOR_FORMAT_RGB565;
+     }
++    else if(cf_final == LV_COLOR_FORMAT_AL88) {
++        /*AL88 images will be blended as L8 + mask*/
++        blend_dsc.src_stride = blend_w;
++        blend_dsc.mask_area = &blend_area;
++        blend_dsc.mask_res = LV_DRAW_SW_MASK_RES_CHANGED;
++        blend_dsc.mask_buf = transformed_buf + blend_w * buf_h;  // Alpha starts after luminance
++        blend_dsc.mask_stride = blend_w;
++        blend_dsc.src_color_format = LV_COLOR_FORMAT_L8;
++    }
+     else if(cf_final == LV_COLOR_FORMAT_A8) {
+         blend_dsc.mask_buf = transformed_buf;
+         blend_dsc.mask_stride = blend_w;
+@@ -570,7 +579,10 @@ static void transform_and_recolor(lv_draw_task_t * t, const lv_draw_image_dsc_t
+         if(blend_area.y2 > y_last) {
+             blend_area.y2 = y_last;
+             if(cf_final == LV_COLOR_FORMAT_RGB565A8) {
+-                blend_dsc.mask_buf =  transformed_buf + blend_w * 2 * lv_area_get_height(&blend_area);
++                blend_dsc.mask_buf = transformed_buf + blend_w * 2 * lv_area_get_height(&blend_area);
++            }
++            else if(cf_final == LV_COLOR_FORMAT_AL88) {
++                blend_dsc.mask_buf = transformed_buf + blend_w * lv_area_get_height(&blend_area);
+             }
+         }
+     }
+diff --git a/src/draw/sw/lv_draw_sw_transform.c b/src/draw/sw/lv_draw_sw_transform.c
+index 11ebed683..be400dff0 100644
+--- a/src/draw/sw/lv_draw_sw_transform.c
++++ b/src/draw/sw/lv_draw_sw_transform.c
+@@ -88,12 +88,16 @@ static void transform_a8(const uint8_t * src, int32_t src_w, int32_t src_h, int3
+ #endif
+ 
+ #if LV_DRAW_SW_SUPPORT_L8
+-#if LV_DRAW_SW_SUPPORT_AL88
+ static void transform_l8_to_al88(const uint8_t * src, int32_t src_w, int32_t src_h, int32_t src_stride,
+                                  int32_t xs_ups, int32_t ys_ups, int32_t xs_step, int32_t ys_step,
+                                  int32_t x_end, uint8_t * abuf, bool aa);
+ #endif
+-#endif /*LV_DRAW_SW_SUPPORT_L8*/
++
++#if LV_DRAW_SW_SUPPORT_AL88
++static void transform_al88(const uint8_t * src, int32_t src_w, int32_t src_h, int32_t src_stride,
++                           int32_t xs_ups, int32_t ys_ups, int32_t xs_step, int32_t ys_step,
++                           int32_t x_end, uint8_t * lbuf, uint8_t * abuf, bool aa);
++#endif
+ 
+ /**********************
+  *  STATIC VARIABLES
+@@ -147,6 +151,9 @@ void lv_draw_sw_transform(const lv_area_t * dest_area, const void * src_buf,
+     else if((src_cf == LV_COLOR_FORMAT_RGB565A8) || (src_cf == LV_COLOR_FORMAT_L8)) {
+         dest_stride = dest_w * 2;
+     }
++    else if(src_cf == LV_COLOR_FORMAT_AL88) {
++        dest_stride = dest_w;
++    }
+     else {
+         dest_stride = dest_w * lv_color_format_get_size(src_cf);
+     }
+@@ -156,6 +163,10 @@ void lv_draw_sw_transform(const lv_area_t * dest_area, const void * src_buf,
+         alpha_buf = dest_buf;
+         alpha_buf += dest_stride * dest_h;
+     }
++    else if(src_cf == LV_COLOR_FORMAT_AL88) {
++        alpha_buf = dest_buf;
++        alpha_buf += dest_w * dest_h;  // AL88: luminance takes dest_w * dest_h bytes
++    }
+     else {
+         alpha_buf = NULL;
+     }
+@@ -288,11 +299,19 @@ void lv_draw_sw_transform(const lv_area_t * dest_area, const void * src_buf,
+                 break;
+ #endif
+ 
+-#if LV_DRAW_SW_SUPPORT_L8 && LV_DRAW_SW_SUPPORT_AL88
++#if LV_DRAW_SW_SUPPORT_L8
+             case LV_COLOR_FORMAT_L8:
+                 transform_l8_to_al88(src_buf, src_w, src_h, src_stride, xs_ups, ys_ups, xs_step_256, ys_step_256, dest_w, dest_buf, aa);
+                 break;
+-#endif /*LV_DRAW_SW_SUPPORT_L8 && (LV_DRAW_SW_SUPPORT_ARGB8888 || LV_DRAW_SW_SUPPORT_AL88)*/
++#endif
++
++#if LV_DRAW_SW_SUPPORT_AL88
++            case LV_COLOR_FORMAT_AL88:
++                transform_al88(src_buf, src_w, src_h, src_stride, xs_ups, ys_ups, xs_step_256, ys_step_256, dest_w,
++                              dest_buf, alpha_buf, aa);
++                break;
++#endif
++
+             default:
+                 LV_LOG_WARN("Color format 0x%02X is not enabled. "
+                             "See lv_color.h to find the name of the color formats and "
+@@ -944,7 +963,7 @@ static void transform_a8(const uint8_t * src, int32_t src_w, int32_t src_h, int3
+ 
+ #endif
+ 
+-#if LV_DRAW_SW_SUPPORT_L8 && LV_DRAW_SW_SUPPORT_AL88
++#if LV_DRAW_SW_SUPPORT_L8
+ 
+ static void transform_l8_to_al88(const uint8_t * src, int32_t src_w, int32_t src_h, int32_t src_stride,
+                                  int32_t xs_ups, int32_t ys_ups, int32_t xs_step, int32_t ys_step,
+@@ -1022,7 +1041,96 @@ static void transform_l8_to_al88(const uint8_t * src, int32_t src_w, int32_t src
+     }
+ }
+ 
+-#endif /*LV_DRAW_SW_SUPPORT_L8 && LV_DRAW_SW_SUPPORT_AL88*/
++#endif
++
++#if LV_DRAW_SW_SUPPORT_AL88
++
++static void transform_al88(const uint8_t * src, int32_t src_w, int32_t src_h, int32_t src_stride,
++                           int32_t xs_ups, int32_t ys_ups, int32_t xs_step, int32_t ys_step,
++                           int32_t x_end, uint8_t * lbuf, uint8_t * abuf, bool aa)
++{
++    int32_t xs_ups_start = xs_ups;
++    int32_t ys_ups_start = ys_ups;
++
++    int32_t x;
++    for(x = 0; x < x_end; x++) {
++        xs_ups = xs_ups_start + ((xs_step * x) >> 8);
++        ys_ups = ys_ups_start + ((ys_step * x) >> 8);
++
++        int32_t xs_int = xs_ups >> 8;
++        int32_t ys_int = ys_ups >> 8;
++
++        /*Fully out of the image*/
++        if(xs_int < 0 || xs_int >= src_w || ys_int < 0 || ys_int >= src_h) {
++            lbuf[x] = 0x00;
++            abuf[x] = 0x00;
++            continue;
++        }
++
++        /*Get the direction the hor and ver neighbor
++         *`fract` will be in range of 0x00..0xFF and `next` (+/-1) indicates the direction*/
++        int32_t xs_fract = xs_ups & 0xFF;
++        int32_t ys_fract = ys_ups & 0xFF;
++
++        int32_t x_next;
++        int32_t y_next;
++        if(xs_fract < 0x80) {
++            x_next = -1;
++            xs_fract = (0x7F - xs_fract) * 2;
++        }
++        else {
++            x_next = 1;
++            xs_fract = (xs_fract - 0x80) * 2;
++        }
++        if(ys_fract < 0x80) {
++            y_next = -1;
++            ys_fract = (0x7F - ys_fract) * 2;
++        }
++        else {
++            y_next = 1;
++            ys_fract = (ys_fract - 0x80) * 2;
++        }
++
++        const lv_color16a_t * src_tmp = (const lv_color16a_t *)(src + ys_int * src_stride + xs_int * 2);
++        lbuf[x] = src_tmp[0].lumi;
++        abuf[x] = src_tmp[0].alpha;
++
++        if(aa &&
++           xs_int + x_next >= 0 &&
++           xs_int + x_next <= src_w - 1 &&
++           ys_int + y_next >= 0 &&
++           ys_int + y_next <= src_h - 1) {
++
++            lv_color16a_t px_hor = src_tmp[x_next];
++            lv_color16a_t px_ver = *(const lv_color16a_t *)((uint8_t *)src_tmp + (y_next * src_stride));
++
++            /* Interpolate luminance */
++            uint8_t l_ver = px_ver.lumi;
++            uint8_t l_hor = px_hor.lumi;
++            if(l_ver != lbuf[x]) l_ver = ((l_ver * ys_fract) + (lbuf[x] * (0x100 - ys_fract))) >> 8;
++            if(l_hor != lbuf[x]) l_hor = ((l_hor * xs_fract) + (lbuf[x] * (0x100 - xs_fract))) >> 8;
++            lbuf[x] = (l_ver + l_hor) >> 1;
++
++            /* Interpolate alpha */
++            uint8_t a_ver = px_ver.alpha;
++            uint8_t a_hor = px_hor.alpha;
++            if(a_ver != abuf[x]) a_ver = ((a_ver * ys_fract) + (abuf[x] * (0x100 - ys_fract))) >> 8;
++            if(a_hor != abuf[x]) a_hor = ((a_hor * xs_fract) + (abuf[x] * (0x100 - xs_fract))) >> 8;
++            abuf[x] = (a_ver + a_hor) >> 1;
++        }
++        else {
++            /*Partially out of the image*/
++            if((xs_int == 0 && x_next < 0) || (xs_int == src_w - 1 && x_next > 0)) {
++                abuf[x] = (abuf[x] * (0xFF - xs_fract)) >> 8;
++            }
++            else if((ys_int == 0 && y_next < 0) || (ys_int == src_h - 1 && y_next > 0)) {
++                abuf[x] = (abuf[x] * (0xFF - ys_fract)) >> 8;
++            }
++        }
++    }
++}
++
++#endif
+ 
+ static void transform_point_upscaled(point_transform_dsc_t * t, int32_t xin, int32_t yin, int32_t * xout,
+                                      int32_t * yout)

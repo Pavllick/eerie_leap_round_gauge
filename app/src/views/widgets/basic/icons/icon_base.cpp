@@ -24,7 +24,7 @@ void IconBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
     is_active_ = GetConfigValue<bool>(
         configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE),
-        false);
+        true);
 }
 
 } // namespace eerie_leap::views::widgets::basic::icons

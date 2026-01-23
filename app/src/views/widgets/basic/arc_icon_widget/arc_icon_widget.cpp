@@ -10,8 +10,8 @@ using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::themes;
 
-ArcIconWidget::ArcIconWidget(uint32_t id, std::shared_ptr<Frame> parent)
-    : IconWidget(id, parent) {}
+ArcIconWidget::ArcIconWidget(uint32_t id, std::shared_ptr<Frame> parent, IconType icon_type)
+    : IconWidget(id, parent, icon_type) {}
 
 int ArcIconWidget::ApplyTheme() {
     IconWidget::ApplyTheme();

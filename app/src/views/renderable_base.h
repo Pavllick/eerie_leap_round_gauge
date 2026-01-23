@@ -18,10 +18,14 @@ protected:
     bool is_ready_ = false;
 
     void OnThemeChanged() override {
-        if (container_->GetObject() != nullptr && is_ready_) {
-            ApplyTheme();
-            container_->Invalidate();
-        }
+        if(container_ == nullptr || container_->GetObject() == nullptr)
+            return;
+
+        if(!is_ready_)
+            return;
+
+        ApplyTheme();
+        container_->Invalidate();
     }
 
 public:
@@ -40,8 +44,12 @@ public:
 
     int Render() override {
         int res = DoRender();
-        if(res == 0)
-            res = ApplyTheme();
+        if(res != 0)
+            return res;
+
+        res = ApplyTheme();
+        if(res != 0)
+            return res;
 
         k_msleep(10); // Allow LVGL to render before invalidation
         container_->Invalidate();
