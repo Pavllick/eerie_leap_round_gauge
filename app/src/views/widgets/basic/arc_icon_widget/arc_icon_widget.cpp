@@ -25,7 +25,7 @@ int ArcIconWidget::ApplyTheme() {
         position_x_,
         position_y_,
         radius - icon_height / 2 - edge_offset_px_,
-        position_angle_);
+        position_angle_ - 90.0F);
 
     return 0;
 }
@@ -36,7 +36,7 @@ void ArcIconWidget::Configure(std::shared_ptr<WidgetConfiguration> configuration
     position_angle_ = GetConfigValue<double>(
         configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_ANGLE),
-        0.0);
+        -90.0F);
 
     edge_offset_px_ = GetConfigValue<int>(
         configuration_->properties,
