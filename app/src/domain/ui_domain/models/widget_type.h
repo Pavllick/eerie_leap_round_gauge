@@ -21,7 +21,7 @@ enum class WidgetType : uint32_t {
     IndicatorDigital = static_cast<uint32_t>(WidgetCategory::Indicator) | 102,
     IndicatorHorizontalChart = static_cast<uint32_t>(WidgetCategory::Indicator) | 103,
     IndicatorSegmentArc = static_cast<uint32_t>(WidgetCategory::Indicator) | 104,
-    IndicatorAnalog = static_cast<uint32_t>(WidgetCategory::Indicator) | 105
+    IndicatorDial = static_cast<uint32_t>(WidgetCategory::Indicator) | 105,
 };
 
 class WidgetTypeHelpers {

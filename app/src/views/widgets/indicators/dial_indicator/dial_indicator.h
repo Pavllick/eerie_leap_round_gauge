@@ -9,7 +9,7 @@ namespace eerie_leap::views::widgets::indicators {
 
 using namespace eerie_leap::views::widgets::basic;
 
-class AnalogIndicator : public IndicatorBase {
+class DialIndicator : public IndicatorBase {
 private:
     int start_angle_;
     int end_angle_;
@@ -32,8 +32,8 @@ private:
     uint32_t GetAngleForValue(float value);
 
 public:
-    explicit AnalogIndicator(uint32_t id, std::shared_ptr<Frame> parent);
-    WidgetType GetType() const override { return WidgetType::IndicatorAnalog; }
+    explicit DialIndicator(uint32_t id, std::shared_ptr<Frame> parent);
+    WidgetType GetType() const override { return WidgetType::IndicatorDial; }
 };
 
 } // namespace eerie_leap::views::widgets::indicators

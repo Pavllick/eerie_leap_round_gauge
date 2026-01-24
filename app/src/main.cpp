@@ -509,7 +509,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
 
     // Widget: IndicatorArcFill
     auto widget9 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
-    widget9->type = WidgetType::IndicatorAnalog;
+    widget9->type = WidgetType::IndicatorDial;
     widget9->id = 9;
     widget9->position_grid.x = 0;
     widget9->position_grid.y = 0;
