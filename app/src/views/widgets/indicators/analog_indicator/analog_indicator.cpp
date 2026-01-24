@@ -42,10 +42,10 @@ lv_obj_t* AnalogIndicator::Create(int32_t range_start, int32_t range_end) {
 }
 
 uint32_t AnalogIndicator::GetAngleForValue(float value) {
-    float angle_delta = start_angle_ + (end_angle_ - start_angle_) *
-        (value - range_start_) / (range_end_ - range_start_);
+    float resolution = (abs(end_angle_ - start_angle_) * 10) / abs(range_end_ - range_start_);
+    float angle_delta = resolution * value;
 
-    return start_angle_ * 10 - 1800 + static_cast<int>(angle_delta * 10);
+    return start_angle_ * 10 - 1800 + static_cast<uint32_t>(angle_delta);
 }
 
 void AnalogIndicator::UpdateIndicator(float value) {

@@ -21,9 +21,9 @@ private:
 protected:
     std::optional<size_t> sensor_id_hash_;
     lv_anim_t value_change_animation_;
-    float range_start_;
-    float range_end_;
-    float value_;
+    float range_start_ = 0;
+    float range_end_ = 0;
+    float value_ = 0;
 
     virtual void UpdateIndicator(float value) = 0;
     lv_anim_t CreateValueChangeAnimation();

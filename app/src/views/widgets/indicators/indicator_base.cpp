@@ -39,47 +39,50 @@ lv_anim_t IndicatorBase::CreateValueChangeAnimation() {
     return anim;
 }
 
-// void IndicatorBase::ValueChangeAnimation(lv_anim_t& anim, float range, float start_value, float end_value) {
-//     uint32_t duration = 4000;
-//     uint32_t unit_duration = duration / range;
-//     uint32_t change_duration = unit_duration * abs(end_value - start_value);
+void IndicatorBase::ValueChangeAnimation(lv_anim_t& anim, float range, float start_value, float end_value) {
+    uint32_t duration = 4000;
+    uint32_t unit_duration = duration / range;
+    uint32_t change_duration = unit_duration * abs(end_value - start_value);
 
-//     lv_anim_set_duration(&anim, change_duration);
-//     lv_anim_set_values(&anim,
-//         static_cast<int32_t>(start_value * 10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS),
-//         static_cast<int32_t>(end_value * 10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS));
-//     lv_anim_start(&anim);
-// }
-
-void IndicatorBase::Update(float value) {
-    if(!IsReady())
-        return;
-
-    int32_t scaled_value = static_cast<int32_t>(
-        value * 10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS);
-
-    if(IsSmoothed()) {
-        int32_t filtered = value_filter_.Filter(scaled_value, smoothing_factor_);
-        UpdateIndicatorCallback(this, filtered);
-    } else {
-        UpdateIndicatorCallback(this, scaled_value);
-    }
+    lv_anim_set_duration(&anim, change_duration);
+    lv_anim_set_values(&anim,
+        static_cast<int32_t>(start_value * 10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS),
+        static_cast<int32_t>(end_value * 10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS));
+    lv_anim_start(&anim);
 }
 
 // void IndicatorBase::Update(float value) {
 //     if(!IsReady())
 //         return;
 
+//     int32_t scaled_value = static_cast<int32_t>(
+//         value * 10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS);
+
 //     if(IsSmoothed()) {
-//         ValueChangeAnimation(
-//             value_change_animation_,
-//             range_end_ - range_start_,
-//             value_,
-//             value);
+//         int32_t filtered = value_filter_.Filter(scaled_value, smoothing_factor_);
+//         UpdateIndicatorCallback(this, filtered);
 //     } else {
-//         UpdateIndicatorCallback(this, static_cast<int32_t>(value * 10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS));
+//         UpdateIndicatorCallback(this, scaled_value);
 //     }
 // }
+
+// NOTE: Actual LVGL animation renders frames smoother
+// compared to Exponential Moving Average Filter which
+// can be jumpy and result in noticeable tearing effect
+void IndicatorBase::Update(float value) {
+    if(!IsReady())
+        return;
+
+    if(IsSmoothed()) {
+        ValueChangeAnimation(
+            value_change_animation_,
+            range_end_ - range_start_,
+            value_,
+            value);
+    } else {
+        UpdateIndicatorCallback(this, static_cast<int32_t>(value * 10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS));
+    }
+}
 
 std::optional<size_t> IndicatorBase::GetSensorIdHash() const {
     return sensor_id_hash_;
