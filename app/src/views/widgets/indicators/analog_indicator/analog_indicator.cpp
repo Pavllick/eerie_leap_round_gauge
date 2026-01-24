@@ -35,7 +35,7 @@ lv_obj_t* AnalogIndicator::Create(int32_t range_start, int32_t range_end) {
     needle_icon_->SetAssetsManager(ui_assets_manager_);
     needle_icon_->Render();
 
-    lv_arc_ = needle_icon_->GetContainer()->GetChild()->GetObject();
+    lv_needle_icon_ = needle_icon_->GetContainer()->GetChild()->GetObject();
     UpdateIndicator(start_angle_);
 
     return needle_icon_->GetContainer()->GetObject();
@@ -50,7 +50,7 @@ uint32_t AnalogIndicator::GetAngleForValue(float value) {
 
 void AnalogIndicator::UpdateIndicator(float value) {
     lv_image_set_rotation(
-        lv_arc_,
+        lv_needle_icon_,
         GetAngleForValue(value));
 
     // NOTE: lv_image_set_pivot is meant to work along with lv_image_set_rotation,
@@ -58,7 +58,7 @@ void AnalogIndicator::UpdateIndicator(float value) {
     // in order to fix that bug. Transform is another option here, but it adds artifacts
     // around an image when rotated.
     // lv_obj_set_style_transform_rotation(
-    //     lv_arc_,
+    //     lv_needle_icon_,
     //     GetAngleForValue(value),
     //     LV_PART_MAIN | LV_STATE_DEFAULT);
 }

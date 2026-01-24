@@ -44,8 +44,8 @@ lv_obj_t* IconWidget::Create() {
         return nullptr;
     icon_->ApplyTheme();
 
-    lv_obj_set_x(container_->GetObject(), position_x_);
-    lv_obj_set_y(container_->GetObject(), position_y_);
+    lv_obj_set_x(icon_->GetContainer()->GetObject(), position_x_);
+    lv_obj_set_y(icon_->GetContainer()->GetObject(), position_y_);
 
     return icon_->GetContainer()->GetObject();
 }

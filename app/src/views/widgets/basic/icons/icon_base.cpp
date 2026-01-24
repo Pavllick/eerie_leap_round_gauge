@@ -8,7 +8,13 @@ using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 
 IconBase::IconBase(std::shared_ptr<Frame> parent)
-    : parent_(std::move(parent)), is_active_(false) {}
+    : parent_(std::move(parent)), is_active_(false) {
+
+    container_ = std::make_shared<Frame>(Frame::CreateWrapped(parent_->GetObject())
+        .SetWidth(100, false)
+        .SetHeight(100, false)
+        .Build());
+}
 
 void IconBase::SetAssetsManager(std::shared_ptr<UiAssetsManager> ui_assets_manager) {
     ui_assets_manager_ = std::move(ui_assets_manager);

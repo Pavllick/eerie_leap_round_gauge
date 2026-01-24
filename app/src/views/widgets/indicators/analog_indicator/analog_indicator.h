@@ -17,7 +17,7 @@ private:
     static constexpr int DEFAULT_START_ANGLE = 45;
     static constexpr int DEFAULT_END_ANGLE = 315;
 
-    lv_obj_t* lv_arc_;
+    lv_obj_t* lv_needle_icon_;
     std::unique_ptr<IconWidget> needle_icon_;
 
     void UpdateIndicator(float value) override;
