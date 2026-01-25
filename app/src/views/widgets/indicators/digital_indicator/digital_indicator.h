@@ -15,7 +15,7 @@ private:
     lv_obj_t* Create(std::shared_ptr<Frame> parent);
 
     int DoRender() override;
-    int ApplyTheme() override;
+    int ApplyTheme(const ITheme& theme) override;
 
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
 

@@ -26,11 +26,9 @@ int HorizontalChartIndicator::DoRender() {
     return 0;
 }
 
-int HorizontalChartIndicator::ApplyTheme() {
-    auto theme = ThemeManager::GetInstance().GetCurrentTheme();
-
+int HorizontalChartIndicator::ApplyTheme(const ITheme& theme) {
     auto ser = lv_chart_get_series_next(lv_chart_, nullptr);
-    lv_chart_set_series_color(lv_chart_, ser, theme->GetPrimaryColor().ToLvColor());
+    lv_chart_set_series_color(lv_chart_, ser, theme.GetPrimaryColor().ToLvColor());
 
     return 0;
 }

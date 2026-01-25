@@ -18,7 +18,7 @@ private:
     uint32_t active_screen_id_;
 
     int DoRender() override;
-    int ApplyTheme() override;
+    int ApplyTheme(const ITheme& theme) override;
 
 public:
     MainView();

@@ -24,11 +24,11 @@ int SegmentArcIndicator::DoRender() {
     return 0;
 }
 
-int SegmentArcIndicator::ApplyTheme() {
-    auto theme = ThemeManager::GetInstance().GetCurrentTheme();
-
-    for(auto& segment : segments_)
-        lv_obj_set_style_arc_color(segment.lv_segment, theme->GetSecondaryColor().ToLvColor(), LV_PART_INDICATOR | LV_STATE_DEFAULT);
+int SegmentArcIndicator::ApplyTheme(const ITheme& theme) {
+    for(auto& segment : segments_) {
+        lv_obj_set_style_arc_color(segment.lv_segment, theme.GetSecondaryColor().ToLvColor(), LV_PART_INDICATOR | LV_STATE_DEFAULT);
+        lv_obj_set_style_arc_opa(segment.lv_segment, theme.GetSecondaryColor().ToLvOpa(), LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    }
 
     return 0;
 }

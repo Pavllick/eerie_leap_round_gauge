@@ -23,10 +23,9 @@ int ArcFillIndicator::DoRender() {
     return 0;
 }
 
-int ArcFillIndicator::ApplyTheme() {
-    auto theme = ThemeManager::GetInstance().GetCurrentTheme();
-
-    lv_obj_set_style_arc_color(lv_arc_, theme->GetSecondaryColor().ToLvColor(), LV_PART_INDICATOR | LV_STATE_DEFAULT);
+int ArcFillIndicator::ApplyTheme(const ITheme& theme) {
+    lv_obj_set_style_arc_color(lv_arc_, theme.GetSecondaryColor().ToLvColor(), LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_arc_opa(lv_arc_, theme.GetSecondaryColor().ToLvOpa(), LV_PART_INDICATOR | LV_STATE_DEFAULT);
 
     return 0;
 }

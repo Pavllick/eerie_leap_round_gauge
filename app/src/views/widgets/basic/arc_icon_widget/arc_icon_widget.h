@@ -17,7 +17,7 @@ private:
     float position_angle_;
     int edge_offset_px_;
 
-    int ApplyTheme() override;
+    int ApplyTheme(const ITheme& theme) override;
 
 public:
     explicit ArcIconWidget(uint32_t id, std::shared_ptr<Frame> parent, IconType icon_type = IconType::None);

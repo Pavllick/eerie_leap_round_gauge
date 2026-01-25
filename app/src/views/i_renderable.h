@@ -4,6 +4,7 @@
 
 #include "views/utilitites/frame.h"
 #include "views/themes/i_theme_observer.h"
+#include "views/themes/i_theme.h"
 
 namespace eerie_leap::views {
 
@@ -18,7 +19,7 @@ public:
     virtual ~IRenderable() = default;
 
     virtual int Render() = 0;
-    virtual int ApplyTheme() = 0;
+    virtual int ApplyTheme(const ITheme& theme) = 0;
     virtual std::shared_ptr<Frame> GetContainer() const = 0;
     virtual bool IsReady() const = 0;
 };

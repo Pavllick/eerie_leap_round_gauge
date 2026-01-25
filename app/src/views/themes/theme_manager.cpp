@@ -16,14 +16,14 @@ ThemeManager& ThemeManager::GetInstance() {
 }
 
 void ThemeManager::SetTheme(std::shared_ptr<ITheme> theme) {
-    if (theme != nullptr && theme != current_theme_) {
+    if(theme != nullptr && theme != current_theme_) {
         current_theme_ = theme;
         NotifyObservers();
     }
 }
 
-const std::shared_ptr<ITheme>& ThemeManager::GetCurrentTheme() const {
-    return current_theme_;
+const ITheme& ThemeManager::GetCurrentTheme() const {
+    return *current_theme_;
 }
 
 void ThemeManager::RegisterObserver(IThemeObserver* observer) {

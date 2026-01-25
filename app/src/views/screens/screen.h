@@ -33,7 +33,7 @@ protected:
     void UpdateWidgetPosition(IWidget& widget, GridSettings& grid_settings);
 
     int DoRender() override;
-    int ApplyTheme() override;
+    int ApplyTheme(const ITheme& theme) override;
 
 public:
     Screen(

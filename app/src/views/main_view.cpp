@@ -55,7 +55,7 @@ void RenderCenterCrossHelperGuides(lv_obj_t* screen) {
     lv_obj_remove_flag(panel1, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_border_color(
         panel1,
-        ThemeManager::GetInstance().GetCurrentTheme()->GetPrimaryColor().ToLvColor(),
+        ThemeManager::GetInstance().GetCurrentTheme().GetPrimaryColor().ToLvColor(),
         LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_opa(panel1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -66,7 +66,7 @@ void RenderCenterCrossHelperGuides(lv_obj_t* screen) {
     lv_obj_remove_flag(panel2, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_border_color(
         panel2,
-        ThemeManager::GetInstance().GetCurrentTheme()->GetPrimaryColor().ToLvColor(),
+        ThemeManager::GetInstance().GetCurrentTheme().GetPrimaryColor().ToLvColor(),
         LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_opa(panel2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
@@ -80,9 +80,9 @@ int MainView::DoRender() {
     return 0;
 }
 
-int MainView::ApplyTheme() {
-    lv_obj_set_style_bg_color(container_->GetObject(), ThemeManager::GetInstance().GetCurrentTheme()->GetBackgroundColor().ToLvColor(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(container_->GetObject(), ThemeManager::GetInstance().GetCurrentTheme()->GetBackgroundColor().ToLvOpa(), LV_PART_MAIN | LV_STATE_DEFAULT);
+int MainView::ApplyTheme(const ITheme& theme) {
+    lv_obj_set_style_bg_color(container_->GetObject(), theme.GetBackgroundColor().ToLvColor(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(container_->GetObject(), theme.GetBackgroundColor().ToLvOpa(), LV_PART_MAIN | LV_STATE_DEFAULT);
 
     return 0;
 }

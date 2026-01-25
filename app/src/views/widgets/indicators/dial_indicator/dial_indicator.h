@@ -25,7 +25,7 @@ private:
     lv_obj_t* Create(int32_t range_start, int32_t range_end);
 
     int DoRender() override;
-    int ApplyTheme() override;
+    int ApplyTheme(const ITheme& theme) override;
 
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
 

@@ -13,8 +13,9 @@ using namespace eerie_leap::views::themes;
 ArcIconWidget::ArcIconWidget(uint32_t id, std::shared_ptr<Frame> parent, IconType icon_type)
     : IconWidget(id, parent, icon_type) {}
 
-int ArcIconWidget::ApplyTheme() {
-    IconWidget::ApplyTheme();
+int ArcIconWidget::ApplyTheme(const ITheme& theme) {
+    IconWidget::ApplyTheme(theme);
+
     lv_obj_update_layout(container_->GetObject());
 
     int radius = lv_obj_get_height(container_->GetObject()) / 2;

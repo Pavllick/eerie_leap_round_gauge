@@ -28,8 +28,8 @@ int IconWidget::DoRender() {
     return 0;
 }
 
-int IconWidget::ApplyTheme() {
-    icon_->ApplyTheme();
+int IconWidget::ApplyTheme(const ITheme& theme) {
+    icon_->ApplyTheme(theme);
 
     return 0;
 }
@@ -42,7 +42,6 @@ lv_obj_t* IconWidget::Create() {
     icon_->SetAssetsManager(ui_assets_manager_);
     if(icon_->Render() != 0)
         return nullptr;
-    icon_->ApplyTheme();
 
     lv_obj_set_x(icon_->GetContainer()->GetObject(), position_x_);
     lv_obj_set_y(icon_->GetContainer()->GetObject(), position_y_);
@@ -89,7 +88,6 @@ void IconWidget::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
                 if (auto it = event.payload.find(UiPayloadType::Value); it != event.payload.end()) {
                     if (auto* value = std::get_if<bool>(&it->second)) {
                         icon_->SetIsActive(*value);
-                        ApplyTheme();
                     }
                 }
             }

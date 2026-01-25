@@ -23,11 +23,9 @@ int HorizontalBarIndicator::DoRender() {
     return 0;
 }
 
-int HorizontalBarIndicator::ApplyTheme() {
-    auto theme = ThemeManager::GetInstance().GetCurrentTheme();
-
-    lv_obj_set_style_bg_color(lv_bar_, theme->GetSecondaryColor().ToLvColor(), LV_PART_INDICATOR);
-    lv_obj_set_style_bg_opa(lv_bar_, theme->GetSecondaryColor().ToLvOpa(), LV_PART_INDICATOR);
+int HorizontalBarIndicator::ApplyTheme(const ITheme& theme) {
+    lv_obj_set_style_bg_color(lv_bar_, theme.GetSecondaryColor().ToLvColor(), LV_PART_INDICATOR | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(lv_bar_, theme.GetSecondaryColor().ToLvOpa(), LV_PART_INDICATOR | LV_STATE_DEFAULT);
 
     return 0;
 }
@@ -45,7 +43,7 @@ lv_obj_t* HorizontalBarIndicator::Create(lv_obj_t* parent, int32_t range_start, 
 
     // Background color - LV_PART_MAIN
     // Bar color - LV_PART_INDICATOR
-    lv_obj_set_style_bg_opa(lv_bar_, 0, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(lv_bar_, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     return lv_bar_;
 }

@@ -23,8 +23,8 @@ int DialIndicator::DoRender() {
     return 0;
 }
 
-int DialIndicator::ApplyTheme() {
-    needle_icon_->ApplyTheme();
+int DialIndicator::ApplyTheme(const ITheme& theme) {
+    needle_icon_->ApplyTheme(theme);
 
     return 0;
 }

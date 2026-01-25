@@ -34,7 +34,7 @@ int Screen::DoRender() {
     return 0;
 }
 
-int Screen::ApplyTheme() {
+int Screen::ApplyTheme(const ITheme& theme) {
     return 0;
 }
 

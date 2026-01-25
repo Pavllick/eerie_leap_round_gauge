@@ -25,7 +25,7 @@ public:
     static ThemeManager& GetInstance();
 
     void SetTheme(std::shared_ptr<ITheme> theme);
-    const std::shared_ptr<ITheme>& GetCurrentTheme() const;
+    const ITheme& GetCurrentTheme() const;
 
     void RegisterObserver(IThemeObserver* observer);
     void UnregisterObserver(IThemeObserver* observer);

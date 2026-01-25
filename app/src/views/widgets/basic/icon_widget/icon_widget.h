@@ -30,7 +30,7 @@ public:
     void SetIsActive(bool is_active);
 
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
-    int ApplyTheme() override;
+    int ApplyTheme(const ITheme& theme) override;
 
     WidgetType GetType() const override { return WidgetType::BasicIcon; }
 };

@@ -21,12 +21,10 @@ int DigitalIndicator::DoRender() {
     return 0;
 }
 
-int DigitalIndicator::ApplyTheme() {
-    auto theme = ThemeManager::GetInstance().GetCurrentTheme();
-
-    lv_obj_set_style_text_font(lv_label_, theme->GetPrimaryFontLarge().ToLvFont(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(lv_label_, theme->GetPrimaryColor().ToLvColor(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(lv_label_, theme->GetPrimaryColor().ToLvOpa(), LV_PART_MAIN | LV_STATE_DEFAULT);
+int DigitalIndicator::ApplyTheme(const ITheme& theme) {
+    lv_obj_set_style_text_font(lv_label_, theme.GetPrimaryFontLarge().ToLvFont(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(lv_label_, theme.GetPrimaryColor().ToLvColor(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(lv_label_, theme.GetPrimaryColor().ToLvOpa(), LV_PART_MAIN | LV_STATE_DEFAULT);
 
     return 0;
 }

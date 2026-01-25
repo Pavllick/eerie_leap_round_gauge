@@ -13,9 +13,7 @@ using namespace eerie_leap::views::themes;
 ImageIcon::ImageIcon(std::shared_ptr<Frame> parent)
     : IconBase(std::move(parent)) {}
 
-int ImageIcon::ApplyTheme() {
-    auto theme = ThemeManager::GetInstance().GetCurrentTheme();
-
+int ImageIcon::ApplyTheme(const ITheme& theme) {
     lv_obj_set_style_opa(
         container_->GetObject(),
         is_active_ ? LV_OPA_COVER : 0,

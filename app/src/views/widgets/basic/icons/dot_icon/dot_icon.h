@@ -20,7 +20,7 @@ private:
 public:
     explicit DotIcon(std::shared_ptr<Frame> parent);
 
-    int ApplyTheme() override;
+    int ApplyTheme(const ITheme& theme) override;
     int DoRender() override;
     IconType GetIconType() const override { return IconType::Dot; }
 };

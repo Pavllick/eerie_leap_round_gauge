@@ -9,12 +9,10 @@ using namespace eerie_leap::views::themes;
 
 DotIcon::DotIcon(std::shared_ptr<Frame> parent) : IconBase(std::move(parent)) { }
 
-int DotIcon::ApplyTheme() {
-    auto theme = ThemeManager::GetInstance().GetCurrentTheme();
-
+int DotIcon::ApplyTheme(const ITheme& theme) {
     if(is_active_) {
-        lv_obj_set_style_bg_color(container_->GetObject(), theme->GetAccentColor().ToLvColor(), LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_set_style_bg_opa(container_->GetObject(), theme->GetAccentColor().ToLvOpa(), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_color(container_->GetObject(), theme.GetAccentColor().ToLvColor(), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_opa(container_->GetObject(), theme.GetAccentColor().ToLvOpa(), LV_PART_MAIN | LV_STATE_DEFAULT);
 
         lv_anim_start(&animation_);
     } else {

@@ -24,7 +24,7 @@ protected:
         if(!is_ready_)
             return;
 
-        ApplyTheme();
+        ApplyTheme(ThemeManager::GetInstance().GetCurrentTheme());
         container_->Invalidate();
     }
 
@@ -47,7 +47,7 @@ public:
         if(res != 0)
             return res;
 
-        res = ApplyTheme();
+        res = ApplyTheme(ThemeManager::GetInstance().GetCurrentTheme());
         if(res != 0)
             return res;
 
