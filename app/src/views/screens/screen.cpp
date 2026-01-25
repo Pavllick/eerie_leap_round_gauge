@@ -41,15 +41,29 @@ int Screen::ApplyTheme(const ITheme& theme) {
 void Screen::Configure(std::shared_ptr<ScreenConfiguration> configuration) {
     configuration_ = std::move(configuration);
 
+    lv_obj_t *active_screen = lv_screen_active();
+    int32_t screen_width = lv_obj_get_width(active_screen);
+    int32_t screen_height = lv_obj_get_height(active_screen);
+
+    if(configuration_->grid.width <= 0 || configuration_->grid.width > screen_width)
+        throw std::invalid_argument("Invalid screen width.");
+
+    if(configuration_->grid.height <= 0 || configuration_->grid.height > screen_height)
+        throw std::invalid_argument("Invalid screen height.");
+
     widgets_->clear();
 
     for(const auto& widget_config : configuration_->widget_configurations) {
-        auto widget = WidgetFactory::GetInstance().CreateWidget(widget_config, container_);
-        widget->SetAssetsManager(ui_assets_manager_);
-        UpdateWidgetSize(*widget, configuration_->grid);
-        UpdateWidgetPosition(*widget, configuration_->grid);
+        try {
+            auto widget = WidgetFactory::GetInstance().CreateWidget(widget_config, container_);
+            widget->SetAssetsManager(ui_assets_manager_);
+            UpdateWidgetSize(*widget, configuration_->grid, screen_width, screen_height);
+            UpdateWidgetPosition(*widget, configuration_->grid);
 
-        widgets_->push_back(std::move(widget));
+            widgets_->push_back(std::move(widget));
+        } catch(const std::exception& e) {
+            LOG_ERR("Failed to create widget with ID: %d. %s", widget_config->id, e.what());
+        }
     }
 }
 
@@ -61,12 +75,14 @@ std::shared_ptr<std::vector<std::unique_ptr<IWidget>>> Screen::GetWidgets() cons
     return widgets_;
 }
 
-void Screen::UpdateWidgetSize(IWidget& widget, GridSettings& grid_settings) {
-    lv_obj_t *active_screen = lv_screen_active();
-    int32_t screen_width = lv_obj_get_width(active_screen);
-    int32_t screen_height = lv_obj_get_height(active_screen);
-
+void Screen::UpdateWidgetSize(IWidget& widget, GridSettings& grid_settings, int32_t screen_width, int32_t screen_height) {
     const auto& widget_config = widget.GetConfiguration();
+
+    if(widget_config->size_grid.width <= 0)
+        throw std::invalid_argument("Invalid widget width.");
+
+    if(widget_config->size_grid.height <= 0)
+        throw std::invalid_argument("Invalid widget height.");
 
     uint32_t width = 0;
     if(grid_settings.width == widget_config->size_grid.width)

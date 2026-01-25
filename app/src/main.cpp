@@ -354,9 +354,14 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     screen_configuration->id = 0;
     screen_configuration->type = ScreenType::Gauge;
 
+    // NOTE: Grid enables relative sizing, spliting screen in equal regions.
+    // If width and height set to actual screen size positioning and size
+    // will act as if they are set in px.
+    // If set to smaller values actual screen size will be devided
+    // in equal regions as a result positioning and sizing will expect cell indexes.
     screen_configuration->grid.snap_enabled = true;
-    screen_configuration->grid.width = 3;
-    screen_configuration->grid.height = 3;
+    screen_configuration->grid.width = 466;
+    screen_configuration->grid.height = 466;
     screen_configuration->grid.spacing_px = 0;
 
     // Widget 0: BasicIcon - Background
@@ -365,8 +370,8 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget0->id = 0;
     widget0->position_grid.x = 0;
     widget0->position_grid.y = 0;
-    widget0->size_grid.width = 3;
-    widget0->size_grid.height = 3;
+    widget0->size_grid.width = 466;
+    widget0->size_grid.height = 466;
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE)] = static_cast<int>(IconType::Image);
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::FILE_PATH)] = "ui_img_norma_al88.bin";
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IMG_WIDTH)] = 466;
@@ -381,9 +386,9 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget1->type = WidgetType::IndicatorDigital;
     widget1->id = 1;
     widget1->position_grid.x = 0;
-    widget1->position_grid.y = 1;
-    widget1->size_grid.width = 3;
-    widget1->size_grid.height = 1;
+    widget1->position_grid.y = 230;
+    widget1->size_grid.width = 200;
+    widget1->size_grid.height = 100;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
@@ -398,8 +403,8 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget2->id = 2;
     widget2->position_grid.x = 0;
     widget2->position_grid.y = 0;
-    widget2->size_grid.width = 3;
-    widget2->size_grid.height = 1;
+    widget2->size_grid.width = 466;
+    widget2->size_grid.height = 160;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = false;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
@@ -414,9 +419,9 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget3->type = WidgetType::IndicatorHorizontalChart;
     widget3->id = 3;
     widget3->position_grid.x = 0;
-    widget3->position_grid.y = 1;
-    widget3->size_grid.width = 3;
-    widget3->size_grid.height = 1;
+    widget3->position_grid.y = 280;
+    widget3->size_grid.width = 466;
+    widget3->size_grid.height = 200;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
@@ -425,18 +430,18 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE)] = static_cast<int>(HorizontalChartIndicatorType::Line);
     screen_configuration->widget_configurations.push_back(std::move(widget3));
 
-    // auto widget4 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
-    // widget4->type = WidgetType::IndicatorHorizontalChart;
-    // widget4->id = 4;
-    // widget4->position_grid.x = 0;
-    // widget4->position_grid.y = 2;
-    // widget4->size_grid.width = 3;
-    // widget4->size_grid.height = 1;
-    // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
-    // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
-    // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
-    // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
-    // widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    auto widget4 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
+    widget4->type = WidgetType::IndicatorHorizontalChart;
+    widget4->id = 4;
+    widget4->position_grid.x = 0;
+    widget4->position_grid.y = 0;
+    widget4->size_grid.width = 466;
+    widget4->size_grid.height = 160;
+    widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
+    widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
+    widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
+    widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
+    widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
     // screen_configuration->widget_configurations.push_back(std::move(widget4));
 
     // Widget: IndicatorArcFill
@@ -445,8 +450,8 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget5->id = 5;
     widget5->position_grid.x = 0;
     widget5->position_grid.y = 0;
-    widget5->size_grid.width = 3;
-    widget5->size_grid.height = 3;
+    widget5->size_grid.width = 466;
+    widget5->size_grid.height = 466;
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
@@ -461,8 +466,8 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     // widget6->id = 6;
     // widget6->position_grid.x = 0;
     // widget6->position_grid.y = 0;
-    // widget6->size_grid.width = 3;
-    // widget6->size_grid.height = 3;
+    // widget6->size_grid.width = 466;
+    // widget6->size_grid.height = 466;
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
@@ -478,8 +483,8 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget7->id = 7;
     widget7->position_grid.x = 0;
     widget7->position_grid.y = 0;
-    widget7->size_grid.width = 3;
-    widget7->size_grid.height = 3;
+    widget7->size_grid.width = 466;
+    widget7->size_grid.height = 466;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE)] = static_cast<int>(IconType::Dot);
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE)] = false;
@@ -508,14 +513,14 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     // widget8->properties[WidgetProperty::GetTypeName(WidgetPropertyType::UI_EVENT_TYPE)] = static_cast<int>(UiEventType::LoggingStatusUpdated);
     // screen_configuration->widget_configurations.push_back(std::move(widget8));
 
-    // Widget: IndicatorArcFill
+    // Widget: IndicatorDial
     auto widget9 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
     widget9->type = WidgetType::IndicatorDial;
     widget9->id = 9;
     widget9->position_grid.x = 0;
     widget9->position_grid.y = 0;
-    widget9->size_grid.width = 3;
-    widget9->size_grid.height = 3;
+    widget9->size_grid.width = 466;
+    widget9->size_grid.height = 466;
     widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::FILE_PATH)] = "ui_img_arrow_al88.bin";
     widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IMG_WIDTH)] = 15;
     widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IMG_HEIGHT)] = 220;
@@ -537,9 +542,9 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget10->type = WidgetType::IndicatorBar;
     widget10->id = 10;
     widget10->position_grid.x = 0;
-    widget10->position_grid.y = 1;
-    widget10->size_grid.width = 3;
-    widget10->size_grid.height = 1;
+    widget10->position_grid.y = 180;
+    widget10->size_grid.width = 466;
+    widget10->size_grid.height = 40;
     widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
@@ -551,10 +556,10 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     auto widget11 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
     widget11->type = WidgetType::IndicatorBar;
     widget11->id = 11;
-    widget11->position_grid.x = 1;
+    widget11->position_grid.x = 200;
     widget11->position_grid.y = 0;
-    widget11->size_grid.width = 1;
-    widget11->size_grid.height = 3;
+    widget11->size_grid.width = 40;
+    widget11->size_grid.height = 466;
     widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::DIRECTION)] = static_cast<int>(InidicatorDirection::TopToBottom);
     widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;

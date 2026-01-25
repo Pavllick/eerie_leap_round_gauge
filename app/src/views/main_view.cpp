@@ -29,7 +29,7 @@ void MainView::AddScreen(uint32_t id, std::shared_ptr<IScreen> screen) {
 }
 
 int MainView::SetActiveScreen(uint32_t id) {
-    if(screens_.find(id) == screens_.end())
+    if(!screens_.contains(id))
         return -1;
 
     active_screen_id_ = id;
@@ -37,7 +37,7 @@ int MainView::SetActiveScreen(uint32_t id) {
 }
 
 std::shared_ptr<IScreen> MainView::GetScreen(uint32_t id) {
-    if(screens_.find(id) == screens_.end())
+    if(!screens_.contains(id))
         return nullptr;
 
     return screens_.at(id);

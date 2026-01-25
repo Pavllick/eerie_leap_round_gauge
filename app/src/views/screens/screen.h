@@ -29,7 +29,7 @@ protected:
     std::shared_ptr<std::vector<std::unique_ptr<IWidget>>> widgets_;
     std::shared_ptr<ScreenConfiguration> configuration_;
 
-    void UpdateWidgetSize(IWidget& widget, GridSettings& grid_settings);
+    void UpdateWidgetSize(IWidget& widget, GridSettings& grid_settings, int32_t screen_width, int32_t screen_height);
     void UpdateWidgetPosition(IWidget& widget, GridSettings& grid_settings);
 
     int DoRender() override;
