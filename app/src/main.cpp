@@ -531,6 +531,21 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     // widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE)] = 360;
     screen_configuration->widget_configurations.push_back(std::move(widget9));
 
+    // Widget: HorizontalBarIndicator
+    auto widget10 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
+    widget10->type = WidgetType::IndicatorHorizontalBar;
+    widget10->id = 10;
+    widget10->position_grid.x = 0;
+    widget10->position_grid.y = 1;
+    widget10->size_grid.width = 3;
+    widget10->size_grid.height = 1;
+    widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
+    widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
+    widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
+    widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
+    widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    screen_configuration->widget_configurations.push_back(std::move(widget10));
+
     ui_configuration->screen_configurations.push_back(std::move(screen_configuration));
 
     ui_configuration_manager->Update(*ui_configuration);

@@ -6,6 +6,7 @@
 #include "views/widgets/indicators/digital_indicator/digital_indicator.h"
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 #include "views/widgets/indicators/dial_indicator/dial_indicator.h"
+#include "views/widgets/indicators/horizontal_bar_indicator/horizontal_bar_indicator.h"
 
 #include "widget_factory.h"
 
@@ -68,6 +69,7 @@ void WidgetFactory::RegisterTypes() {
     RegisterWidget<DigitalIndicator>(WidgetType::IndicatorDigital);
     RegisterWidget<HorizontalChartIndicator>(WidgetType::IndicatorHorizontalChart);
     RegisterWidget<DialIndicator>(WidgetType::IndicatorDial);
+    RegisterWidget<HorizontalBarIndicator>(WidgetType::IndicatorHorizontalBar);
 }
 
 } // namespace eerie_leap::views::widgets
