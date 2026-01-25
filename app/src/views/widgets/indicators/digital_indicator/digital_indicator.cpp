@@ -10,7 +10,7 @@ using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::themes;
 
 DigitalIndicator::DigitalIndicator(uint32_t id, std::shared_ptr<Frame> parent)
-    : IndicatorBase(id, parent) { }
+    : IndicatorBase(id, parent) {}
 
 int DigitalIndicator::DoRender() {
     auto lv_obj = Create(container_);

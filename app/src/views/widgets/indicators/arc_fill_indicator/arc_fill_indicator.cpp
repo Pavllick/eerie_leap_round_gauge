@@ -12,7 +12,7 @@ using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 
 ArcFillIndicator::ArcFillIndicator(uint32_t id, std::shared_ptr<Frame> parent)
-    : IndicatorBase(id, parent) { }
+    : IndicatorBase(id, parent) {}
 
 int ArcFillIndicator::DoRender() {
     auto lv_obj = Create(container_->GetObject(), static_cast<int32_t>(range_start_), static_cast<int32_t>(range_end_));

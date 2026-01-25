@@ -22,7 +22,7 @@ enum class WidgetType : uint32_t {
     IndicatorHorizontalChart = static_cast<uint32_t>(WidgetCategory::Indicator) | 103,
     IndicatorSegmentArc = static_cast<uint32_t>(WidgetCategory::Indicator) | 104,
     IndicatorDial = static_cast<uint32_t>(WidgetCategory::Indicator) | 105,
-    IndicatorHorizontalBar = static_cast<uint32_t>(WidgetCategory::Indicator) | 106,
+    IndicatorBar = static_cast<uint32_t>(WidgetCategory::Indicator) | 106,
 };
 
 class WidgetTypeHelpers {

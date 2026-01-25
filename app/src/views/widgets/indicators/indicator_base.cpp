@@ -127,7 +127,7 @@ void IndicatorBase::Configure(std::shared_ptr<WidgetConfiguration> configuration
         configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE),
         100);
-    value_ = range_start_;
+    value_ = 0;
 }
 
 } // namespace eerie_leap::views::widgets::indicators

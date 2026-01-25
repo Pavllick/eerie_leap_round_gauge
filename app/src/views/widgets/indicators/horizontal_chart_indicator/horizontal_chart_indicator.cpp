@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "utilities/type/config_value.h"
 #include "domain/ui_domain/models/widget_property.h"
@@ -87,7 +88,7 @@ void HorizontalChartIndicator::Configure(std::shared_ptr<WidgetConfiguration> co
     chart_type_ = static_cast<HorizontalChartIndicatorType>(GetConfigValue<int>(
         configuration->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE),
-        static_cast<std::uint16_t>(HorizontalChartIndicatorType::Bar)));
+        std::to_underlying(HorizontalChartIndicatorType::Bar)));
 }
 
 } // namespace eerie_leap::views::widgets::indicators

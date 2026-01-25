@@ -52,6 +52,7 @@
 #include "controllers/ui_controller.h"
 #include "controllers/logging_controller.h"
 
+#include "views/utilitites/enums.h"
 #include "views/themes/theme_manager.h"
 #include "views/themes/dark_theme.h"
 #include "views/themes/dark_bw_theme.h"
@@ -531,9 +532,9 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     // widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE)] = 360;
     screen_configuration->widget_configurations.push_back(std::move(widget9));
 
-    // Widget: HorizontalBarIndicator
+    // Widget: IndicatorBar - Horizontal Left to right
     auto widget10 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
-    widget10->type = WidgetType::IndicatorHorizontalBar;
+    widget10->type = WidgetType::IndicatorBar;
     widget10->id = 10;
     widget10->position_grid.x = 0;
     widget10->position_grid.y = 1;
@@ -545,6 +546,22 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
     screen_configuration->widget_configurations.push_back(std::move(widget10));
+
+    // Widget: IndicatorBar - Vertical Bottom to top
+    auto widget11 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
+    widget11->type = WidgetType::IndicatorBar;
+    widget11->id = 11;
+    widget11->position_grid.x = 1;
+    widget11->position_grid.y = 0;
+    widget11->size_grid.width = 1;
+    widget11->size_grid.height = 3;
+    widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::DIRECTION)] = static_cast<int>(InidicatorDirection::TopToBottom);
+    widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
+    widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
+    widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
+    widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
+    widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    // screen_configuration->widget_configurations.push_back(std::move(widget11));
 
     ui_configuration->screen_configurations.push_back(std::move(screen_configuration));
 
