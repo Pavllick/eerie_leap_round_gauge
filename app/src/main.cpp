@@ -186,7 +186,7 @@ int main() {
     canbus_com_service->Initialize();
     canbus_com_service->Start();
 
-    auto sensor_readings_frame = make_shared_pmr<SensorReadingsFrame>(Mrm::GetExtPmr());
+    auto sensor_readings_frame = std::make_shared<SensorReadingsFrame>();
 
     auto isr_sensor_reader_factory = std::make_shared<IsrSensorReaderFactory>(
         time_service,
@@ -254,8 +254,9 @@ void EmulateReadings(
     std::shared_ptr<GuidGenerator> guid_generator,
     std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager,
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame) {
+
     for(auto sensor : *sensors_configuration_manager->Get()) {
-        SensorReading reading(std::allocator_arg, Mrm::GetDefaultPmr(), guid_generator->Generate(), sensor);
+        SensorReading reading(guid_generator->Generate(), sensor);
         reading.source = ReadingSource::PROCESSING;
         reading.status = ReadingStatus::PROCESSED;
         reading.value = (Rng::Get32() / static_cast<float>(UINT32_MAX)) * 100.0F;
@@ -544,7 +545,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     widget10->position_grid.x = 0;
     widget10->position_grid.y = 180;
     widget10->size_grid.width = 466;
-    widget10->size_grid.height = 40;
+    widget10->size_grid.height = 8;
     widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;

@@ -16,6 +16,9 @@ DialIndicator::DialIndicator(uint32_t id, std::shared_ptr<Frame> parent)
 
 int DialIndicator::DoRender() {
     auto lv_obj = Create(static_cast<int32_t>(range_start_), static_cast<int32_t>(range_end_));
+    if(lv_obj == nullptr)
+        return -1;
+
     auto child = std::make_shared<Frame>(
         Frame::Create(lv_obj).Build());
     container_->SetChild(child);
@@ -33,7 +36,8 @@ lv_obj_t* DialIndicator::Create(int32_t range_start, int32_t range_end) {
     needle_icon_ = std::make_unique<IconWidget>(id_, container_, IconType::Image);
     needle_icon_->Configure(configuration_);
     needle_icon_->SetAssetsManager(ui_assets_manager_);
-    needle_icon_->Render();
+    if(needle_icon_->Render() != 0)
+        return nullptr;
 
     lv_needle_icon_ = needle_icon_->GetContainer()->GetChild()->GetObject();
     UpdateIndicator(start_angle_);
