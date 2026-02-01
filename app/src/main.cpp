@@ -21,6 +21,7 @@
 #include "subsys/time/rtc_provider.h"
 #include "subsys/time/boot_elapsed_time_provider.h"
 #include "subsys/event_bus/event_bus.h"
+#include "subsys/bluetooth/bluetooth_configuration_service.h"
 
 #include "configuration/services/cbor_configuration_service.h"
 
@@ -68,6 +69,7 @@ using namespace eerie_leap::subsys::device_tree;
 using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::gpio;
 using namespace eerie_leap::subsys::time;
+using namespace eerie_leap::subsys::bluetooth;
 
 using namespace eerie_leap::configuration::services;
 
@@ -105,6 +107,30 @@ void EmulateReadings(
     std::shared_ptr<GuidGenerator> guid_generator,
     std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager,
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame);
+
+bool HandleConfigWrite(ConfigType type, std::span<const uint8_t> data) {
+    switch(type) {
+        case ConfigType::CanBus:
+            // your CBOR decode here
+            LOG_INF("Received CANBus config, size: %zu", data.size());
+            return true;
+
+        default:
+            LOG_ERR("Unknown config type: %u", static_cast<uint8_t>(type));
+            return false;
+    }
+}
+
+size_t HandleConfigRead(ConfigType type, std::span<uint8_t> buffer) {
+    switch(type) {
+        case ConfigType::CanBus:
+            // return encoded_size;
+            return 0;
+
+        default:
+            return 0;
+    }
+}
 
 int main() {
     DtConfigurator::Initialize();
@@ -236,6 +262,11 @@ int main() {
     } while(false);
 
     sensors_processing_service->Start();
+
+    BluetoothConfigurationService::GetInstance().Initialize({
+        .on_config_write = HandleConfigWrite,
+        .on_config_read = HandleConfigRead,
+    });
 
 	while (true) {
         // SystemInfo::PrintHeapInfo();
