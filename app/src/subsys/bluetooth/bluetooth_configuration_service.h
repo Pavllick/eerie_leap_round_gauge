@@ -37,12 +37,23 @@ enum class State : uint8_t {
     Error = 3
 };
 
+enum class ErrorCode : uint8_t {
+    None = 0,
+    InsufficientData = 1,    // START_WRITE command too short
+    TransferTooLarge = 2,    // Requested size exceeds buffer
+    InvalidState = 3,        // Command received in wrong state
+    IncompleteTransfer = 4,  // END_WRITE before all data received
+    HandlerFailed = 5,       // on_config_write callback returned false
+    DataOverflow = 6,        // Received more data than expected
+    NotificationFailed = 7,  // Failed to send BLE notification
+};
+
 struct Status {
     State state;
     ConfigType current_type;
     uint32_t transferred_bytes;
     uint32_t total_bytes;
-    uint8_t error_code;
+    ErrorCode error_code;
 } __attribute__((packed));
 
 struct Callbacks {
@@ -57,12 +68,13 @@ struct Callbacks {
 
 class BluetoothConfigurationService {
 private:
-    static constexpr size_t kMaxTransferSize = 64;// * 1024;
+    static constexpr size_t MaxTransferSize = 64;// * 1024;
+    static constexpr uint32_t ChunkDelayMs = 5;
 
     k_mutex mutex_;
     Callbacks callbacks_;
     Status status_{};
-    std::array<uint8_t, kMaxTransferSize> transfer_buffer_{};
+    std::array<uint8_t, MaxTransferSize> transfer_buffer_{};
     bt_conn* active_conn_{nullptr};
     atomic_t notifications_enabled_{0};
     atomic_t disconnected_during_read_{0};
@@ -120,8 +132,6 @@ private:
     friend void Disconnected(bt_conn* conn, uint8_t reason);
 
     friend void AdvRestartWorkHandler(struct k_work* work);
-    friend void connected_work_handler(struct k_work *work);
-    friend void disconnected_work_handler(struct k_work *work);
 
 public:
     static BluetoothConfigurationService& GetInstance();

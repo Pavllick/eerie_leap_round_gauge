@@ -9,17 +9,19 @@ LOG_MODULE_REGISTER(bt_config);
 
 namespace eerie_leap::subsys::bluetooth {
 
+// Custom 128-bit UUIDs for the Configuration Service
+// Base UUID: e7a1b2c3-d4e5-6f78-9a0b-c1d2e3f40000
 #define BT_UUID_CONFIG_SERVICE_VAL \
-    BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef0)
+    BT_UUID_128_ENCODE(0xe7a1b2c3, 0xd4e5, 0x6f78, 0x9a0b, 0xc1d2e3f40000)
 
 #define BT_UUID_CONFIG_CONTROL_VAL \
-    BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef1)
+    BT_UUID_128_ENCODE(0xe7a1b2c3, 0xd4e5, 0x6f78, 0x9a0b, 0xc1d2e3f40001)
 
 #define BT_UUID_CONFIG_DATA_VAL \
-    BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef2)
+    BT_UUID_128_ENCODE(0xe7a1b2c3, 0xd4e5, 0x6f78, 0x9a0b, 0xc1d2e3f40002)
 
 #define BT_UUID_CONFIG_STATUS_VAL \
-    BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef3)
+    BT_UUID_128_ENCODE(0xe7a1b2c3, 0xd4e5, 0x6f78, 0x9a0b, 0xc1d2e3f40003)
 
 #define BT_UUID_CONFIG_SERVICE  BT_UUID_DECLARE_128(BT_UUID_CONFIG_SERVICE_VAL)
 #define BT_UUID_CONFIG_CONTROL  BT_UUID_DECLARE_128(BT_UUID_CONFIG_CONTROL_VAL)
@@ -247,10 +249,7 @@ void BluetoothConfigurationService::ResetTransferLocked() {
     SetState(State::Idle);
 }
 
-void BluetoothConfigurationService::HandleControlCommand(
-        bt_conn* conn,
-        std::span<const uint8_t> data) {
-
+void BluetoothConfigurationService::HandleControlCommand(bt_conn* conn, std::span<const uint8_t> data) {
     if(data.empty()) {
         LOG_ERR("Empty control command");
         return;
@@ -264,7 +263,7 @@ void BluetoothConfigurationService::HandleControlCommand(
         case Command::StartWrite: {
             if(data.size() < 6) {
                 LOG_ERR("START_WRITE: insufficient data");
-                status_.error_code = 1;
+                status_.error_code = ErrorCode::InsufficientData;
                 SetState(State::Error);
                 k_mutex_unlock(&mutex_);
                 return;
@@ -274,9 +273,9 @@ void BluetoothConfigurationService::HandleControlCommand(
             uint32_t size = data[2] | (data[3] << 8) |
                           (data[4] << 16) | (data[5] << 24);
 
-            if(size > kMaxTransferSize) {
+            if(size > MaxTransferSize) {
                 LOG_ERR("Config too large: %u bytes", size);
-                status_.error_code = 2;
+                status_.error_code = ErrorCode::TransferTooLarge;
                 SetState(State::Error);
                 k_mutex_unlock(&mutex_);
                 return;
@@ -293,15 +292,14 @@ void BluetoothConfigurationService::HandleControlCommand(
             status_.current_type = type;
             status_.total_bytes = size;
             status_.transferred_bytes = 0;
-            status_.error_code = 0;
+            status_.error_code = ErrorCode::None;
             SetState(State::Writing);
-            break;
-        }
 
-        case Command::EndWrite: {
+            break;
+        } case Command::EndWrite: {
             if(status_.state != State::Writing) {
                 LOG_ERR("END_WRITE: not in writing state");
-                status_.error_code = 3;
+                status_.error_code = ErrorCode::InvalidState;
                 SetState(State::Error);
                 k_mutex_unlock(&mutex_);
                 return;
@@ -310,7 +308,7 @@ void BluetoothConfigurationService::HandleControlCommand(
             if(status_.transferred_bytes != status_.total_bytes) {
                 LOG_ERR("Incomplete transfer: %u/%u bytes",
                        status_.transferred_bytes, status_.total_bytes);
-                status_.error_code = 4;
+                status_.error_code = ErrorCode::IncompleteTransfer;
                 SetState(State::Error);
                 k_mutex_unlock(&mutex_);
                 return;
@@ -340,22 +338,21 @@ void BluetoothConfigurationService::HandleControlCommand(
                     ResetTransferLocked();
                 } else {
                     LOG_ERR("Config write handler failed");
-                    status_.error_code = 5;
+                    status_.error_code = ErrorCode::HandlerFailed;
                     SetState(State::Error);
                 }
             } else {
                 LOG_WRN("No write handler registered");
                 ResetTransferLocked();
             }
-            break;
-        }
 
-        case Command::Abort:
+            break;
+        } case Command::Abort: {
             LOG_INF("Transfer aborted");
             ResetTransferLocked();
-            break;
 
-        case Command::RequestRead: {
+            break;
+        } case Command::RequestRead: {
             if(data.size() < 2) {
                 LOG_ERR("REQUEST_READ: insufficient data");
                 k_mutex_unlock(&mutex_);
@@ -367,20 +364,18 @@ void BluetoothConfigurationService::HandleControlCommand(
 
             k_mutex_unlock(&mutex_);
             SendConfig(conn, type);
-            return;
-        }
 
-        default:
+            return;
+        } default: {
             LOG_WRN("Unknown command: 0x%02x", data[0]);
             break;
+        }
     }
 
     k_mutex_unlock(&mutex_);
 }
 
-void BluetoothConfigurationService::HandleDataChunk(
-        std::span<const uint8_t> data) {
-
+void BluetoothConfigurationService::HandleDataChunk(std::span<const uint8_t> data) {
     k_mutex_lock(&mutex_, K_FOREVER);
 
     if(status_.state != State::Writing) {
@@ -391,11 +386,11 @@ void BluetoothConfigurationService::HandleDataChunk(
 
     // Guard against overflow using the buffer's own size, not just the
     // client-supplied total_bytes, so the check remains valid if
-    // kMaxTransferSize and the validation in kStartWrite ever diverge.
+    // MaxTransferSize and the validation in kStartWrite ever diverge.
     if(status_.transferred_bytes + data.size() > status_.total_bytes ||
        status_.transferred_bytes + data.size() > transfer_buffer_.size()) {
         LOG_ERR("Data overflow: would exceed %u bytes", status_.total_bytes);
-        status_.error_code = 6;
+        status_.error_code = ErrorCode::DataOverflow;
         SetState(State::Error);
         k_mutex_unlock(&mutex_);
         return;
@@ -412,10 +407,7 @@ void BluetoothConfigurationService::HandleDataChunk(
     k_mutex_unlock(&mutex_);
 }
 
-bool BluetoothConfigurationService::SendConfig(
-        bt_conn* conn,
-        ConfigType type) {
-
+bool BluetoothConfigurationService::SendConfig(bt_conn* conn, ConfigType type) {
     k_mutex_lock(&mutex_, K_FOREVER);
 
     // Check notifications while already holding the lock, closing the TOCTOU
@@ -447,7 +439,7 @@ bool BluetoothConfigurationService::SendConfig(
         return false;
     }
 
-    if(data_size > kMaxTransferSize) {
+    if(data_size > MaxTransferSize) {
         LOG_ERR("Config too large: %zu bytes", data_size);
         k_mutex_unlock(&mutex_);
         return false;
@@ -461,16 +453,18 @@ bool BluetoothConfigurationService::SendConfig(
         bt_conn_unref(active_conn_);
     active_conn_ = bt_conn_ref(conn);
 
-    // Take a second ref for the notification loop below.  This one is owned
-    // purely by this stack frame and is unconditionally unref'd before we
-    // return, so Disconnected → ResetTransferLocked cannot invalidate the
-    // pointer we use for bt_gatt_notify.
-    bt_conn* loop_conn = bt_conn_ref(conn);
+    // RAII guard for the loop-local connection reference.
+    // This ensures unconditional unref on all exit paths.
+    struct ConnRefGuard {
+        bt_conn* conn;
+        ~ConnRefGuard() { if(conn) bt_conn_unref(conn); }
+    } loop_conn_guard{bt_conn_ref(conn)};
+    bt_conn* loop_conn = loop_conn_guard.conn;
 
     status_.current_type = type;
     status_.total_bytes = data_size;
     status_.transferred_bytes = 0;
-    status_.error_code = 0;
+    status_.error_code = ErrorCode::None;
     SetState(State::Reading);
 
     // Clear the disconnect flag before releasing the lock so we don't pick
@@ -483,15 +477,30 @@ bool BluetoothConfigurationService::SendConfig(
     //     loop_conn is pinned by its own ref and remains valid regardless of
     //     what Disconnected does to active_conn_. ---
 
-    bool success = true;
+    // Lambda to handle cleanup and return result consistently.
+    auto finalize = [this](bool success) {
+        k_mutex_lock(&mutex_, K_FOREVER);
+
+        // If Disconnected already reset the state machine while we were in the
+        // loop, don't stomp on it again — just leave things idle.
+        if(status_.state == State::Reading) {
+            if(!success) {
+                status_.error_code = ErrorCode::NotificationFailed;
+                SetState(State::Error);
+            }
+            ResetTransferLocked();
+        }
+
+        k_mutex_unlock(&mutex_);
+        return success;
+    };
 
     const bt_gatt_attr* attr = bt_gatt_find_by_uuid(
         config_svc.attrs, config_svc.attr_count, BT_UUID_CONFIG_STATUS);
 
     if(!attr) {
         LOG_ERR("Status characteristic not found");
-        success = false;
-        goto cleanup;
+        return finalize(false);
     }
 
     {
@@ -508,8 +517,7 @@ bool BluetoothConfigurationService::SendConfig(
         int err = bt_gatt_notify(loop_conn, attr, &start_msg, sizeof(start_msg));
         if(err) {
             LOG_ERR("Failed to send START_READ notification (err %d)", err);
-            success = false;
-            goto cleanup;
+            return finalize(false);
         }
     }
 
@@ -521,8 +529,7 @@ bool BluetoothConfigurationService::SendConfig(
             // Bail out early if Disconnected fired while we were looping.
             if(atomic_get(&disconnected_during_read_)) {
                 LOG_INF("Aborting SendConfig: disconnected during transfer");
-                success = false;
-                goto cleanup;
+                return finalize(false);
             }
 
             size_t to_send = std::min<size_t>(chunk_size, data_size - offset);
@@ -532,11 +539,10 @@ bool BluetoothConfigurationService::SendConfig(
 
             if(err) {
                 LOG_ERR("Notification failed at offset %zu (err %d)", offset, err);
-                success = false;
-                goto cleanup;
+                return finalize(false);
             }
 
-            k_sleep(K_MSEC(5));
+            k_sleep(K_MSEC(ChunkDelayMs));
         }
     }
 
@@ -545,32 +551,12 @@ bool BluetoothConfigurationService::SendConfig(
         int err = bt_gatt_notify(loop_conn, attr, &complete_cmd, 1);
         if(err) {
             LOG_ERR("Failed to send READ_COMPLETE notification (err %d)", err);
-            success = false;
-            goto cleanup;
+            return finalize(false);
         }
     }
 
     LOG_INF("Config sent successfully");
-
-cleanup:
-    // Release the loop-local connection reference unconditionally.
-    bt_conn_unref(loop_conn);
-
-    k_mutex_lock(&mutex_, K_FOREVER);
-
-    // If Disconnected already reset the state machine while we were in the
-    // loop, don't stomp on it again — just leave things idle.
-    if(status_.state == State::Reading) {
-        if(!success) {
-            status_.error_code = 7;
-            SetState(State::Error);
-        }
-        ResetTransferLocked();
-    }
-
-    k_mutex_unlock(&mutex_);
-
-    return success;
+    return finalize(true);
 }
 
 } // namespace eerie_leap::subsys::bluetooth
