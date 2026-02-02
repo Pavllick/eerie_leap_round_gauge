@@ -199,10 +199,20 @@ BluetoothConfigurationService& BluetoothConfigurationService::GetInstance() {
     return instance;
 }
 
-bool BluetoothConfigurationService::Initialize(const Callbacks& callbacks) {
+bool BluetoothConfigurationService::Initialize(
+    const Callbacks& callbacks,
+    allocator_type allocator,
+    size_t max_transfer_size) {
+
     k_mutex_lock(&mutex_, K_FOREVER);
+
+    max_transfer_size_ = max_transfer_size;
+    transfer_buffer_.emplace(max_transfer_size_, uint8_t{0}, allocator);
+    transfer_buffer_.value().resize(max_transfer_size_);
+
     callbacks_ = callbacks;
     ResetTransferLocked();
+
     k_mutex_unlock(&mutex_);
 
     return InitializeBluetooth() == 0;
@@ -273,7 +283,7 @@ void BluetoothConfigurationService::HandleControlCommand(bt_conn* conn, std::spa
             uint32_t size = data[2] | (data[3] << 8) |
                           (data[4] << 16) | (data[5] << 24);
 
-            if(size > MaxTransferSize) {
+            if(size > max_transfer_size_) {
                 LOG_ERR("Config too large: %u bytes", size);
                 status_.error_code = ErrorCode::TransferTooLarge;
                 SetState(State::Error);
@@ -316,7 +326,7 @@ void BluetoothConfigurationService::HandleControlCommand(bt_conn* conn, std::spa
 
             ConfigType type = status_.current_type;
             uint32_t byte_count = status_.transferred_bytes;
-            auto received_data = std::span(transfer_buffer_.data(), byte_count);
+            auto received_data = std::span(transfer_buffer_.value().data(), byte_count);
 
             if(callbacks_.on_config_write) {
                 k_mutex_unlock(&mutex_);
@@ -386,9 +396,9 @@ void BluetoothConfigurationService::HandleDataChunk(std::span<const uint8_t> dat
 
     // Guard against overflow using the buffer's own size, not just the
     // client-supplied total_bytes, so the check remains valid if
-    // MaxTransferSize and the validation in kStartWrite ever diverge.
+    // max_transfer_size_ and the validation in StartWrite ever diverge.
     if(status_.transferred_bytes + data.size() > status_.total_bytes ||
-       status_.transferred_bytes + data.size() > transfer_buffer_.size()) {
+       status_.transferred_bytes + data.size() > transfer_buffer_.value().size()) {
         LOG_ERR("Data overflow: would exceed %u bytes", status_.total_bytes);
         status_.error_code = ErrorCode::DataOverflow;
         SetState(State::Error);
@@ -397,7 +407,7 @@ void BluetoothConfigurationService::HandleDataChunk(std::span<const uint8_t> dat
     }
 
     std::copy(data.begin(), data.end(),
-             transfer_buffer_.begin() + status_.transferred_bytes);
+             transfer_buffer_.value().begin() + status_.transferred_bytes);
 
     status_.transferred_bytes += data.size();
 
@@ -431,7 +441,7 @@ bool BluetoothConfigurationService::SendConfig(bt_conn* conn, ConfigType type) {
     }
 
     size_t data_size = callbacks_.on_config_read(
-        type, std::span(transfer_buffer_));
+        type, std::span(transfer_buffer_.value()));
 
     if(data_size == 0) {
         LOG_ERR("Read handler returned no data");
@@ -439,7 +449,7 @@ bool BluetoothConfigurationService::SendConfig(bt_conn* conn, ConfigType type) {
         return false;
     }
 
-    if(data_size > MaxTransferSize) {
+    if(data_size > max_transfer_size_) {
         LOG_ERR("Config too large: %zu bytes", data_size);
         k_mutex_unlock(&mutex_);
         return false;
@@ -535,7 +545,7 @@ bool BluetoothConfigurationService::SendConfig(bt_conn* conn, ConfigType type) {
             size_t to_send = std::min<size_t>(chunk_size, data_size - offset);
 
             int err = bt_gatt_notify(loop_conn, attr,
-                transfer_buffer_.data() + offset, to_send);
+                transfer_buffer_.value().data() + offset, to_send);
 
             if(err) {
                 LOG_ERR("Notification failed at offset %zu (err %d)", offset, err);

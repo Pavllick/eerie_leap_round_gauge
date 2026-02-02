@@ -3,7 +3,9 @@
 #include <span>
 #include <functional>
 #include <cstdint>
-#include <array>
+#include <optional>
+#include <vector>
+#include <memory_resource>
 
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/conn.h>
@@ -67,14 +69,19 @@ struct Callbacks {
 };
 
 class BluetoothConfigurationService {
-private:
-    static constexpr size_t MaxTransferSize = 64;// * 1024;
+public:
+    using allocator_type = std::pmr::polymorphic_allocator<>;
+
+    static constexpr size_t DefaultMaxTransferSize = 64 * 1024;
     static constexpr uint32_t ChunkDelayMs = 5;
+
+private:
+    size_t max_transfer_size_{0};
 
     k_mutex mutex_;
     Callbacks callbacks_;
     Status status_{};
-    std::array<uint8_t, MaxTransferSize> transfer_buffer_{};
+    std::optional<std::pmr::vector<uint8_t>> transfer_buffer_;
     bt_conn* active_conn_{nullptr};
     atomic_t notifications_enabled_{0};
     atomic_t disconnected_during_read_{0};
@@ -136,8 +143,13 @@ private:
 public:
     static BluetoothConfigurationService& GetInstance();
 
-    bool Initialize(const Callbacks& callbacks);
+    bool Initialize(
+        const Callbacks& callbacks,
+        allocator_type allocator = std::pmr::get_default_resource(),
+        size_t max_transfer_size = DefaultMaxTransferSize);
+
     [[nodiscard]] Status GetStatus();
+    [[nodiscard]] size_t GetMaxTransferSize() const { return max_transfer_size_; }
 
     bool SendConfig(
         bt_conn* conn,

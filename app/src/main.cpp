@@ -266,7 +266,9 @@ int main() {
     BluetoothConfigurationService::GetInstance().Initialize({
         .on_config_write = HandleConfigWrite,
         .on_config_read = HandleConfigRead,
-    });
+    },
+    Mrm::GetExtPmr(),
+    64 * 1024);
 
 	while (true) {
         // SystemInfo::PrintHeapInfo();
