@@ -14,9 +14,19 @@ using namespace eerie_leap::subsys::device_tree;
 
 LOG_MODULE_REGISTER(renderer_logger);
 
-// NOTE: Should be allocated on internal RAM to take an advantage of DMA for rendering
-// NOTE: Dinamic allocation causes issues with LVGL rendering memory access
-K_KERNEL_STACK_MEMBER(UiRendererService::stack_area_, UiRendererService::k_stack_size_);
+UiRendererService::UiRendererService() {
+    // NOTE: Stack should be allocated on internal RAM to take an advantage of DMA for rendering
+    thread_ = std::make_unique<Thread>(
+        "ui_renderer_service",
+        this,
+        UiRendererService::k_stack_size_,
+        UiRendererService::k_priority_,
+        true);
+}
+
+UiRendererService::~UiRendererService() {
+    Stop();
+}
 
 int UiRendererService::Initialize() {
     if(DtDisplay::Get() == nullptr) {
@@ -29,8 +39,14 @@ int UiRendererService::Initialize() {
 		return -1;
 	}
 
+    thread_->Initialize();
+
     auto* act_scr = lv_display_get_default();
     lv_display_add_event_cb(act_scr, DisplayInvalidateCb, LV_EVENT_INVALIDATE_AREA, nullptr);
+
+    lv_obj_t* screen = lv_screen_active();
+    lv_obj_set_style_bg_color(screen, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     display_blanking_off(DtDisplay::Get());
     display_set_brightness(DtDisplay::Get(), 160);
@@ -38,31 +54,19 @@ int UiRendererService::Initialize() {
     return 0;
 }
 
-k_tid_t UiRendererService::Start() {
+void UiRendererService::Start() {
     running_ = true;
-
-    thread_id_ = k_thread_create(
-        &thread_data_,
-        stack_area_,
-        K_KERNEL_STACK_SIZEOF(stack_area_),
-        [](void* instance, void* p2, void* p3) {
-            static_cast<UiRendererService*>(instance)->UiRendererThreadEntry(); },
-        this, nullptr, nullptr,
-        k_priority_, 0, K_NO_WAIT);
-
-    k_thread_name_set(&thread_data_, "ui_renderer_service");
+    thread_->Start();
 
     LOG_INF("UI renderer service started.");
-
-    return thread_id_;
 }
 
 void UiRendererService::Stop() {
     running_ = false;
-    k_thread_join(thread_id_, K_MSEC(100));
+    thread_->Join();
 }
 
-void UiRendererService::UiRendererThreadEntry() {
+void UiRendererService::ThreadEntry() {
     while(running_)
         Render();
 }

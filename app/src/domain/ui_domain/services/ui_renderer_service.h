@@ -1,34 +1,38 @@
 #pragma once
 
 #include <atomic>
+#include <memory>
 
 #include <zephyr/kernel.h>
 #include <lvgl.h>
 
+#include <subsys/threading/thread.h>
 
 namespace eerie_leap::domain::ui_domain::services {
 
-class UiRendererService {
+using namespace eerie_leap::subsys::threading;
+
+class UiRendererService : public IThread {
 private:
     static constexpr int k_stack_size_ = CONFIG_EERIE_LEAP_UI_RENDERER_THREAD_STACK_SIZE;
-    static constexpr int k_priority_ = K_PRIO_COOP(8);
+    static constexpr int k_priority_ = 8;
 
-    static z_thread_stack_element stack_area_[k_stack_size_];
-    k_tid_t thread_id_;
-    k_thread thread_data_;
+    std::unique_ptr<Thread> thread_;
 
     std::atomic<bool> running_ = false;
 
-    void UiRendererThreadEntry();
+    void ThreadEntry() override;
 
     void Render();
     static void DisplayInvalidateCb(lv_event_t* e);
 
 public:
-    UiRendererService() = default;
+    UiRendererService();
+    ~UiRendererService();
+
     int Initialize();
 
-    k_tid_t Start();
+    void Start();
     void Stop();
 };
 
