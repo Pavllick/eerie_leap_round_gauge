@@ -77,6 +77,9 @@ public:
 
 private:
     size_t max_transfer_size_{0};
+    static const bt_data ad_[];
+    static const bt_le_adv_param* advertising_params_;
+    static const STRUCT_SECTION_ITERABLE(bt_gatt_service_static, gatt_service_);
 
     k_mutex mutex_;
     Callbacks callbacks_;
@@ -86,7 +89,6 @@ private:
     atomic_t notifications_enabled_{0};
     atomic_t disconnected_during_read_{0};
 
-    bt_le_ext_adv* extended_advertising_{nullptr};
     k_work_delayable adv_restart_work_;
 
     BluetoothConfigurationService() = default;
@@ -98,8 +100,7 @@ private:
     // Must be called with mutex_ held.
     void SetState(State new_state);
 
-    // Must be called with mutex_ held. Unrefs active_conn_ if set.
-    void ResetTransferLocked();
+    void ResetTransfer();
 
     // Acquires mutex_ internally.
     void HandleControlCommand(bt_conn* conn, std::span<const uint8_t> data);
@@ -108,7 +109,6 @@ private:
     void HandleDataChunk(std::span<const uint8_t> data);
 
     int StartAdvertising(k_timeout_t delay);
-    int StartExtendedAdvertising();
     int InitializeBluetooth();
 
     friend ssize_t ControlWriteCallback(
@@ -137,8 +137,13 @@ private:
     friend void NotifyCccChanged(const bt_gatt_attr* attr, uint16_t value);
     friend void Connected(bt_conn* conn, uint8_t err);
     friend void Disconnected(bt_conn* conn, uint8_t reason);
+    friend void ParamertersUpdated(bt_conn* conn, uint16_t interval, uint16_t latency, uint16_t timeout);
+    friend void DataLengthUpdated(bt_conn* conn, bt_conn_le_data_len_info* info);
 
-    friend void AdvRestartWorkHandler(struct k_work* work);
+    static void UpdateDataLength(bt_conn* conn);
+    static void UpdateMtu(bt_conn* conn);
+    static void GattExchangeParamsFunc(bt_conn* conn, uint8_t att_err, bt_gatt_exchange_params* params);
+    static void RestartAdvertisingWorkHandler(struct k_work* work);
 
 public:
     static BluetoothConfigurationService& GetInstance();

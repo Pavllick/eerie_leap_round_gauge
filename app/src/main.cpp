@@ -199,7 +199,9 @@ int main() {
     auto input_work_queue_thread = std::make_shared<WorkQueueThread>(
         "input_work_queue",
         input_work_queue_stack_size,
-        input_work_queue_priority);
+        input_work_queue_priority,
+        false,
+        Mrm::GetExtPmr());
     input_work_queue_thread->Initialize();
 
     // TODO: For test purposes only
@@ -264,11 +266,11 @@ int main() {
     sensors_processing_service->Start();
 
     BluetoothConfigurationService::GetInstance().Initialize({
-        .on_config_write = HandleConfigWrite,
-        .on_config_read = HandleConfigRead,
-    },
-    Mrm::GetExtPmr(),
-    64 * 1024);
+            .on_config_write = HandleConfigWrite,
+            .on_config_read = HandleConfigRead,
+        },
+        Mrm::GetExtPmr(),
+        64 * 1024);
 
 	while (true) {
         // SystemInfo::PrintHeapInfo();

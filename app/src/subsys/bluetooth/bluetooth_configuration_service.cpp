@@ -28,125 +28,10 @@ namespace eerie_leap::subsys::bluetooth {
 #define BT_UUID_CONFIG_DATA     BT_UUID_DECLARE_128(BT_UUID_CONFIG_DATA_VAL)
 #define BT_UUID_CONFIG_STATUS   BT_UUID_DECLARE_128(BT_UUID_CONFIG_STATUS_VAL)
 
-// Work handler for deferred advertising restart
-void AdvRestartWorkHandler(struct k_work* work) {
-    auto& svc = BluetoothConfigurationService::GetInstance();
-    int err = svc.StartExtendedAdvertising();
-    if(err)
-        LOG_ERR("Failed to restart advertising (err %d)", err);
-}
-
-// GATT callbacks
-
-ssize_t ControlWriteCallback(bt_conn* conn,
-    const bt_gatt_attr* attr,
-    const void* buf, uint16_t len,
-    uint16_t offset, uint8_t flags) {
-
-    if(offset != 0)
-        return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
-
-    BluetoothConfigurationService::GetInstance().HandleControlCommand(
-        conn, std::span(static_cast<const uint8_t*>(buf), len));
-
-    return len;
-}
-
-ssize_t DataWriteCallback(bt_conn* conn,
-    const bt_gatt_attr* attr,
-    const void* buf, uint16_t len,
-    uint16_t offset, uint8_t flags) {
-
-    if(offset != 0)
-        return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
-
-    BluetoothConfigurationService::GetInstance().HandleDataChunk(
-        std::span(static_cast<const uint8_t*>(buf), len));
-
-    return len;
-}
-
-ssize_t StatusReadCallback(bt_conn* conn,
-    const bt_gatt_attr* attr,
-    void* buf, uint16_t len,
-    uint16_t offset) {
-
-    auto status = BluetoothConfigurationService::GetInstance().GetStatus();
-    return bt_gatt_attr_read(conn, attr, buf, len, offset,
-                            &status, sizeof(status));
-}
-
-void NotifyCccChanged(const bt_gatt_attr* attr, uint16_t value) {
-    atomic_set(&BluetoothConfigurationService::GetInstance().notifications_enabled_,
-        (value == BT_GATT_CCC_NOTIFY) ? 1 : 0);
-
-    LOG_INF("Notifications %s",
-        atomic_get(&BluetoothConfigurationService::GetInstance().notifications_enabled_)
-            ? "enabled" : "disabled");
-}
-
-void Connected(bt_conn* conn, uint8_t err) {
-    if(err) {
-        LOG_ERR("Connection failed (err %u)", err);
-        return;
-    }
-
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    LOG_INF("Connected: %s", addr);
-
-    auto& svc = BluetoothConfigurationService::GetInstance();
-    k_mutex_lock(&svc.mutex_, K_FOREVER);
-    svc.ResetTransferLocked();
-    k_mutex_unlock(&svc.mutex_);
-}
-
-void Disconnected(bt_conn* conn, uint8_t reason) {
-    LOG_INF("Disconnected (reason %u)", reason);
-
-    auto& svc = BluetoothConfigurationService::GetInstance();
-
-    // Signal any in-progress SendConfig loop to abort.
-    atomic_set(&svc.disconnected_during_read_, 1);
-
-    k_mutex_lock(&svc.mutex_, K_FOREVER);
-    svc.ResetTransferLocked();
-    k_mutex_unlock(&svc.mutex_);
-
-    // Defer advertising restart to allow BT stack to fully clean up
-    svc.StartAdvertising(K_MSEC(100));
-}
-
-// GATT Service Definition
-
-BT_GATT_SERVICE_DEFINE(config_svc,
-    BT_GATT_PRIMARY_SERVICE(BT_UUID_CONFIG_SERVICE),
-
-    BT_GATT_CHARACTERISTIC(BT_UUID_CONFIG_CONTROL,
-                        BT_GATT_CHRC_WRITE | BT_GATT_CHRC_WRITE_WITHOUT_RESP,
-                        BT_GATT_PERM_WRITE,
-                        nullptr, &ControlWriteCallback, nullptr),
-
-    BT_GATT_CHARACTERISTIC(BT_UUID_CONFIG_DATA,
-                        BT_GATT_CHRC_WRITE | BT_GATT_CHRC_WRITE_WITHOUT_RESP,
-                        BT_GATT_PERM_WRITE,
-                        nullptr, &DataWriteCallback, nullptr),
-
-    BT_GATT_CHARACTERISTIC(BT_UUID_CONFIG_STATUS,
-                        BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
-                        BT_GATT_PERM_READ,
-                        &StatusReadCallback, nullptr, nullptr),
-    BT_GATT_CCC(&NotifyCccChanged, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
-);
-
-BT_CONN_CB_DEFINE(conn_callbacks) = {
-    .connected = &Connected,
-    .disconnected = &Disconnected,
-};
-
 // Advertising data
+// =================
 
-static const bt_data ad[] = {
+const bt_data BluetoothConfigurationService::ad_[] = {
     // Flags: general discoverable, no BR/EDR
     BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
 
@@ -155,44 +40,12 @@ static const bt_data ad[] = {
             sizeof(CONFIG_BT_DEVICE_NAME) - 1),
 };
 
-static const bt_le_adv_param extended_advertising_params = BT_LE_ADV_PARAM_INIT(
-    BT_LE_ADV_OPT_CONN | BT_LE_ADV_OPT_EXT_ADV,
+const bt_le_adv_param* BluetoothConfigurationService::advertising_params_ = BT_LE_ADV_PARAM(
+    BT_LE_ADV_OPT_CONN,
     BT_GAP_ADV_FAST_INT_MIN_2,
     BT_GAP_ADV_FAST_INT_MAX_2,
     nullptr
 );
-
-int BluetoothConfigurationService::StartAdvertising(k_timeout_t delay) {
-    return k_work_schedule(&adv_restart_work_, delay);
-}
-
-int BluetoothConfigurationService::StartExtendedAdvertising() {
-    if(extended_advertising_ == nullptr) {
-        int err = bt_le_ext_adv_create(&extended_advertising_params, nullptr, &extended_advertising_);
-        if(err) {
-            LOG_ERR("Failed to create extended advertising set (err %d)", err);
-            return err;
-        }
-
-        err = bt_le_ext_adv_set_data(extended_advertising_, ad, ARRAY_SIZE(ad), nullptr, 0);
-        if(err) {
-            LOG_ERR("Failed to set extended advertising data (err %d)", err);
-            return err;
-        }
-    } else {
-        // Stop advertising before restarting (may already be stopped, ignore error)
-        bt_le_ext_adv_stop(extended_advertising_);
-    }
-
-    int err = bt_le_ext_adv_start(extended_advertising_, BT_LE_EXT_ADV_START_DEFAULT);
-    if(err) {
-        LOG_ERR("Failed to start extended advertising (err %d)", err);
-        return err;
-    }
-
-    LOG_INF("Extended advertising started");
-    return 0;
-}
 
 BluetoothConfigurationService& BluetoothConfigurationService::GetInstance() {
     static BluetoothConfigurationService instance;
@@ -211,7 +64,7 @@ bool BluetoothConfigurationService::Initialize(
     transfer_buffer_.value().resize(max_transfer_size_);
 
     callbacks_ = callbacks;
-    ResetTransferLocked();
+    ResetTransfer();
 
     k_mutex_unlock(&mutex_);
 
@@ -219,7 +72,7 @@ bool BluetoothConfigurationService::Initialize(
 }
 
 int BluetoothConfigurationService::InitializeBluetooth() {
-    k_work_init_delayable(&adv_restart_work_, AdvRestartWorkHandler);
+    k_work_init_delayable(&adv_restart_work_, RestartAdvertisingWorkHandler);
 
     int err = bt_enable(nullptr);
     if(err) {
@@ -232,10 +85,58 @@ int BluetoothConfigurationService::InitializeBluetooth() {
     return StartAdvertising(K_NO_WAIT);
 }
 
+int BluetoothConfigurationService::StartAdvertising(k_timeout_t delay) {
+    return k_work_schedule(&adv_restart_work_, delay);
+}
+
+void BluetoothConfigurationService::RestartAdvertisingWorkHandler(struct k_work* work) {
+    bt_le_adv_stop();
+
+    int err = bt_le_adv_start(advertising_params_, ad_, ARRAY_SIZE(ad_), nullptr, 0);
+    if(err) {
+        LOG_ERR("Failed to start advertising (err %d)", err);
+        return;
+    }
+
+    LOG_INF("BLE advertising started");
+}
+
+void BluetoothConfigurationService::UpdateDataLength(bt_conn* conn) {
+    struct bt_conn_le_data_len_param my_data_len = {
+        .tx_max_len = BT_GAP_DATA_LEN_MAX,
+        .tx_max_time = BT_GAP_DATA_TIME_MAX,
+    };
+
+    int err = bt_conn_le_data_len_update(conn, &my_data_len);
+    if(err) {
+        LOG_ERR("data_len_update failed (err %d)", err);
+    }
+}
+
+void BluetoothConfigurationService::UpdateMtu(bt_conn* conn) {
+    bt_gatt_exchange_params exchange_params = {
+        .func = GattExchangeParamsFunc,
+    };
+
+    int err = bt_gatt_exchange_mtu(conn, &exchange_params);
+    if(err)
+        LOG_ERR("bt_gatt_exchange_mtu failed (err %d)", err);
+}
+
+void BluetoothConfigurationService::GattExchangeParamsFunc(bt_conn* conn, uint8_t att_err, bt_gatt_exchange_params* params) {
+    LOG_INF("MTU exchange %s", att_err == 0 ? "successful" : "failed");
+
+    if(!att_err) {
+        uint16_t payload_mtu = bt_gatt_get_mtu(conn) - 3;   // 3 bytes used for Attribute headers.
+        LOG_INF("New MTU: %d bytes", payload_mtu);
+    }
+}
+
 Status BluetoothConfigurationService::GetStatus() {
     k_mutex_lock(&mutex_, K_FOREVER);
     Status snapshot = status_;
     k_mutex_unlock(&mutex_);
+
     return snapshot;
 }
 
@@ -248,13 +149,7 @@ void BluetoothConfigurationService::SetState(State new_state) {
         callbacks_.on_state_change(old_state, new_state);
 }
 
-// Must be called with mutex_ held. Unrefs active_conn_ if set.
-void BluetoothConfigurationService::ResetTransferLocked() {
-    if(active_conn_) {
-        bt_conn_unref(active_conn_);
-        active_conn_ = nullptr;
-    }
-
+void BluetoothConfigurationService::ResetTransfer() {
     status_ = {};
     SetState(State::Idle);
 }
@@ -293,11 +188,6 @@ void BluetoothConfigurationService::HandleControlCommand(bt_conn* conn, std::spa
 
             LOG_INF("Starting write: type=%u, size=%u",
                    static_cast<uint8_t>(type), size);
-
-            // Replace any existing conn reference.
-            if(active_conn_)
-                bt_conn_unref(active_conn_);
-            active_conn_ = bt_conn_ref(conn);
 
             status_.current_type = type;
             status_.total_bytes = size;
@@ -345,7 +235,7 @@ void BluetoothConfigurationService::HandleControlCommand(bt_conn* conn, std::spa
 
                 if(success) {
                     LOG_INF("Config write successful");
-                    ResetTransferLocked();
+                    ResetTransfer();
                 } else {
                     LOG_ERR("Config write handler failed");
                     status_.error_code = ErrorCode::HandlerFailed;
@@ -353,13 +243,13 @@ void BluetoothConfigurationService::HandleControlCommand(bt_conn* conn, std::spa
                 }
             } else {
                 LOG_WRN("No write handler registered");
-                ResetTransferLocked();
+                ResetTransfer();
             }
 
             break;
         } case Command::Abort: {
             LOG_INF("Transfer aborted");
-            ResetTransferLocked();
+            ResetTransfer();
 
             break;
         } case Command::RequestRead: {
@@ -458,11 +348,6 @@ bool BluetoothConfigurationService::SendConfig(bt_conn* conn, ConfigType type) {
     LOG_INF("Sending config: type=%u, size=%zu",
            static_cast<uint8_t>(type), data_size);
 
-    // Store a ref so the conn stays valid for the duration of the transfer.
-    if(active_conn_)
-        bt_conn_unref(active_conn_);
-    active_conn_ = bt_conn_ref(conn);
-
     // RAII guard for the loop-local connection reference.
     // This ensures unconditional unref on all exit paths.
     struct ConnRefGuard {
@@ -498,7 +383,7 @@ bool BluetoothConfigurationService::SendConfig(bt_conn* conn, ConfigType type) {
                 status_.error_code = ErrorCode::NotificationFailed;
                 SetState(State::Error);
             }
-            ResetTransferLocked();
+            ResetTransfer();
         }
 
         k_mutex_unlock(&mutex_);
@@ -506,7 +391,7 @@ bool BluetoothConfigurationService::SendConfig(bt_conn* conn, ConfigType type) {
     };
 
     const bt_gatt_attr* attr = bt_gatt_find_by_uuid(
-        config_svc.attrs, config_svc.attr_count, BT_UUID_CONFIG_STATUS);
+        gatt_service_.attrs, gatt_service_.attr_count, BT_UUID_CONFIG_STATUS);
 
     if(!attr) {
         LOG_ERR("Status characteristic not found");
@@ -568,5 +453,160 @@ bool BluetoothConfigurationService::SendConfig(bt_conn* conn, ConfigType type) {
     LOG_INF("Config sent successfully");
     return finalize(true);
 }
+
+// Connection callbacks
+// ====================
+
+void Connected(bt_conn* conn, uint8_t err) {
+    if(err) {
+        LOG_ERR("Connection failed (err %u)", err);
+        return;
+    }
+
+    char addr[BT_ADDR_LE_STR_LEN];
+    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+    LOG_INF("Connected: %s", addr);
+
+    auto& svc = BluetoothConfigurationService::GetInstance();
+    k_mutex_lock(&svc.mutex_, K_FOREVER);
+    if(svc.active_conn_)
+        bt_conn_unref(svc.active_conn_);
+    svc.active_conn_ = bt_conn_ref(conn);
+
+    svc.ResetTransfer();
+
+    k_msleep(1000);
+    svc.UpdateDataLength(conn);
+    svc.UpdateMtu(conn);
+    k_mutex_unlock(&svc.mutex_);
+}
+
+void Disconnected(bt_conn* conn, uint8_t reason) {
+    LOG_INF("Disconnected (reason %u)", reason);
+
+    auto& svc = BluetoothConfigurationService::GetInstance();
+
+    // Signal any in-progress SendConfig loop to abort.
+    atomic_set(&svc.disconnected_during_read_, 1);
+
+    k_mutex_lock(&svc.mutex_, K_FOREVER);
+    svc.ResetTransfer();
+    if(svc.active_conn_)
+        bt_conn_unref(svc.active_conn_);
+    svc.active_conn_ = nullptr;
+    k_mutex_unlock(&svc.mutex_);
+
+    // Defer advertising restart to allow BT stack to fully clean up
+    svc.StartAdvertising(K_MSEC(100));
+}
+
+void ParamertersUpdated(bt_conn* conn, uint16_t interval, uint16_t latency, uint16_t timeout) {
+    double connection_interval_ms = interval * 1.25;
+    uint16_t supervision_timeout_ms = timeout * 10;
+
+    LOG_INF("Connection parameters updated: interval %.2f ms, latency %d intervals, timeout %d ms",
+        connection_interval_ms, latency, supervision_timeout_ms);
+}
+
+// NOTE: Any logging from this callback will cause a crash.
+//       Thus it's disabled.
+void DataLengthUpdated(bt_conn* conn, bt_conn_le_data_len_info* info) {
+    uint16_t tx_len = info->tx_max_len;
+    uint16_t tx_time = info->tx_max_time;
+    uint16_t rx_len = info->rx_max_len;
+    uint16_t rx_time = info->rx_max_time;
+
+    LOG_INF("Data length updated. Length %d/%d bytes, time %d/%d us",
+        tx_len, rx_len, tx_time, rx_time);
+}
+
+BT_CONN_CB_DEFINE(conn_callbacks) = {
+    .connected = &Connected,
+    .disconnected = &Disconnected,
+    .le_param_updated = &ParamertersUpdated,
+    // .le_data_len_updated = &DataLengthUpdated // See note at the method implementation
+};
+
+// GATT callbacks
+// ==============
+
+ssize_t ControlWriteCallback(
+    bt_conn* conn,
+    const bt_gatt_attr* attr,
+    const void* buf, uint16_t len,
+    uint16_t offset, uint8_t flags) {
+
+    if(offset != 0)
+        return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
+
+    BluetoothConfigurationService::GetInstance().HandleControlCommand(
+        conn, std::span(static_cast<const uint8_t*>(buf), len));
+
+    return len;
+}
+
+ssize_t DataWriteCallback(
+    bt_conn* conn,
+    const bt_gatt_attr* attr,
+    const void* buf, uint16_t len,
+    uint16_t offset, uint8_t flags) {
+
+    if(offset != 0)
+        return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
+
+    BluetoothConfigurationService::GetInstance().HandleDataChunk(
+        std::span(static_cast<const uint8_t*>(buf), len));
+
+    return len;
+}
+
+ssize_t StatusReadCallback(
+    bt_conn* conn,
+    const bt_gatt_attr* attr,
+    void* buf, uint16_t len,
+    uint16_t offset) {
+
+    auto status = BluetoothConfigurationService::GetInstance().GetStatus();
+    return bt_gatt_attr_read(conn, attr, buf, len, offset, &status, sizeof(status));
+}
+
+void NotifyCccChanged(const bt_gatt_attr* attr, uint16_t value) {
+    atomic_set(&BluetoothConfigurationService::GetInstance().notifications_enabled_,
+        (value == BT_GATT_CCC_NOTIFY) ? 1 : 0);
+
+    LOG_INF("Notifications %s",
+        atomic_get(&BluetoothConfigurationService::GetInstance().notifications_enabled_)
+            ? "enabled"
+            : "disabled");
+}
+
+
+// GATT Service Definition
+// =======================
+
+// NOTE: This is supposed to be defined with BT_GATT_SERVICE_DEFINE(gatt_service_, ...) macro,
+//       but in order to make gatt_service_ a class member macro has been expanded manually.
+static const bt_gatt_attr gatt_attributes_[] = {
+    BT_GATT_PRIMARY_SERVICE(BT_UUID_CONFIG_SERVICE),
+
+    BT_GATT_CHARACTERISTIC(BT_UUID_CONFIG_CONTROL,
+                        BT_GATT_CHRC_WRITE | BT_GATT_CHRC_WRITE_WITHOUT_RESP,
+                        BT_GATT_PERM_WRITE,
+                        nullptr, &ControlWriteCallback, nullptr),
+
+    BT_GATT_CHARACTERISTIC(BT_UUID_CONFIG_DATA,
+                        BT_GATT_CHRC_WRITE | BT_GATT_CHRC_WRITE_WITHOUT_RESP,
+                        BT_GATT_PERM_WRITE,
+                        nullptr, &DataWriteCallback, nullptr),
+
+    BT_GATT_CHARACTERISTIC(BT_UUID_CONFIG_STATUS,
+                        BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
+                        BT_GATT_PERM_READ,
+                        &StatusReadCallback, nullptr, nullptr),
+    BT_GATT_CCC(&NotifyCccChanged, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
+};
+
+const STRUCT_SECTION_ITERABLE(bt_gatt_service_static, BluetoothConfigurationService::gatt_service_) =
+    BT_GATT_SERVICE(gatt_attributes_);
 
 } // namespace eerie_leap::subsys::bluetooth
