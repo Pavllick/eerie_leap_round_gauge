@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <vector>
 #include <expected>
 #include <string>
@@ -11,12 +12,16 @@
 
 #include <zephyr/kernel.h>
 
+#include "subsys/threading/work_queue_thread.h"
+
 #include "event.h"
 #include "subscription.h"
 #include "subscription_handle.h"
 #include "event_bus_task.h"
 
 namespace eerie_leap::subsys::event_bus {
+
+using namespace eerie_leap::subsys::threading;
 
 template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
 class EventBus {
@@ -27,19 +32,15 @@ private:
 
     using EventBusTaskType = EventBusTask<EventTypeEnum, PayloadTypeEnum>;
 
-    int k_stack_size_;
-    static constexpr int k_priority_ = K_PRIO_COOP(10);
-
-    k_thread_stack_t* stack_area_;
-    k_work_q work_q;
-    EventBusTask<EventTypeEnum, PayloadTypeEnum> event_task_;
+    std::unique_ptr<WorkQueueThread> work_queue_thread_;
+    std::optional<WorkQueueTask<EventBusTaskType>> work_queue_task_;
 
     k_sem processing_semaphore_;
     static constexpr k_timeout_t PROCESSING_TIMEOUT = K_MSEC(200);
 
     void Initialize();
 
-    static void ProcessEventWork(k_work* work);
+    static WorkQueueTaskResult ProcessEventWork(EventBusTaskType* task);
     static void ProcessEvent(
         std::shared_ptr<std::unordered_map<EventTypeEnum, std::vector<std::unique_ptr<Subscription<EventTypeEnum, PayloadTypeEnum>>>>>& subscribers,
         const Event<EventTypeEnum, PayloadTypeEnum>& event);
@@ -48,7 +49,7 @@ protected:
     EventBus(std::string bus_name, int k_stack_size);
 
 public:
-    virtual ~EventBus();
+    virtual ~EventBus() = default;
 
     template<EventFilter<EventTypeEnum, PayloadTypeEnum> FilterType = AcceptAllFilter<EventTypeEnum, PayloadTypeEnum>>
     std::expected<SubscriptionHandle<EventTypeEnum>, std::string>

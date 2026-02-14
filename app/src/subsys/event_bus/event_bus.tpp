@@ -1,36 +1,36 @@
-#include <optional>
+#include "utilities/memory/memory_resource_manager.h"
 
 #include "event_bus.h"
 
 namespace eerie_leap::subsys::event_bus {
 
+using namespace eerie_leap::utilities::memory;
+
 template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
 EventBus<EventTypeEnum, PayloadTypeEnum>::EventBus(std::string bus_name, int k_stack_size)
-    : bus_name_(std::move(bus_name)), k_stack_size_(k_stack_size) {
+    : bus_name_(std::move(bus_name)) {
 
     subscribers_ = std::make_shared<std::unordered_map<EventTypeEnum, std::vector<std::unique_ptr<Subscription<EventTypeEnum, PayloadTypeEnum>>>>>();
     k_sem_init(&processing_semaphore_, 1, 1);
+
+    work_queue_thread_ = std::make_unique<WorkQueueThread>(
+        bus_name_,
+        k_stack_size,
+        10,
+        true,
+        Mrm::GetExtPmr());
 
     Initialize();
 }
 
 template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
-EventBus<EventTypeEnum, PayloadTypeEnum>::~EventBus() {
-    k_work_queue_stop(&work_q, K_FOREVER);
-    k_thread_stack_free(stack_area_);
-}
-
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
 void EventBus<EventTypeEnum, PayloadTypeEnum>::Initialize() {
-    stack_area_ = k_thread_stack_alloc(k_stack_size_, 0);
-    k_work_queue_init(&work_q);
-    k_work_queue_start(&work_q, stack_area_, k_stack_size_, k_priority_, nullptr);
+    work_queue_thread_->Initialize();
 
-    k_thread_name_set(&work_q.thread, bus_name_.c_str());
-
-    k_work_init(&event_task_.work, ProcessEventWork);
-    event_task_.processing_semaphore = &processing_semaphore_;
-    event_task_.subscribers = subscribers_;
+    auto event_task = std::make_unique<EventBusTaskType>();
+    event_task->processing_semaphore = &processing_semaphore_;
+    event_task->subscribers = subscribers_;
+    work_queue_task_ = work_queue_thread_->CreateTask(ProcessEventWork, std::move(event_task));
 }
 
 template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
@@ -83,11 +83,12 @@ void EventBus<EventTypeEnum, PayloadTypeEnum>::Publish(const Event<EventTypeEnum
 
 template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
 void EventBus<EventTypeEnum, PayloadTypeEnum>::PublishAsync(const Event<EventTypeEnum, PayloadTypeEnum>& event) {
-    if(k_mutex_lock(&event_task_.queue_mutex, K_FOREVER) == 0) {
-        event_task_.event_queue.push(event);
-        k_mutex_unlock(&event_task_.queue_mutex);
+    if(work_queue_task_ && k_mutex_lock(&work_queue_task_.value().GetUserdata()->queue_mutex, K_FOREVER) == 0) {
+        work_queue_task_.value().GetUserdata()->event_queue.push(event);
+        k_mutex_unlock(&work_queue_task_.value().GetUserdata()->queue_mutex);
 
-        k_work_submit_to_queue(&work_q, &event_task_.work);
+        if(!work_queue_task_.value().IsScheduled())
+            work_queue_task_.value().Schedule();
     }
 }
 
@@ -106,11 +107,11 @@ void EventBus<EventTypeEnum, PayloadTypeEnum>::ProcessEvent(
 }
 
 template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
-void EventBus<EventTypeEnum, PayloadTypeEnum>::ProcessEventWork(k_work* work) {
-    auto* task = CONTAINER_OF(work, EventBusTaskType, work);
-
+WorkQueueTaskResult EventBus<EventTypeEnum, PayloadTypeEnum>::ProcessEventWork(EventBusTaskType* task) {
     if(k_sem_take(task->processing_semaphore, K_NO_WAIT) != 0)
-        return;
+        return {
+            .reschedule = false
+        };
 
     while(true) {
         std::optional<Event<EventTypeEnum, PayloadTypeEnum>> event;
@@ -131,6 +132,10 @@ void EventBus<EventTypeEnum, PayloadTypeEnum>::ProcessEventWork(k_work* work) {
     }
 
     k_sem_give(task->processing_semaphore);
+
+    return {
+        .reschedule = false
+    };
 }
 
 } // namespace eerie_leap::subsys::event_bus
