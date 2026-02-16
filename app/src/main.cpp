@@ -21,7 +21,8 @@
 #include "subsys/time/rtc_provider.h"
 #include "subsys/time/boot_elapsed_time_provider.h"
 #include "subsys/event_bus/event_bus.h"
-#include "subsys/bluetooth/bluetooth_configuration_service.h"
+#include "subsys/bluetooth/ble.h"
+#include "subsys/bluetooth/ble_configuration_service.h"
 
 #include "configuration/services/cbor_configuration_service.h"
 
@@ -108,10 +109,10 @@ void EmulateReadings(
     std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager,
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame);
 
-bool HandleConfigWrite(ConfigType type, std::span<const uint8_t> data) {
+bool HandleConfigWrite(BleConfigServiceType type, std::span<const uint8_t> data) {
     switch(type) {
-        case ConfigType::CanBus:
-            // your CBOR decode here
+        case BleConfigServiceType::CanBus:
+            // CBOR decode here
             LOG_INF("Received CANBus config, size: %zu", data.size());
             return true;
 
@@ -121,9 +122,9 @@ bool HandleConfigWrite(ConfigType type, std::span<const uint8_t> data) {
     }
 }
 
-size_t HandleConfigRead(ConfigType type, std::span<uint8_t> buffer) {
+size_t HandleConfigRead(BleConfigServiceType type, std::span<uint8_t> buffer) {
     switch(type) {
-        case ConfigType::CanBus:
+        case BleConfigServiceType::CanBus:
             // return encoded_size;
             return 0;
 
@@ -265,12 +266,17 @@ int main() {
 
     sensors_processing_service->Start();
 
-    BluetoothConfigurationService::GetInstance().Initialize({
+    BleConfigurationService::Initialize({
             .on_config_write = HandleConfigWrite,
             .on_config_read = HandleConfigRead,
         },
         Mrm::GetExtPmr(),
         64 * 1024);
+
+    Ble::Initialize({
+        .connected = BleConfigurationService::BleConnected,
+        .disconnected = BleConfigurationService::BleDisconnected,
+    });
 
 	while (true) {
         // SystemInfo::PrintHeapInfo();
