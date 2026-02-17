@@ -2,6 +2,7 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/settings/settings.h>
 
 #include "ble.h"
 
@@ -51,12 +52,6 @@ bt_conn* Ble::active_conn_{nullptr};
 BleCallbacks Ble::callbacks_;
 k_work_delayable Ble::adv_restart_work_;
 
-static void auth_cancel(struct bt_conn *conn) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    LOG_INF("Pairing cancelled: %s", addr);
-}
-
 static void pairing_complete(struct bt_conn *conn, bool bonded) {
     char addr[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
@@ -69,42 +64,25 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
     LOG_ERR("Pairing failed: %s, reason: %d", addr, reason);
 }
 
-static enum bt_security_err pairing_accept(struct bt_conn *conn,
-                                           const struct bt_conn_pairing_feat *const feat) {
-    LOG_INF("Pairing accept request");
-    return BT_SECURITY_ERR_SUCCESS;
-}
+static bt_conn_auth_info_cb auth_info_cb = {
+    .pairing_complete = pairing_complete,
+    .pairing_failed = pairing_failed,
+};
 
-static void pairing_confirm(struct bt_conn *conn) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    LOG_INF("Pairing confirm: %s", addr);
-    bt_conn_auth_pairing_confirm(conn);
-}
-
-// static bt_conn_auth_cb auth_cb = {
-//     .pairing_accept = pairing_accept,
-//     .cancel = auth_cancel,
-//     .pairing_confirm = pairing_confirm,
-// };
-
-// static bt_conn_auth_info_cb auth_info_cb = {
-//     .pairing_complete = pairing_complete,
-//     .pairing_failed = pairing_failed,
-// };
 
 bool Ble::Initialize(BleCallbacks callbacks) {
     callbacks_ = callbacks;
     k_work_init_delayable(&adv_restart_work_, RestartAdvertisingWorkHandler);
 
-    // bt_conn_auth_cb_register(&auth_cb);
-    // bt_conn_auth_info_cb_register(&auth_info_cb);
+    bt_conn_auth_info_cb_register(&auth_info_cb);
 
     int err = bt_enable(nullptr);
     if(err) {
         LOG_ERR("Bluetooth init failed (err %d)", err);
         return false;
     }
+
+    settings_load();
 
     LOG_INF("Bluetooth initialized");
 
@@ -184,16 +162,12 @@ void Connected(bt_conn* conn, uint8_t err) {
     if(Ble::callbacks_.connected)
         Ble::callbacks_.connected(conn);
 
-    // TODO: Remove once security implemented
-    Ble::UpdateDataLength(conn);
-    Ble::UpdateMtu(conn);
-
-    // int sec_err = bt_conn_set_security(conn, BT_SECURITY_L2);
-    // if(sec_err) {
-    //     LOG_ERR("Failed to set security (err %d)", sec_err);
-    // } else {
-    //     LOG_INF("Security upgrade initiated");
-    // }
+    int sec_err = bt_conn_set_security(conn, BT_SECURITY_L2);
+    if(sec_err) {
+        LOG_ERR("Failed to set security (err %d)", sec_err);
+    } else {
+        LOG_INF("Security upgrade initiated");
+    }
 }
 
 void Disconnected(bt_conn* conn, uint8_t reason) {
@@ -236,15 +210,14 @@ void SecurityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 
 	if(!err) {
-		LOG_INF("Security changed: %s level %u\n", addr, level);
+		LOG_INF("Security changed: %s level %u", addr, level);
 
         if(level >= BT_SECURITY_L2) {
             Ble::UpdateDataLength(conn);
-            Ble::UpdateMtu(conn);
+            // Ble::UpdateMtu(conn);
         }
 	} else {
-		LOG_INF("Security failed: %s level %u err %d\n", addr, level,
-			err);
+		LOG_INF("Security failed: %s level %u err %d", addr, level, err);
 	}
 }
 
@@ -254,7 +227,7 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
     .recycled = &Recycled,
     .le_param_updated = &ParamertersUpdated,
     // .le_data_len_updated = &DataLengthUpdated // See note at the method implementation
-    // .security_changed = &SecurityChanged,
+    .security_changed = &SecurityChanged,
 };
 
 } // namespace eerie_leap::subsys::bluetooth
