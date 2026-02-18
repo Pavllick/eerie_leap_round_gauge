@@ -41,16 +41,24 @@
 };
 
 &flash0 {
-	partitions {
-		compatible = "fixed-partitions";
-		#address-cells = <1>;
-		#size-cells = <1>;
+    partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
 
-		intfs0_partition: partition@600000 {
+        /* Delete the overlapping partitions */
+        /delete-node/ partition@5f0000;  /* slot1_partition - OVERLAPS with your partition */
+        /delete-node/ partition@bc0000;  /* slot0_appcpu_partition - OVERLAPS */
+        /delete-node/ partition@db0000;  /* slot1_appcpu_partition - OVERLAPS */
+        /delete-node/ partition@fa0000;  /* slot0_lpcore_partition - OVERLAPS */
+        /delete-node/ partition@fa8000;  /* slot1_lpcore_partition - OVERLAPS */
+
+        /* Your LittleFS partition */
+        intfs0_partition: partition@600000 {
             label = "intfs0_storage";
-            reg = <0x600000 DT_SIZE_M(2)>; // 2MB at offset 6MB
+            reg = <0x600000 DT_SIZE_M(8)>; // 8MB at offset 6MB
         };
-	};
+    };
 };
 
 &usb_serial {
