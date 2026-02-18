@@ -474,7 +474,7 @@ static const bt_gatt_attr gatt_attributes_[] = {
 
     BT_GATT_CHARACTERISTIC(BT_UUID_CONFIG_STATUS,
                         BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
-                        BT_GATT_PERM_READ,
+                        BT_GATT_PERM_READ_ENCRYPT,
                         &StatusReadCallback, nullptr, nullptr),
 };
 

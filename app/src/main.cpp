@@ -266,6 +266,14 @@ int main() {
 
     sensors_processing_service->Start();
 
+    auto ble_pairing_started = [&]() {
+        sensors_processing_service->Pause();
+    };
+
+    auto ble_pairing_finished = [&]() {
+        sensors_processing_service->Resume();
+    };
+
     BleConfigurationService::Initialize({
             .on_config_write = HandleConfigWrite,
             .on_config_read = HandleConfigRead,
@@ -276,6 +284,8 @@ int main() {
     Ble::Initialize({
         .connected = BleConfigurationService::BleConnected,
         .disconnected = BleConfigurationService::BleDisconnected,
+        .pairing_started = ble_pairing_started,
+        .pairing_finished = ble_pairing_finished,
     });
 
 	while (true) {

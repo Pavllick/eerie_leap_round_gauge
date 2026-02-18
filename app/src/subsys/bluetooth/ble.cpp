@@ -52,29 +52,20 @@ bt_conn* Ble::active_conn_{nullptr};
 BleCallbacks Ble::callbacks_;
 k_work_delayable Ble::adv_restart_work_;
 
-static void pairing_complete(struct bt_conn *conn, bool bonded) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    LOG_INF("Pairing completed: %s, bonded: %d", addr, bonded);
-}
-
-static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
-    char addr[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-    LOG_ERR("Pairing failed: %s, reason: %d", addr, reason);
-}
-
-static bt_conn_auth_info_cb auth_info_cb = {
-    .pairing_complete = pairing_complete,
-    .pairing_failed = pairing_failed,
-};
-
+k_work_delayable Ble::connected_cb_work_;
+k_work_delayable Ble::security_update_work_;
+k_work_delayable Ble::data_length_update_work_;
+k_work_delayable Ble::pairing_started_work_;
+k_work_delayable Ble::pairing_finished_work_;
 
 bool Ble::Initialize(BleCallbacks callbacks) {
     callbacks_ = callbacks;
     k_work_init_delayable(&adv_restart_work_, RestartAdvertisingWorkHandler);
-
-    bt_conn_auth_info_cb_register(&auth_info_cb);
+    k_work_init_delayable(&connected_cb_work_, ConnectedCbWorkHandler);
+    k_work_init_delayable(&security_update_work_, SecurityUpdateWorkHandler);
+    k_work_init_delayable(&data_length_update_work_, DataLengthUpdateWorkHandler);
+    k_work_init_delayable(&pairing_started_work_, PairingStartedWorkHandler);
+    k_work_init_delayable(&pairing_finished_work_, PairingFinishedWorkHandler);
 
     int err = bt_enable(nullptr);
     if(err) {
@@ -159,15 +150,9 @@ void Connected(bt_conn* conn, uint8_t err) {
         bt_conn_unref(Ble::active_conn_);
     Ble::active_conn_ = bt_conn_ref(conn);
 
-    if(Ble::callbacks_.connected)
-        Ble::callbacks_.connected(conn);
-
-    int sec_err = bt_conn_set_security(conn, BT_SECURITY_L2);
-    if(sec_err) {
-        LOG_ERR("Failed to set security (err %d)", sec_err);
-    } else {
-        LOG_INF("Security upgrade initiated");
-    }
+    k_work_schedule(&Ble::connected_cb_work_, K_NO_WAIT);
+    k_work_schedule(&Ble::pairing_started_work_, K_NO_WAIT);
+    k_work_schedule(&Ble::security_update_work_, K_NO_WAIT);
 }
 
 void Disconnected(bt_conn* conn, uint8_t reason) {
@@ -193,8 +178,8 @@ void ParamertersUpdated(bt_conn* conn, uint16_t interval, uint16_t latency, uint
         connection_interval_ms, latency, supervision_timeout_ms);
 }
 
-// NOTE: Any logging from this callback will cause a crash.
-//       Thus it's disabled.
+// NOTE: Any logging from this callback will cause a crash,
+// thus it's disabled.
 void DataLengthUpdated(bt_conn* conn, bt_conn_le_data_len_info* info) {
     uint16_t tx_len = info->tx_max_len;
     uint16_t tx_time = info->tx_max_time;
@@ -212,13 +197,14 @@ void SecurityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security
 	if(!err) {
 		LOG_INF("Security changed: %s level %u", addr, level);
 
-        if(level >= BT_SECURITY_L2) {
-            Ble::UpdateDataLength(conn);
-            // Ble::UpdateMtu(conn);
-        }
+        if(level >= BT_SECURITY_L2)
+            k_work_schedule(&Ble::data_length_update_work_, K_NO_WAIT);
 	} else {
 		LOG_INF("Security failed: %s level %u err %d", addr, level, err);
+        bt_conn_disconnect(conn, BT_HCI_ERR_AUTH_FAIL);
 	}
+
+    k_work_schedule(&Ble::pairing_finished_work_, K_NO_WAIT);
 }
 
 BT_CONN_CB_DEFINE(conn_callbacks) = {
@@ -229,5 +215,36 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
     // .le_data_len_updated = &DataLengthUpdated // See note at the method implementation
     .security_changed = &SecurityChanged,
 };
+
+void Ble::ConnectedCbWorkHandler(struct k_work* work) {
+    if(callbacks_.connected)
+        callbacks_.connected(active_conn_);
+}
+
+void Ble::SecurityUpdateWorkHandler(struct k_work* work) {
+    int sec_err = bt_conn_set_security(active_conn_, BT_SECURITY_L2);
+    if(sec_err)
+        LOG_ERR("Failed to set security (err %d)", sec_err);
+    else
+        LOG_INF("Security upgrade initiated");
+}
+
+void Ble::DataLengthUpdateWorkHandler(struct k_work* work) {
+    Ble::UpdateDataLength(Ble::active_conn_);
+
+    // TODO: Doesn't seem to work with iOS, investigate.
+    // Ble::UpdateMtu(Ble::active_conn_);
+}
+
+void Ble::PairingStartedWorkHandler(struct k_work* work) {
+    if(Ble::callbacks_.pairing_started)
+        Ble::callbacks_.pairing_started();
+}
+
+void Ble::PairingFinishedWorkHandler(struct k_work* work) {
+    if(Ble::callbacks_.pairing_finished)
+        Ble::callbacks_.pairing_finished();
+}
+
 
 } // namespace eerie_leap::subsys::bluetooth
