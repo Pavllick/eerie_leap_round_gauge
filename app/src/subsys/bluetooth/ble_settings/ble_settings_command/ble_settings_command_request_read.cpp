@@ -4,20 +4,77 @@ LOG_MODULE_DECLARE(ble_settings_logger);
 
 namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command {
 
-BleSettingsCommandRequestRead::BleSettingsCommandRequestRead(std::shared_ptr<BleSettingsStatus> status)
-    : BleSettingsCommandBase(status) {}
+BleSettingsCommandRequestRead::BleSettingsCommandRequestRead(
+    std::shared_ptr<BleSettingsStatus> status)
+        : BleSettingsCommandBase(status) {}
+
+void BleSettingsCommandRequestRead::SetReadHandler(ReadHandler handler) {
+    read_handler_ = handler;
+}
+
+void BleSettingsCommandRequestRead::SetSendHandler(SendHandler send_handler) {
+    send_handler_ = send_handler;
+}
 
 void BleSettingsCommandRequestRead::Process(std::span<const uint8_t> data) {
+    if(status_->GetState() != BleSettingsState::Idle) {
+        LOG_ERR("RequestRead: not in Idle state");
+        status_->SetErrorCode(BleSettingsErrorCode::InvalidState);
+        status_->SetState(BleSettingsState::Error);
+        return;
+    }
+
     if(data.size() < 2) {
-        LOG_ERR("REQUEST_READ: insufficient data");
+        LOG_ERR("RequestRead: insufficient data");
+        status_->SetErrorCode(BleSettingsErrorCode::InsufficientData);
+        status_->SetState(BleSettingsState::Error);
         return;
     }
 
     auto type = static_cast<BleSettingsType>(data[1]);
-    LOG_INF("Read requested: type=%u", static_cast<uint8_t>(type));
 
-    // TODO: Remove from here and implement BTE read callback
-    // SendConfig(conn, type);
+    if(!read_handler_) {
+        LOG_ERR("RequestRead: no read handler registered");
+        status_->SetErrorCode(BleSettingsErrorCode::HandlerFailed);
+        status_->SetState(BleSettingsState::Error);
+        return;
+    }
+
+    if(!send_handler_) {
+        LOG_ERR("RequestRead: no send handler registered");
+        status_->SetErrorCode(BleSettingsErrorCode::HandlerFailed);
+        status_->SetState(BleSettingsState::Error);
+        return;
+    }
+
+    // Transition to Reading state BEFORE callback
+    status_->SetCurrentType(type);
+    status_->SetState(BleSettingsState::Reading);
+    status_->SetErrorCode(BleSettingsErrorCode::None);
+
+    LOG_INF("RequestRead: type=%u", static_cast<uint8_t>(type));
+
+    std::span<const uint8_t> config_data = read_handler_(type);
+
+    // Check if state changed during callback (disconnect, abort, etc.)
+    if(status_->GetState() != BleSettingsState::Reading) {
+        LOG_INF("RequestRead: state changed during callback, aborting");
+        return;
+    }
+
+    if(config_data.empty()) {
+        LOG_ERR("RequestRead: handler returned empty span");
+        status_->SetErrorCode(BleSettingsErrorCode::HandlerFailed);
+        status_->SetState(BleSettingsState::Error);
+        return;
+    }
+
+    bool success = send_handler_(type, config_data);
+
+    if(!success) {
+        LOG_ERR("RequestRead: send failed");
+        // Send already updated state to Error
+    }
 }
 
 } // namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command

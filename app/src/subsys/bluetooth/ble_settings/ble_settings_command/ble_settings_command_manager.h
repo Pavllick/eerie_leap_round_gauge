@@ -11,8 +11,6 @@
 #include "ble_settings_command_start_write.h"
 #include "ble_settings_command_end_write.h"
 #include "ble_settings_command_request_read.h"
-#include "ble_settings_command_start_read.h"
-#include "ble_settings_command_end_read.h"
 #include "ble_settings_command_abort.h"
 
 namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command {
@@ -20,10 +18,9 @@ namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command {
 class BleSettingsCommandManager {
 public:
     struct Callbacks {
-        using ReadHandler = std::function<size_t(BleSettingsType type, std::span<uint8_t> buffer)>;
-
         BleSettingsCommandEndWrite::WriteHandler on_config_write;
-        ReadHandler on_config_read;
+        BleSettingsCommandRequestRead::ReadHandler on_config_read;
+        BleSettingsCommandRequestRead::SendHandler on_send;
     };
 
 private:

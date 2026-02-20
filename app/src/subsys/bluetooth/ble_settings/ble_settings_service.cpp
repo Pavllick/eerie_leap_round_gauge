@@ -28,6 +28,7 @@ namespace eerie_leap::subsys::bluetooth::ble_settings {
 #define BT_UUID_CONFIG_DATA     BT_UUID_DECLARE_128(BT_UUID_CONFIG_DATA_VAL)
 #define BT_UUID_CONFIG_STATUS   BT_UUID_DECLARE_128(BT_UUID_CONFIG_STATUS_VAL)
 
+bt_conn* BleSettingsService::ble_active_conn_{nullptr};
 BleSettingsService::Callbacks BleSettingsService::callbacks_;
 size_t BleSettingsService::max_transfer_size_{0};
 k_mutex BleSettingsService::mutex_;
@@ -56,7 +57,8 @@ void BleSettingsService::Initialize(
     command_manager_.Initialize(
         transfer_buffer_, {
             .on_config_write = callbacks_.on_config_write,
-            .on_config_read = callbacks_.on_config_read
+            .on_config_read = callbacks_.on_config_read,
+            .on_send = SendData
         });
 
     status_->Reset();
@@ -66,6 +68,10 @@ void BleSettingsService::Initialize(
 
 void BleSettingsService::BleConnected(bt_conn* conn) {
     k_mutex_lock(&mutex_, K_FOREVER);
+    if(ble_active_conn_)
+        bt_conn_unref(ble_active_conn_);
+    ble_active_conn_ = bt_conn_ref(conn);
+
     status_->Reset();
     k_mutex_unlock(&mutex_);
 }
@@ -75,6 +81,10 @@ void BleSettingsService::BleDisconnected(bt_conn* conn) {
     // atomic_set(&disconnected_during_read_, 1);
 
     k_mutex_lock(&mutex_, K_FOREVER);
+    if(ble_active_conn_)
+        bt_conn_unref(ble_active_conn_);
+    ble_active_conn_ = nullptr;
+
     status_->Reset();
     k_mutex_unlock(&mutex_);
 }
@@ -113,140 +123,118 @@ void BleSettingsService::HandleDataChunk(std::span<const uint8_t> data) {
         data.size(), status_->GetTransferredBytes(), status_->GetTotalBytes());
 }
 
-// TODO: Reimplement as a BLE callback
-bool BleSettingsService::SendConfig(bt_conn* conn, BleSettingsType type) {
-    // if(status_->GetState() != BleSettingsState::Idle) {
-    //     LOG_ERR("Already in transfer");
-    //     return false;
-    // }
+bool BleSettingsService::SendData(BleSettingsType type, std::span<const uint8_t> data) {
+    if(status_->GetState() != BleSettingsState::Reading) {
+        LOG_ERR("Send: not in Reading state");
+        return false;
+    }
 
-    // if(!callbacks_.on_config_read) {
-    //     LOG_ERR("No read handler registered");
-    //     return false;
-    // }
+    if(!ble_active_conn_) {
+        LOG_ERR("Send: no active connection");
+        status_->SetErrorCode(BleSettingsErrorCode::NotificationFailed);
+        status_->SetState(BleSettingsState::Error);
 
-    // size_t data_size = callbacks_.on_config_read(
-    //     type, std::span(transfer_buffer_->data(), transfer_buffer_->size()));
+        return false;
+    }
 
-    // if(data_size == 0) {
-    //     LOG_ERR("Read handler returned no data");
-    //     return false;
-    // }
+    if(data.empty()) {
+        LOG_ERR("Send: empty data");
+        status_->SetErrorCode(BleSettingsErrorCode::HandlerFailed);
+        status_->SetState(BleSettingsState::Error);
 
-    // if(data_size > max_transfer_size_) {
-    //     LOG_ERR("Config too large: %zu bytes", data_size);
-    //     return false;
-    // }
+        return false;
+    }
 
-    // LOG_INF("Sending config: type=%u, size=%zu",
-    //        static_cast<uint8_t>(type), data_size);
+    // Find characteristics
+    const bt_gatt_attr* status_attr = bt_gatt_find_by_uuid(
+        gatt_service_.attrs, gatt_service_.attr_count, BT_UUID_CONFIG_STATUS);
+    const bt_gatt_attr* data_attr = bt_gatt_find_by_uuid(
+        gatt_service_.attrs, gatt_service_.attr_count, BT_UUID_CONFIG_DATA);
 
-    // // RAII guard for the loop-local connection reference.
-    // // This ensures unconditional unref on all exit paths.
-    // struct ConnRefGuard {
-    //     bt_conn* conn;
-    //     ~ConnRefGuard() { if(conn) bt_conn_unref(conn); }
-    // } loop_conn_guard{bt_conn_ref(conn)};
-    // bt_conn* loop_conn = loop_conn_guard.conn;
+    if(!status_attr || !data_attr) {
+        LOG_ERR("Send: characteristics not found");
+        status_->SetErrorCode(BleSettingsErrorCode::NotificationFailed);
+        status_->SetState(BleSettingsState::Error);
 
-    // status_->SetCurrentType(type);
-    // status_->SetTotalBytes(data_size);
-    // status_->SetTransferredBytes(0);
-    // status_->SetErrorCode(BleSettingsErrorCode::None);
-    // status_->SetState(BleSettingsState::Reading);
+        return false;
+    }
 
-    // // Clear the disconnect flag before releasing the lock so we don't pick
-    // // up a stale signal from a previous connection.
-    // atomic_set(&disconnected_during_read_, 0);
+    // Update status
+    status_->SetTotalBytes(data.size());
+    status_->SetTransferredBytes(0);
+    status_->SetErrorCode(BleSettingsErrorCode::None);
 
-    // k_mutex_unlock(&mutex_);
+    LOG_INF("Sending config: type=%u, size=%zu", static_cast<uint8_t>(type), data.size());
 
-    // // --- From here, status_ is only updated under the lock at the end.
-    // //     loop_conn is pinned by its own ref and remains valid regardless of
-    // //     what Disconnected does to active_conn_. ---
+    bool success = true;
 
-    // // Lambda to handle cleanup and return result consistently.
-    // auto finalize = [](bool success) {
-    //     k_mutex_lock(&mutex_, K_FOREVER);
+    // 1. Send StartRead notification
+    {
+        struct {
+            uint8_t cmd;
+            uint8_t type;
+            uint32_t size;
+        } __attribute__((packed)) start_msg = {
+            .cmd = static_cast<uint8_t>(BleSettingsCommandType::StartRead),
+            .type = static_cast<uint8_t>(type),
+            .size = static_cast<uint32_t>(data.size())
+        };
 
-    //     // If Disconnected already reset the state machine while we were in the
-    //     // loop, don't stomp on it again — just leave things idle.
-    //     if(status_->GetState() == BleSettingsState::Reading) {
-    //         if(!success) {
-    //             status_->SetErrorCode(BleSettingsErrorCode::NotificationFailed);
-    //             status_->SetState(BleSettingsState::Error);
-    //         }
-    //         ResetTransfer();
-    //     }
+        int err = bt_gatt_notify(ble_active_conn_, status_attr, &start_msg, sizeof(start_msg));
+        if(err) {
+            LOG_ERR("Failed to send StartRead notification (err %d)", err);
+            success = false;
+        }
+    }
 
-    //     k_mutex_unlock(&mutex_);
-    //     return success;
-    // };
+    // 2. Send data chunks
+    if(success) {
+        uint16_t mtu = bt_gatt_get_mtu(ble_active_conn_);
+        uint16_t chunk_size = std::min<uint16_t>(mtu - 3, 512);
 
-    // const bt_gatt_attr* attr = bt_gatt_find_by_uuid(
-    //     gatt_service_.attrs, gatt_service_.attr_count, BT_UUID_CONFIG_STATUS);
+        for(size_t offset = 0; offset < data.size() && success; offset += chunk_size) {
+            size_t to_send = std::min<size_t>(chunk_size, data.size() - offset);
 
-    // if(!attr) {
-    //     LOG_ERR("Status characteristic not found");
-    //     return finalize(false);
-    // }
+            int err = bt_gatt_notify(ble_active_conn_, data_attr,
+                data.data() + offset, to_send);
 
-    // {
-    //     struct {
-    //         uint8_t cmd;
-    //         uint8_t type;
-    //         uint32_t size;
-    //     } __attribute__((packed)) start_msg = {
-    //         .cmd = static_cast<uint8_t>(BleSettingsCommandType::StartRead),
-    //         .type = static_cast<uint8_t>(type),
-    //         .size = static_cast<uint32_t>(data_size)
-    //     };
+            if(err) {
+                LOG_ERR("Notification failed at offset %zu (err %d)", offset, err);
+                success = false;
+                break;
+            }
 
-    //     int err = bt_gatt_notify(loop_conn, attr, &start_msg, sizeof(start_msg));
-    //     if(err) {
-    //         LOG_ERR("Failed to send START_READ notification (err %d)", err);
-    //         return finalize(false);
-    //     }
-    // }
+            if(status_->GetState() == BleSettingsState::Reading) {
+                status_->SetTransferredBytes(offset + to_send);
+            }
 
-    // {
-    //     uint16_t mtu = bt_gatt_get_mtu(loop_conn);
-    //     uint16_t chunk_size = std::min<uint16_t>(mtu - 3, 512);
+            // Small delay for flow control
+            k_sleep(K_MSEC(10));
+        }
+    }
 
-    //     for(size_t offset = 0; offset < data_size; offset += chunk_size) {
-    //         // Bail out early if Disconnected fired while we were looping.
-    //         if(atomic_get(&disconnected_during_read_)) {
-    //             LOG_INF("Aborting SendConfig: disconnected during transfer");
-    //             return finalize(false);
-    //         }
+    // 3. Send EndRead notification
+    if(success) {
+        uint8_t end_cmd = static_cast<uint8_t>(BleSettingsCommandType::EndRead);
+        int err = bt_gatt_notify(ble_active_conn_, status_attr, &end_cmd, 1);
+        if(err) {
+            LOG_ERR("Failed to send EndRead notification (err %d)", err);
+            success = false;
+        }
+    }
 
-    //         size_t to_send = std::min<size_t>(chunk_size, data_size - offset);
+    // Only update if still in Reading state (disconnect might have reset)
+    if(status_->GetState() == BleSettingsState::Reading) {
+        if(success) {
+            LOG_INF("Config sent successfully");
+            status_->Reset();
+        } else {
+            status_->SetErrorCode(BleSettingsErrorCode::NotificationFailed);
+            status_->SetState(BleSettingsState::Error);
+        }
+    }
 
-    //         int err = bt_gatt_notify(loop_conn, attr,
-    //             transfer_buffer_->data() + offset, to_send);
-
-    //         if(err) {
-    //             LOG_ERR("Notification failed at offset %zu (err %d)", offset, err);
-    //             return finalize(false);
-    //         }
-
-    //         k_sleep(K_MSEC(ChunkDelayMs));
-    //     }
-    // }
-
-    // {
-    //     auto complete_cmd = static_cast<uint8_t>(BleSettingsCommandType::EndRead);
-    //     int err = bt_gatt_notify(loop_conn, attr, &complete_cmd, 1);
-    //     if(err) {
-    //         LOG_ERR("Failed to send END_READ notification (err %d)", err);
-    //         return finalize(false);
-    //     }
-    // }
-
-    // LOG_INF("Config sent successfully");
-    // return finalize(true);
-
-    return true;
+    return success;
 }
 
 // GATT callbacks
@@ -315,14 +303,16 @@ static const bt_gatt_attr gatt_attributes_[] = {
                         nullptr, &ControlWriteCallback, nullptr),
 
     BT_GATT_CHARACTERISTIC(BT_UUID_CONFIG_DATA,
-                        BT_GATT_CHRC_WRITE | BT_GATT_CHRC_WRITE_WITHOUT_RESP,
+                        BT_GATT_CHRC_WRITE | BT_GATT_CHRC_WRITE_WITHOUT_RESP | BT_GATT_CHRC_NOTIFY,
                         BT_GATT_PERM_WRITE,
                         nullptr, &DataWriteCallback, nullptr),
+    BT_GATT_CCC(nullptr, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
 
     BT_GATT_CHARACTERISTIC(BT_UUID_CONFIG_STATUS,
                         BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
                         BT_GATT_PERM_READ_ENCRYPT,
                         &StatusReadCallback, nullptr, nullptr),
+    BT_GATT_CCC(nullptr, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
 };
 
 const STRUCT_SECTION_ITERABLE(bt_gatt_service_static, BleSettingsService::gatt_service_) =

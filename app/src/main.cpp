@@ -123,14 +123,15 @@ bool HandleConfigWrite(BleSettingsType type, std::span<const uint8_t> data) {
     }
 }
 
-size_t HandleConfigRead(BleSettingsType type, std::span<uint8_t> buffer) {
+std::string test = "test";
+std::span<const uint8_t> HandleConfigRead(BleSettingsType type) {
     switch(type) {
         case BleSettingsType::CanBus:
-            // return encoded_size;
-            return 0;
+            // return config data
+            return { reinterpret_cast<const uint8_t*>(test.c_str()), test.size() };
 
         default:
-            return 0;
+            return {};
     }
 }
 

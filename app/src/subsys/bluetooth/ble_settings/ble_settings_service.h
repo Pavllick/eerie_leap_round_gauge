@@ -28,7 +28,7 @@ public:
 
     struct Callbacks {
         BleSettingsCommandEndWrite::WriteHandler on_config_write;
-        BleSettingsCommandManager::Callbacks::ReadHandler on_config_read;
+        BleSettingsCommandRequestRead::ReadHandler on_config_read;
         BleSettingsStatus::StateChangeHandler on_state_change;
     };
 
@@ -36,6 +36,7 @@ public:
     static constexpr uint32_t ChunkDelayMs = 5;
 
 private:
+    static bt_conn* ble_active_conn_;
     static size_t max_transfer_size_;
     static const STRUCT_SECTION_ITERABLE(bt_gatt_service_static, gatt_service_);
 
@@ -54,13 +55,7 @@ private:
 
     static void SetState(BleSettingsState new_state);
     static void HandleDataChunk(std::span<const uint8_t> data);
-
-    static void CommandStartWrite(bt_conn* conn, std::span<const uint8_t> data);
-    static void CommandEndWrite(bt_conn* conn, std::span<const uint8_t> data);
-    static void CommandAbort(bt_conn* conn, std::span<const uint8_t> data);
-    static void CommandRequestRead(bt_conn* conn, std::span<const uint8_t> data);
-    static void CommandStartRead(bt_conn* conn, std::span<const uint8_t> data);
-    static void CommandReadComplete(bt_conn* conn, std::span<const uint8_t> data);
+    static bool SendData(BleSettingsType type, std::span<const uint8_t> data);
 
     friend ssize_t ControlWriteCallback(
         bt_conn* conn,
@@ -96,8 +91,6 @@ public:
 
     [[nodiscard]] static BleSettingsStatus GetStatus();
     [[nodiscard]] static size_t GetMaxTransferSize() { return max_transfer_size_; }
-
-    static bool SendConfig(bt_conn* conn, BleSettingsType type);
 };
 
 } // namespace eerie_leap::subsys::bluetooth::ble_settings

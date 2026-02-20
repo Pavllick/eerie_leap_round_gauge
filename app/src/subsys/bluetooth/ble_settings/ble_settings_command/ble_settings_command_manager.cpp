@@ -7,18 +7,12 @@ namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command {
 BleSettingsCommandManager::BleSettingsCommandManager(std::shared_ptr<BleSettingsStatus> status)
     : status_(std::move(status)) {
 
-    printf("Is status null %d\n", status_ == nullptr);
-
     commands_.emplace(BleSettingsCommandType::StartWrite,
         std::make_unique<BleSettingsCommandStartWrite>(status_));
     commands_.emplace(BleSettingsCommandType::EndWrite,
         std::make_unique<BleSettingsCommandEndWrite>(status_, transfer_buffer_));
     commands_.emplace(BleSettingsCommandType::RequestRead,
         std::make_unique<BleSettingsCommandRequestRead>(status_));
-    commands_.emplace(BleSettingsCommandType::StartRead,
-        std::make_unique<BleSettingsCommandStartRead>(status_));
-    commands_.emplace(BleSettingsCommandType::EndRead,
-        std::make_unique<BleSettingsCommandEndRead>(status_));
     commands_.emplace(BleSettingsCommandType::Abort,
         std::make_unique<BleSettingsCommandAbort>(status_));
 }
@@ -37,6 +31,11 @@ void BleSettingsCommandManager::Initialize(
     auto* start_write_cmd = static_cast<BleSettingsCommandStartWrite*>(
         commands_[BleSettingsCommandType::StartWrite].get());
     start_write_cmd->SetMaxTransferSize(transfer_buffer_->size());
+
+    auto* request_read_cmd = static_cast<BleSettingsCommandRequestRead*>(
+        commands_[BleSettingsCommandType::RequestRead].get());
+    request_read_cmd->SetReadHandler(callbacks_.on_config_read);
+    request_read_cmd->SetSendHandler(callbacks_.on_send);
 }
 
 void BleSettingsCommandManager::Process(std::span<const uint8_t> data) {
@@ -49,6 +48,8 @@ void BleSettingsCommandManager::Process(std::span<const uint8_t> data) {
 
     if(commands_.contains(cmd))
         commands_[cmd]->Process(data);
+    else
+        LOG_ERR("Unknown command: %d", static_cast<int>(cmd));
 }
 
 } // namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command

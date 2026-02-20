@@ -13,7 +13,7 @@ void BleSettingsCommandStartWrite::SetMaxTransferSize(size_t max_transfer_size) 
 
 void BleSettingsCommandStartWrite::Process(std::span<const uint8_t> data) {
     if(data.size() < 6) {
-        LOG_ERR("START_WRITE: insufficient data");
+        LOG_ERR("StartWrite: insufficient data");
         status_->SetErrorCode(BleSettingsErrorCode::InsufficientData);
         status_->SetState(BleSettingsState::Error);
         return;
