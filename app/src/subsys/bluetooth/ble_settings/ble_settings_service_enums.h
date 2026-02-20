@@ -4,20 +4,17 @@
 
 namespace eerie_leap::subsys::bluetooth::ble_settings {
 
-enum class BleSettingsType : uint8_t {
-    CanBus = 0x01,
-    WifiSettings = 0x02,
-    SensorCalibration = 0x03,
-    SystemParams = 0x04,
-};
-
 enum class BleSettingsCommandType : uint8_t {
-    StartWrite = 0x01,
-    EndWrite = 0x02,
-    RequestRead = 0x03,
-    StartRead = 0x04,
-    EndRead = 0x05,
-    Abort = 0x06,
+    Abort = 0x01,
+
+    // Request commands
+    StartWrite = 0x20,
+    EndWrite = 0x21,
+    RequestRead = 0x22,
+
+    // Notification commands
+    StartRead = 0x40,
+    EndRead = 0x41,
 };
 
 enum class BleSettingsState : uint8_t {

@@ -6,7 +6,7 @@ namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command {
 
 BleSettingsCommandRequestRead::BleSettingsCommandRequestRead(
     std::shared_ptr<BleSettingsStatus> status)
-        : BleSettingsCommandBase(status) {}
+        : BleSettingsCommandRequestBase(status) {}
 
 void BleSettingsCommandRequestRead::SetReadHandler(ReadHandler handler) {
     read_handler_ = handler;
@@ -31,7 +31,7 @@ void BleSettingsCommandRequestRead::Process(std::span<const uint8_t> data) {
         return;
     }
 
-    auto type = static_cast<BleSettingsType>(data[1]);
+    uint8_t settings_id = data[1];
 
     if(!read_handler_) {
         LOG_ERR("RequestRead: no read handler registered");
@@ -48,13 +48,13 @@ void BleSettingsCommandRequestRead::Process(std::span<const uint8_t> data) {
     }
 
     // Transition to Reading state BEFORE callback
-    status_->SetCurrentType(type);
+    status_->SetSettingsId(settings_id);
     status_->SetState(BleSettingsState::Reading);
     status_->SetErrorCode(BleSettingsErrorCode::None);
 
-    LOG_INF("RequestRead: type=%u", static_cast<uint8_t>(type));
+    LOG_INF("RequestRead: settings_id=%u", settings_id);
 
-    std::span<const uint8_t> config_data = read_handler_(type);
+    std::span<const uint8_t> config_data = read_handler_(settings_id);
 
     // Check if state changed during callback (disconnect, abort, etc.)
     if(status_->GetState() != BleSettingsState::Reading) {
@@ -69,7 +69,7 @@ void BleSettingsCommandRequestRead::Process(std::span<const uint8_t> data) {
         return;
     }
 
-    bool success = send_handler_(type, config_data);
+    bool success = send_handler_(settings_id, config_data);
 
     if(!success) {
         LOG_ERR("RequestRead: send failed");

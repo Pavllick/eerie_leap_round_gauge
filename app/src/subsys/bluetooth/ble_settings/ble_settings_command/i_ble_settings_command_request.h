@@ -5,9 +5,9 @@
 
 namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command {
 
-class IBleSettingsCommand {
+class IBleSettingsCommandRequest {
 public:
-    virtual ~IBleSettingsCommand() = default;
+    virtual ~IBleSettingsCommandRequest() = default;
     virtual void Process(std::span<const uint8_t> data) = 0;
 };
 

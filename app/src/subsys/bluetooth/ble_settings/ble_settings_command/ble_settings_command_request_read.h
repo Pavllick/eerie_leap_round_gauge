@@ -4,17 +4,17 @@
 #include <span>
 #include <memory>
 
-#include "ble_settings_command_base.h"
+#include "ble_settings_command_request_base.h"
 
 namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command {
 
 // NOTE: Data format:
 //       [0] - BleSettingsCommandType::RequestRead
-//       [1] - BleSettingsType
-class BleSettingsCommandRequestRead : public BleSettingsCommandBase {
+//       [1] - Settings ID
+class BleSettingsCommandRequestRead : public BleSettingsCommandRequestBase {
 public:
-    using ReadHandler = std::function<std::span<const uint8_t>(BleSettingsType)>;
-    using SendHandler = std::function<bool(BleSettingsType, std::span<const uint8_t>)>;
+    using ReadHandler = std::function<std::span<const uint8_t>(uint8_t settings_id)>;
+    using SendHandler = std::function<bool(uint8_t settings_id, std::span<const uint8_t>)>;
 
 private:
     ReadHandler read_handler_;

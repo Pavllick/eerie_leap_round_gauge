@@ -55,7 +55,7 @@ private:
 
     static void SetState(BleSettingsState new_state);
     static void HandleDataChunk(std::span<const uint8_t> data);
-    static bool SendData(BleSettingsType type, std::span<const uint8_t> data);
+    static bool SendData(uint8_t settings_id, std::span<const uint8_t> data);
 
     friend ssize_t ControlWriteCallback(
         bt_conn* conn,

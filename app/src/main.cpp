@@ -110,23 +110,23 @@ void EmulateReadings(
     std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager,
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame);
 
-bool HandleConfigWrite(BleSettingsType type, std::span<const uint8_t> data) {
-    switch(type) {
-        case BleSettingsType::CanBus:
-            // CBOR decode here
+bool HandleConfigWrite(uint8_t settings_id, std::span<const uint8_t> data) {
+    switch(settings_id) {
+        case 1:
+            // Config decode here
             LOG_INF("Received CANBus config, size: %zu", data.size());
             return true;
 
         default:
-            LOG_ERR("Unknown config type: %u", static_cast<uint8_t>(type));
+            LOG_ERR("Unknown config type: %u", settings_id);
             return false;
     }
 }
 
 std::string test = "test";
-std::span<const uint8_t> HandleConfigRead(BleSettingsType type) {
-    switch(type) {
-        case BleSettingsType::CanBus:
+std::span<const uint8_t> HandleConfigRead(uint8_t settings_id) {
+    switch(settings_id) {
+        case 1:
             // return config data
             return { reinterpret_cast<const uint8_t*>(test.c_str()), test.size() };
 

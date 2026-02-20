@@ -3,6 +3,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
+#include "ble_settings_command/ble_settings_command_start_read.h"
+#include "ble_settings_command/ble_settings_command_end_read.h"
 #include "ble_settings_service.h"
 
 LOG_MODULE_REGISTER(ble_settings_logger);
@@ -123,14 +125,14 @@ void BleSettingsService::HandleDataChunk(std::span<const uint8_t> data) {
         data.size(), status_->GetTransferredBytes(), status_->GetTotalBytes());
 }
 
-bool BleSettingsService::SendData(BleSettingsType type, std::span<const uint8_t> data) {
+bool BleSettingsService::SendData(uint8_t settings_id, std::span<const uint8_t> data) {
     if(status_->GetState() != BleSettingsState::Reading) {
-        LOG_ERR("Send: not in Reading state");
+        LOG_ERR("SendData: not in Reading state");
         return false;
     }
 
     if(!ble_active_conn_) {
-        LOG_ERR("Send: no active connection");
+        LOG_ERR("SendData: no active connection");
         status_->SetErrorCode(BleSettingsErrorCode::NotificationFailed);
         status_->SetState(BleSettingsState::Error);
 
@@ -138,7 +140,7 @@ bool BleSettingsService::SendData(BleSettingsType type, std::span<const uint8_t>
     }
 
     if(data.empty()) {
-        LOG_ERR("Send: empty data");
+        LOG_ERR("SendData: empty data");
         status_->SetErrorCode(BleSettingsErrorCode::HandlerFailed);
         status_->SetState(BleSettingsState::Error);
 
@@ -152,7 +154,7 @@ bool BleSettingsService::SendData(BleSettingsType type, std::span<const uint8_t>
         gatt_service_.attrs, gatt_service_.attr_count, BT_UUID_CONFIG_DATA);
 
     if(!status_attr || !data_attr) {
-        LOG_ERR("Send: characteristics not found");
+        LOG_ERR("SendData: BLE characteristics not found");
         status_->SetErrorCode(BleSettingsErrorCode::NotificationFailed);
         status_->SetState(BleSettingsState::Error);
 
@@ -164,25 +166,16 @@ bool BleSettingsService::SendData(BleSettingsType type, std::span<const uint8_t>
     status_->SetTransferredBytes(0);
     status_->SetErrorCode(BleSettingsErrorCode::None);
 
-    LOG_INF("Sending config: type=%u, size=%zu", static_cast<uint8_t>(type), data.size());
+    LOG_INF("SendData: Sending config: id=%u, size=%zu", settings_id, data.size());
 
     bool success = true;
 
     // 1. Send StartRead notification
     {
-        struct {
-            uint8_t cmd;
-            uint8_t type;
-            uint32_t size;
-        } __attribute__((packed)) start_msg = {
-            .cmd = static_cast<uint8_t>(BleSettingsCommandType::StartRead),
-            .type = static_cast<uint8_t>(type),
-            .size = static_cast<uint32_t>(data.size())
-        };
-
-        int err = bt_gatt_notify(ble_active_conn_, status_attr, &start_msg, sizeof(start_msg));
+        auto start_msg = BleSettingsCommandStartRead::Create(settings_id, data.size());
+        int err = bt_gatt_notify(ble_active_conn_, status_attr, start_msg.data(), start_msg.size());
         if(err) {
-            LOG_ERR("Failed to send StartRead notification (err %d)", err);
+            LOG_ERR("SendData: Failed to send StartRead notification (err %d)", err);
             success = false;
         }
     }
@@ -195,19 +188,22 @@ bool BleSettingsService::SendData(BleSettingsType type, std::span<const uint8_t>
         for(size_t offset = 0; offset < data.size() && success; offset += chunk_size) {
             size_t to_send = std::min<size_t>(chunk_size, data.size() - offset);
 
-            int err = bt_gatt_notify(ble_active_conn_, data_attr,
-                data.data() + offset, to_send);
-
+            int err = bt_gatt_notify(ble_active_conn_, data_attr, data.data() + offset, to_send);
             if(err) {
-                LOG_ERR("Notification failed at offset %zu (err %d)", offset, err);
+                LOG_ERR("SendData: Notification failed at offset %zu (err %d)", offset, err);
                 success = false;
                 break;
             }
 
             if(status_->GetState() == BleSettingsState::Reading) {
                 status_->SetTransferredBytes(offset + to_send);
+            } else {
+                LOG_ERR("SendData: BLE connection state changed to %u during transfer", status_->GetState());
+                success = false;
+                break;
             }
 
+            // TODO: Evaluate if this delay is necessary
             // Small delay for flow control
             k_sleep(K_MSEC(10));
         }
@@ -215,10 +211,10 @@ bool BleSettingsService::SendData(BleSettingsType type, std::span<const uint8_t>
 
     // 3. Send EndRead notification
     if(success) {
-        uint8_t end_cmd = static_cast<uint8_t>(BleSettingsCommandType::EndRead);
-        int err = bt_gatt_notify(ble_active_conn_, status_attr, &end_cmd, 1);
+        auto end_msg = BleSettingsCommandEndRead::Create();
+        int err = bt_gatt_notify(ble_active_conn_, status_attr, end_msg.data(), end_msg.size());
         if(err) {
-            LOG_ERR("Failed to send EndRead notification (err %d)", err);
+            LOG_ERR("SendData: Failed to send EndRead notification (err %d)", err);
             success = false;
         }
     }
@@ -226,9 +222,10 @@ bool BleSettingsService::SendData(BleSettingsType type, std::span<const uint8_t>
     // Only update if still in Reading state (disconnect might have reset)
     if(status_->GetState() == BleSettingsState::Reading) {
         if(success) {
-            LOG_INF("Config sent successfully");
+            LOG_INF("SendData: Config sent successfully");
             status_->Reset();
         } else {
+            LOG_ERR("SendData: Failed to send config");
             status_->SetErrorCode(BleSettingsErrorCode::NotificationFailed);
             status_->SetState(BleSettingsState::Error);
         }

@@ -7,7 +7,7 @@ namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command {
 BleSettingsCommandEndWrite::BleSettingsCommandEndWrite(
     std::shared_ptr<BleSettingsStatus> status,
     std::shared_ptr<std::pmr::vector<uint8_t>> transfer_buffer)
-        : BleSettingsCommandBase(status),
+        : BleSettingsCommandRequestBase(status),
         transfer_buffer_(std::move(transfer_buffer)) {}
 
 void BleSettingsCommandEndWrite::SetWriteHandler(WriteHandler write_handler) {
@@ -19,20 +19,22 @@ void BleSettingsCommandEndWrite::Process(std::span<const uint8_t> data) {
         LOG_ERR("END_WRITE: not in writing state");
         status_->SetErrorCode(BleSettingsErrorCode::InvalidState);
         status_->SetState(BleSettingsState::Error);
+
         return;
     }
 
     if(status_->GetTransferredBytes() != status_->GetTotalBytes()) {
         LOG_ERR("Incomplete transfer: %u/%u bytes",
-                status_->GetTransferredBytes(), status_->GetTotalBytes());
+            status_->GetTransferredBytes(), status_->GetTotalBytes());
         status_->SetErrorCode(BleSettingsErrorCode::IncompleteTransfer);
         status_->SetState(BleSettingsState::Error);
+
         return;
     }
 
     if(write_handler_) {
         auto received_data = std::span(transfer_buffer_->data(), status_->GetTransferredBytes());
-        bool success = write_handler_(status_->GetCurrentType(), received_data);
+        bool success = write_handler_(status_->GetSettingsId(), received_data);
 
         // A disconnect (or another command) may have fired while the
         // lock was released and already reset the state machine.  Only

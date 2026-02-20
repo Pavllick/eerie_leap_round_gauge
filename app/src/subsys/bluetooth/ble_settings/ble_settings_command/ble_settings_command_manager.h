@@ -7,7 +7,7 @@
 #include <unordered_map>
 
 #include "../ble_settings_status.h"
-#include "i_ble_settings_command.h"
+#include "i_ble_settings_command_request.h"
 #include "ble_settings_command_start_write.h"
 #include "ble_settings_command_end_write.h"
 #include "ble_settings_command_request_read.h"
@@ -26,7 +26,7 @@ public:
 private:
     std::shared_ptr<BleSettingsStatus> status_;
     Callbacks callbacks_;
-    std::unordered_map<BleSettingsCommandType, std::unique_ptr<IBleSettingsCommand>> commands_;
+    std::unordered_map<BleSettingsCommandType, std::unique_ptr<IBleSettingsCommandRequest>> commands_;
     std::shared_ptr<std::pmr::vector<uint8_t>> transfer_buffer_;
 
 public:

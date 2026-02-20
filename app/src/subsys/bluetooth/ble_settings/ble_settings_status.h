@@ -12,7 +12,7 @@ class BleSettingsStatus {
 public:
     struct Status {
         BleSettingsState state;
-        BleSettingsType current_type;
+        uint8_t settings_id;
         uint32_t transferred_bytes;
         uint32_t total_bytes;
         BleSettingsErrorCode error_code;
@@ -57,12 +57,12 @@ public:
         on_state_change_ = handler;
     }
 
-    [[nodiscard]] BleSettingsType GetCurrentType() const noexcept {
-        return status_.current_type;
+    [[nodiscard]] uint8_t GetSettingsId() const noexcept {
+        return status_.settings_id;
     }
 
-    void SetCurrentType(BleSettingsType type) noexcept {
-        status_.current_type = type;
+    void SetSettingsId(uint8_t settings_id) noexcept {
+        status_.settings_id = settings_id;
     }
 
     [[nodiscard]] uint32_t GetTransferredBytes() const noexcept {
