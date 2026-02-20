@@ -6,6 +6,7 @@
 #include <optional>
 #include <vector>
 #include <memory_resource>
+#include <memory>
 
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/conn.h>
@@ -14,31 +15,22 @@
 #include <zephyr/sys/atomic.h>
 #include <zephyr/kernel.h>
 
-#include "ble_configuration_service_enums.h"
+#include "ble_settings_command/ble_settings_command_manager.h"
+#include "ble_settings_status.h"
 
-namespace eerie_leap::subsys::bluetooth {
+namespace eerie_leap::subsys::bluetooth::ble_settings {
 
-struct BleConfigurationServiceStatus {
-    BleConfigServiceState state;
-    BleConfigServiceType current_type;
-    uint32_t transferred_bytes;
-    uint32_t total_bytes;
-    BleConfigServiceErrorCode error_code;
-} __attribute__((packed));
+using namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command;
 
-struct BleConfigurationServiceCallbacks {
-    using WriteHandler = std::function<bool(BleConfigServiceType type, std::span<const uint8_t> data)>;
-    using ReadHandler = std::function<size_t(BleConfigServiceType type, std::span<uint8_t> buffer)>;
-    using StateChangeHandler = std::function<void(BleConfigServiceState old_state, BleConfigServiceState new_state)>;
-
-    WriteHandler on_config_write;
-    ReadHandler on_config_read;
-    StateChangeHandler on_state_change;
-};
-
-class BleConfigurationService {
+class BleSettingsService {
 public:
     using allocator_type = std::pmr::polymorphic_allocator<>;
+
+    struct Callbacks {
+        BleSettingsCommandEndWrite::WriteHandler on_config_write;
+        BleSettingsCommandManager::Callbacks::ReadHandler on_config_read;
+        BleSettingsStatus::StateChangeHandler on_state_change;
+    };
 
     static constexpr size_t DefaultMaxTransferSize = 64 * 1024;
     static constexpr uint32_t ChunkDelayMs = 5;
@@ -47,21 +39,20 @@ private:
     static size_t max_transfer_size_;
     static const STRUCT_SECTION_ITERABLE(bt_gatt_service_static, gatt_service_);
 
+    static Callbacks callbacks_;
     static k_mutex mutex_;
-    static BleConfigurationServiceCallbacks callbacks_;
-    static BleConfigurationServiceStatus status_;
-    static std::optional<std::pmr::vector<uint8_t>> transfer_buffer_;
+    static std::shared_ptr<BleSettingsStatus> status_;
+    static std::shared_ptr<std::pmr::vector<uint8_t>> transfer_buffer_;
+    static BleSettingsCommandManager command_manager_;
     static atomic_t disconnected_during_read_;
 
-    BleConfigurationService() = default;
-    ~BleConfigurationService() = default;
+    BleSettingsService() = default;
+    ~BleSettingsService() = default;
 
-    BleConfigurationService(const BleConfigurationService&) = delete;
-    BleConfigurationService& operator=(const BleConfigurationService&) = delete;
+    BleSettingsService(const BleSettingsService&) = delete;
+    BleSettingsService& operator=(const BleSettingsService&) = delete;
 
-    static void SetState(BleConfigServiceState new_state);
-    static void ResetTransfer();
-    static void HandleControlCommand(bt_conn* conn, std::span<const uint8_t> data);
+    static void SetState(BleSettingsState new_state);
     static void HandleDataChunk(std::span<const uint8_t> data);
 
     static void CommandStartWrite(bt_conn* conn, std::span<const uint8_t> data);
@@ -96,19 +87,17 @@ private:
 
 public:
     static void Initialize(
-        const BleConfigurationServiceCallbacks& callbacks,
+        Callbacks callbacks,
         allocator_type allocator = std::pmr::get_default_resource(),
         size_t max_transfer_size = DefaultMaxTransferSize);
 
     static void BleConnected(bt_conn* conn);
     static void BleDisconnected(bt_conn* conn);
 
-    [[nodiscard]] static BleConfigurationServiceStatus GetStatus();
+    [[nodiscard]] static BleSettingsStatus GetStatus();
     [[nodiscard]] static size_t GetMaxTransferSize() { return max_transfer_size_; }
 
-    static bool SendConfig(
-        bt_conn* conn,
-        BleConfigServiceType type);
+    static bool SendConfig(bt_conn* conn, BleSettingsType type);
 };
 
-} // namespace eerie_leap::subsys::bluetooth
+} // namespace eerie_leap::subsys::bluetooth::ble_settings

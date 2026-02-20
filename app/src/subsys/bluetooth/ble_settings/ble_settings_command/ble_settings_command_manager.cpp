@@ -1,0 +1,54 @@
+#include "ble_settings_command_manager.h"
+
+LOG_MODULE_DECLARE(ble_settings_logger);
+
+namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command {
+
+BleSettingsCommandManager::BleSettingsCommandManager(std::shared_ptr<BleSettingsStatus> status)
+    : status_(std::move(status)) {
+
+    printf("Is status null %d\n", status_ == nullptr);
+
+    commands_.emplace(BleSettingsCommandType::StartWrite,
+        std::make_unique<BleSettingsCommandStartWrite>(status_));
+    commands_.emplace(BleSettingsCommandType::EndWrite,
+        std::make_unique<BleSettingsCommandEndWrite>(status_, transfer_buffer_));
+    commands_.emplace(BleSettingsCommandType::RequestRead,
+        std::make_unique<BleSettingsCommandRequestRead>(status_));
+    commands_.emplace(BleSettingsCommandType::StartRead,
+        std::make_unique<BleSettingsCommandStartRead>(status_));
+    commands_.emplace(BleSettingsCommandType::EndRead,
+        std::make_unique<BleSettingsCommandEndRead>(status_));
+    commands_.emplace(BleSettingsCommandType::Abort,
+        std::make_unique<BleSettingsCommandAbort>(status_));
+}
+
+void BleSettingsCommandManager::Initialize(
+    std::shared_ptr<std::pmr::vector<uint8_t>> transfer_buffer,
+    Callbacks callbacks) {
+
+    transfer_buffer_ = std::move(transfer_buffer);
+    callbacks_ = std::move(callbacks);
+
+    auto* end_write_cmd = static_cast<BleSettingsCommandEndWrite*>(
+        commands_[BleSettingsCommandType::EndWrite].get());
+    end_write_cmd->SetWriteHandler(callbacks_.on_config_write);
+
+    auto* start_write_cmd = static_cast<BleSettingsCommandStartWrite*>(
+        commands_[BleSettingsCommandType::StartWrite].get());
+    start_write_cmd->SetMaxTransferSize(transfer_buffer_->size());
+}
+
+void BleSettingsCommandManager::Process(std::span<const uint8_t> data) {
+    if(data.empty()) {
+        LOG_ERR("Empty control command");
+        return;
+    }
+
+    auto cmd = static_cast<BleSettingsCommandType>(data[0]);
+
+    if(commands_.contains(cmd))
+        commands_[cmd]->Process(data);
+}
+
+} // namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command

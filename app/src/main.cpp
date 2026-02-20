@@ -22,7 +22,7 @@
 #include "subsys/time/boot_elapsed_time_provider.h"
 #include "subsys/event_bus/event_bus.h"
 #include "subsys/bluetooth/ble.h"
-#include "subsys/bluetooth/ble_configuration_service.h"
+#include "subsys/bluetooth/ble_settings/ble_settings_service.h"
 
 #include "configuration/services/cbor_configuration_service.h"
 
@@ -71,6 +71,7 @@ using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::gpio;
 using namespace eerie_leap::subsys::time;
 using namespace eerie_leap::subsys::bluetooth;
+using namespace eerie_leap::subsys::bluetooth::ble_settings;
 
 using namespace eerie_leap::configuration::services;
 
@@ -109,9 +110,9 @@ void EmulateReadings(
     std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager,
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame);
 
-bool HandleConfigWrite(BleConfigServiceType type, std::span<const uint8_t> data) {
+bool HandleConfigWrite(BleSettingsType type, std::span<const uint8_t> data) {
     switch(type) {
-        case BleConfigServiceType::CanBus:
+        case BleSettingsType::CanBus:
             // CBOR decode here
             LOG_INF("Received CANBus config, size: %zu", data.size());
             return true;
@@ -122,9 +123,9 @@ bool HandleConfigWrite(BleConfigServiceType type, std::span<const uint8_t> data)
     }
 }
 
-size_t HandleConfigRead(BleConfigServiceType type, std::span<uint8_t> buffer) {
+size_t HandleConfigRead(BleSettingsType type, std::span<uint8_t> buffer) {
     switch(type) {
-        case BleConfigServiceType::CanBus:
+        case BleSettingsType::CanBus:
             // return encoded_size;
             return 0;
 
@@ -274,7 +275,7 @@ int main() {
         sensors_processing_service->Resume();
     };
 
-    BleConfigurationService::Initialize({
+    BleSettingsService::Initialize({
             .on_config_write = HandleConfigWrite,
             .on_config_read = HandleConfigRead,
         },
@@ -282,8 +283,8 @@ int main() {
         64 * 1024);
 
     Ble::Initialize({
-        .connected = BleConfigurationService::BleConnected,
-        .disconnected = BleConfigurationService::BleDisconnected,
+        .connected = BleSettingsService::BleConnected,
+        .disconnected = BleSettingsService::BleDisconnected,
         .pairing_started = ble_pairing_started,
         .pairing_finished = ble_pairing_finished,
     });
