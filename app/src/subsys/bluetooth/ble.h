@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <optional>
 #include <vector>
+#include <unordered_map>
 #include <memory_resource>
 
 #include <zephyr/bluetooth/bluetooth.h>
@@ -16,24 +17,17 @@
 
 namespace eerie_leap::subsys::bluetooth {
 
-struct BleCallbacks {
+class Ble {
+public:
     using ConnectedHandler = std::function<void(bt_conn* conn)>;
     using DisconnectedHandler = std::function<void(bt_conn* conn)>;
     using PairingStartedHandler = std::function<void()>;
     using PairingFinishedHandler = std::function<void()>;
 
-    ConnectedHandler connected;
-    DisconnectedHandler disconnected;
-    PairingStartedHandler pairing_started;
-    PairingFinishedHandler pairing_finished;
-};
-
-class Ble {
 private:
     static const bt_data ad_[];
     static const bt_le_adv_param* advertising_params_;
     static bt_conn* active_conn_;
-    static BleCallbacks callbacks_;
 
     static k_work_delayable adv_restart_work_;
     static k_work_delayable connected_cb_work_;
@@ -41,6 +35,11 @@ private:
     static k_work_delayable data_length_update_work_;
     static k_work_delayable pairing_started_work_;
     static k_work_delayable pairing_finished_work_;
+
+    static std::unordered_map<int, ConnectedHandler> connected_handlers_;
+    static std::unordered_map<int, DisconnectedHandler> disconnected_handlers_;
+    static std::unordered_map<int, PairingStartedHandler> pairing_started_handlers_;
+    static std::unordered_map<int, PairingFinishedHandler> pairing_finished_handlers_;
 
     Ble() = default;
     ~Ble() = default;
@@ -70,7 +69,17 @@ private:
     static void PairingFinishedWorkHandler(struct k_work* work);
 
 public:
-    static bool Initialize(BleCallbacks callbacks);
+    static bool Initialize();
+
+    static int RegisterConnectedHandler(ConnectedHandler handler);
+    static int RegisterDisconnectedHandler(DisconnectedHandler handler);
+    static int RegisterPairingStartedHandler(PairingStartedHandler handler);
+    static int RegisterPairingFinishedHandler(PairingFinishedHandler handler);
+
+    static void UnregisterConnectedHandler(int id);
+    static void UnregisterDisconnectedHandler(int id);
+    static void UnregisterPairingStartedHandler(int id);
+    static void UnregisterPairingFinishedHandler(int id);
 };
 
 } // namespace eerie_leap::subsys::bluetooth

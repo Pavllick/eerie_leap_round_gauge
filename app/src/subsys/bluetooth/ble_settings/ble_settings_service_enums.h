@@ -26,10 +26,10 @@ enum class BleSettingsState : uint8_t {
 
 enum class BleSettingsErrorCode : uint8_t {
     None = 0,
-    InsufficientData = 1,    // START_WRITE command too short
+    InsufficientData = 1,    // "StartWrite" command too short
     TransferTooLarge = 2,    // Requested size exceeds buffer
     InvalidState = 3,        // Command received in wrong state
-    IncompleteTransfer = 4,  // END_WRITE before all data received
+    IncompleteTransfer = 4,  // "EndWrite" before all data received
     HandlerFailed = 5,       // on_config_write callback returned false
     DataOverflow = 6,        // Received more data than expected
     NotificationFailed = 7,  // Failed to send BLE notification

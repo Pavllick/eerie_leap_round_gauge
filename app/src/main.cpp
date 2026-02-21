@@ -22,9 +22,11 @@
 #include "subsys/time/boot_elapsed_time_provider.h"
 #include "subsys/event_bus/event_bus.h"
 #include "subsys/bluetooth/ble.h"
-#include "subsys/bluetooth/ble_settings/ble_settings_service.h"
 
 #include "configuration/services/cbor_configuration_service.h"
+
+#include "domain/configuration_domain/services/configuration_service.h"
+#include "domain/ble_settings_domain/services/ble_settings_configuration_service.h"
 
 #include "domain/system_domain/configuration/system_configuration_manager.h"
 
@@ -71,11 +73,12 @@ using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::gpio;
 using namespace eerie_leap::subsys::time;
 using namespace eerie_leap::subsys::bluetooth;
-using namespace eerie_leap::subsys::bluetooth::ble_settings;
 
 using namespace eerie_leap::configuration::services;
 
+using namespace eerie_leap::domain::configuration_domain::services;
 using namespace eerie_leap::domain::system_domain::configuration;
+using namespace eerie_leap::domain::ble_settings_domain::services;
 using namespace eerie_leap::domain::ui_domain;
 using namespace eerie_leap::domain::ui_domain::configuration;
 using namespace eerie_leap::domain::ui_domain::models;
@@ -109,31 +112,6 @@ void EmulateReadings(
     std::shared_ptr<GuidGenerator> guid_generator,
     std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager,
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame);
-
-bool HandleConfigWrite(uint8_t settings_id, std::span<const uint8_t> data) {
-    switch(settings_id) {
-        case 1:
-            // Config decode here
-            LOG_INF("Received CANBus config, size: %zu", data.size());
-            return true;
-
-        default:
-            LOG_ERR("Unknown config type: %u", settings_id);
-            return false;
-    }
-}
-
-std::string test = "test";
-std::span<const uint8_t> HandleConfigRead(uint8_t settings_id) {
-    switch(settings_id) {
-        case 1:
-            // return config data
-            return { reinterpret_cast<const uint8_t*>(test.c_str()), test.size() };
-
-        default:
-            return {};
-    }
-}
 
 int main() {
     DtConfigurator::Initialize();
@@ -185,6 +163,12 @@ int main() {
         "ui_config", fs_service);
     auto ui_configuration_manager = make_shared_ext<UiConfigurationManager>(
         std::move(ui_config_service));
+
+    auto configuration_service = std::make_shared<ConfigurationService>();
+    configuration_service->RegisterJsonConfigurationManager(
+        ConfigurationService::Type::CanbusJson, canbus_configuration_manager);
+    configuration_service->RegisterJsonConfigurationManager(
+        ConfigurationService::Type::SensorsJson, sensors_configuration_manager);
 
     // TODO: For test purposes only
     SetupTestUiConfig(ui_configuration_manager);
@@ -276,19 +260,11 @@ int main() {
         sensors_processing_service->Resume();
     };
 
-    BleSettingsService::Initialize({
-            .on_config_write = HandleConfigWrite,
-            .on_config_read = HandleConfigRead,
-        },
-        Mrm::GetExtPmr(),
-        64 * 1024);
+    Ble::Initialize();
+    Ble::RegisterPairingStartedHandler(ble_pairing_started);
+    Ble::RegisterPairingFinishedHandler(ble_pairing_finished);
 
-    Ble::Initialize({
-        .connected = BleSettingsService::BleConnected,
-        .disconnected = BleSettingsService::BleDisconnected,
-        .pairing_started = ble_pairing_started,
-        .pairing_finished = ble_pairing_finished,
-    });
+    BleSettingsConfigurationService::Initialize(configuration_service);
 
 	while (true) {
         // SystemInfo::PrintHeapInfo();
