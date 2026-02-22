@@ -2,12 +2,12 @@
 
 #include <lvgl.h>
 
-#include "views/utilitites/enums.h"
+#include "domain/ui_domain/models/indicator_direction.h"
 #include "views/widgets/indicators/indicator_base.h"
 
 namespace eerie_leap::views::widgets::indicators {
 
-using namespace views::utilitites;
+using namespace eerie_leap::domain::ui_domain::models;
 
 class BarIndicator : public IndicatorBase {
 protected:

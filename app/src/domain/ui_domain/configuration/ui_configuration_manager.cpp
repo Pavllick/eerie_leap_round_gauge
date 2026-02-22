@@ -10,11 +10,15 @@ using namespace eerie_leap::utilities::memory;
 
 LOG_MODULE_REGISTER(ui_config_ctrl_logger);
 
-UiConfigurationManager::UiConfigurationManager(std::unique_ptr<CborConfigurationService<CborUiConfig>> cbor_configuration_service) :
+UiConfigurationManager::UiConfigurationManager(
+    std::unique_ptr<CborConfigurationService<CborUiConfig>> cbor_configuration_service,
+    std::unique_ptr<JsonConfigurationService<JsonUiConfig>> json_configuration_service) :
     cbor_configuration_service_(std::move(cbor_configuration_service)),
+    json_configuration_service_(std::move(json_configuration_service)),
     configuration_(nullptr) {
 
     cbor_parser_ = std::make_unique<UiConfigurationCborParser>();
+    json_parser_ = std::make_unique<UiConfigurationJsonParser>();
     std::shared_ptr<UiConfiguration> configuration = nullptr;
 
     try {
@@ -33,6 +37,40 @@ UiConfigurationManager::UiConfigurationManager(std::unique_ptr<CborConfiguration
     }
 
     LOG_INF("UI Configuration Manager initialized successfully.");
+
+    ApplyJsonConfiguration(true);
+}
+
+bool UiConfigurationManager::ApplyJsonConfiguration(bool fs_load, std::span<const uint8_t> data) {
+    if(fs_load && !json_configuration_service_->IsAvailable())
+        return false;
+
+    auto json_config_loaded = fs_load
+        ? json_configuration_service_->Load()
+        : json_configuration_service_->Load(data);
+    if(!json_config_loaded.has_value())
+        return false;
+
+    // if(json_config_loaded->checksum == json_config_checksum_)
+    //     return true;
+
+    try {
+        auto configuration = json_parser_->Deserialize(Mrm::GetExtPmr(), *json_config_loaded->config);
+
+        if(!Update(*configuration))
+            return false;
+    } catch(const std::exception& e) {
+        LOG_ERR("Failed to deserialize JSON configuration. %s", e.what());
+        return false;
+    }
+
+    LOG_INF("JSON configuration loaded successfully.");
+
+    return true;
+}
+
+bool UiConfigurationManager::ApplyJsonConfiguration(std::span<const uint8_t> data) {
+    return ApplyJsonConfiguration(false, data);
 }
 
 bool UiConfigurationManager::Update(const UiConfiguration& configuration) {

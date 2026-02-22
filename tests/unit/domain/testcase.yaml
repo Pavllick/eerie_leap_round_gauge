@@ -1,0 +1,10 @@
+common:
+  tags:
+    - unit
+    - domain
+    - unit_domain
+  platform_allow:
+    - native_sim
+
+tests:
+  unit.domain: {}

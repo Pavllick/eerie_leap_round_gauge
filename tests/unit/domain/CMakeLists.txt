@@ -26,13 +26,8 @@ file(GLOB_RECURSE APP_SRC_CONFIGURATION
 
 set(APP_SRC_UI_DOMAIN_DIR ${APP_SRC_DIR}/domain/ui_domain)
 file(GLOB_RECURSE APP_SRC_UI_DOMAIN
-  ${APP_SRC_UI_DOMAIN_DIR}/*.c
-  ${APP_SRC_UI_DOMAIN_DIR}/*.cpp
-)
-
-set(APP_SRC_SUBSYS_DT_DIR ${APP_SRC_DIR}/subsys/device_tree)
-file(GLOB_RECURSE APP_SRC_SUBSYS_DT
-  ${APP_SRC_SUBSYS_DT_DIR}/dt_fs.cpp
+  ${APP_SRC_UI_DOMAIN_DIR}/models/*.cpp
+  ${APP_SRC_UI_DOMAIN_DIR}/configuration/parsers/*.cpp
 )
 
 file(GLOB_RECURSE TEST_SOURCES src/*.c src/*.cpp)
@@ -41,6 +36,5 @@ file(GLOB_RECURSE TEST_SOURCES src/*.c src/*.cpp)
 target_sources(app PRIVATE
   ${APP_SRC_CONFIGURATION}
   ${APP_SRC_UI_DOMAIN}
-  ${APP_SRC_SUBSYS_DT}
   ${TEST_SOURCES}
 )

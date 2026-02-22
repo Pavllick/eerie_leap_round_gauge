@@ -50,13 +50,13 @@
 #include "domain/ui_domain/models/widget_position.h"
 #include "domain/ui_domain/models/widget_property.h"
 #include "domain/ui_domain/models/icon_type.h"
+#include "domain/ui_domain/models/indicator_direction.h"
 #include "domain/ui_domain/assets_manager/ui_assets_manager.h"
 #include "domain/canbus_com_domain/services/canbus_com_service.h"
 
 #include "controllers/ui_controller.h"
 #include "controllers/logging_controller.h"
 
-#include "views/utilitites/enums.h"
 #include "views/themes/theme_manager.h"
 #include "views/themes/dark_theme.h"
 #include "views/themes/dark_bw_theme.h"
@@ -159,16 +159,20 @@ int main() {
         nullptr,
         0, 0);
 
-    auto ui_config_service = std::make_unique<CborConfigurationService<CborUiConfig>>(
+    auto cbor_ui_config_service = std::make_unique<CborConfigurationService<CborUiConfig>>(
         "ui_config", fs_service);
+    auto json_ui_config_service = std::make_unique<JsonConfigurationService<JsonUiConfig>>(
+        "ui_config", nullptr);
     auto ui_configuration_manager = make_shared_ext<UiConfigurationManager>(
-        std::move(ui_config_service));
+        std::move(cbor_ui_config_service), std::move(json_ui_config_service));
 
     auto configuration_service = std::make_shared<ConfigurationService>();
     configuration_service->RegisterJsonConfigurationManager(
         ConfigurationService::Type::CanbusJson, canbus_configuration_manager);
     configuration_service->RegisterJsonConfigurationManager(
         ConfigurationService::Type::SensorsJson, sensors_configuration_manager);
+    configuration_service->RegisterJsonConfigurationManager(
+        ConfigurationService::Type::UiJson, ui_configuration_manager);
 
     // TODO: For test purposes only
     SetupTestUiConfig(ui_configuration_manager);
