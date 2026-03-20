@@ -22,6 +22,12 @@ namespace eerie_leap::subsys::bluetooth::ble_settings {
 
 using namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command;
 
+// Base UUID: e7a1b2c3-d4e5-6f78-9a0b-c1d2e3f40000
+#define BT_UUID_SETTINGS_SERVICE_ENCODE(characteristic_id) \
+    BT_UUID_128_ENCODE(0xe7a1b2c3, 0xd4e5, 0x6f78, 0x9a0b, 0xc1d2e3f40000 + (characteristic_id))
+
+#define BT_UUID_SETTINGS_SERVICE_VAL BT_UUID_SETTINGS_SERVICE_ENCODE(0)
+
 class BleSettingsService {
 public:
     using allocator_type = std::pmr::polymorphic_allocator<>;

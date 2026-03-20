@@ -10,36 +10,19 @@ LOG_MODULE_REGISTER(ble);
 
 namespace eerie_leap::subsys::bluetooth {
 
-// Custom 128-bit UUIDs for the Configuration Service
-// Base UUID: e7a1b2c3-d4e5-6f78-9a0b-c1d2e3f40000
-#define BT_UUID_CONFIG_SERVICE_VAL \
-    BT_UUID_128_ENCODE(0xe7a1b2c3, 0xd4e5, 0x6f78, 0x9a0b, 0xc1d2e3f40000)
-
-#define BT_UUID_CONFIG_CONTROL_VAL \
-    BT_UUID_128_ENCODE(0xe7a1b2c3, 0xd4e5, 0x6f78, 0x9a0b, 0xc1d2e3f40001)
-
-#define BT_UUID_CONFIG_DATA_VAL \
-    BT_UUID_128_ENCODE(0xe7a1b2c3, 0xd4e5, 0x6f78, 0x9a0b, 0xc1d2e3f40002)
-
-#define BT_UUID_CONFIG_STATUS_VAL \
-    BT_UUID_128_ENCODE(0xe7a1b2c3, 0xd4e5, 0x6f78, 0x9a0b, 0xc1d2e3f40003)
-
-#define BT_UUID_CONFIG_SERVICE  BT_UUID_DECLARE_128(BT_UUID_CONFIG_SERVICE_VAL)
-#define BT_UUID_CONFIG_CONTROL  BT_UUID_DECLARE_128(BT_UUID_CONFIG_CONTROL_VAL)
-#define BT_UUID_CONFIG_DATA     BT_UUID_DECLARE_128(BT_UUID_CONFIG_DATA_VAL)
-#define BT_UUID_CONFIG_STATUS   BT_UUID_DECLARE_128(BT_UUID_CONFIG_STATUS_VAL)
-
 // Advertising data
 // =================
 
-const bt_data Ble::ad_[] = {
-    // Flags: general discoverable, no BR/EDR
-    BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
+AdBuffer Ble::ad_;
+AdBuffer Ble::sd_;
 
-    // Full device name
-    BT_DATA(BT_DATA_NAME_COMPLETE, CONFIG_BT_DEVICE_NAME,
-            sizeof(CONFIG_BT_DEVICE_NAME) - 1),
-};
+void Ble::UpdateAdvertisingData(AdBuffer&& ad) {
+    ad_ = std::move(ad);
+}
+
+void Ble::UpdateScanResponseData(AdBuffer&& sd) {
+    sd_ = std::move(sd);
+}
 
 const bt_le_adv_param* Ble::advertising_params_ = BT_LE_ADV_PARAM(
     BT_LE_ADV_OPT_CONN,
@@ -80,6 +63,10 @@ bool Ble::Initialize() {
 
     LOG_INF("Bluetooth initialized");
 
+    return true;
+}
+
+bool Ble::Start() {
     return StartAdvertising() == 0;
 }
 
@@ -93,7 +80,10 @@ int Ble::StartAdvertising() {
 void Ble::RestartAdvertisingWorkHandler(struct k_work* work) {
     bt_le_adv_stop();
 
-    int err = bt_le_adv_start(advertising_params_, ad_, ARRAY_SIZE(ad_), nullptr, 0);
+    int err = bt_le_adv_start(
+        advertising_params_,
+        ad_.empty() ? nullptr : ad_.data(), ad_.size(),
+        sd_.empty() ? nullptr : sd_.data(), sd_.size());
     if(err) {
         LOG_ERR("Failed to start advertising (err %d)", err);
         return;

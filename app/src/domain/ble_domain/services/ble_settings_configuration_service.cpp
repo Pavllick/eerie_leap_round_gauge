@@ -6,7 +6,7 @@
 
 #include "ble_settings_configuration_service.h"
 
-namespace eerie_leap::domain::ble_settings_domain::services {
+namespace eerie_leap::domain::ble_domain::services {
 
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::subsys::bluetooth;
@@ -14,22 +14,45 @@ using namespace eerie_leap::subsys::bluetooth::ble_settings;
 
 LOG_MODULE_REGISTER(ble_scs_logger);
 
-std::shared_ptr<ConfigurationService> BleSettingsConfigurationService::configuration_service_ = nullptr;
+std::unique_ptr<BleSettingsConfigurationService> BleSettingsConfigurationService::instance_;
+bool BleSettingsConfigurationService::is_initialized_ = false;
 
-int BleSettingsConfigurationService::Initialize(std::shared_ptr<ConfigurationService> configuration_service) {
-    configuration_service_ = std::move(configuration_service);
+BleSettingsConfigurationService::BleSettingsConfigurationService(std::shared_ptr<ConfigurationService> configuration_service)
+    : configuration_service_(std::move(configuration_service)) {}
+
+BleSettingsConfigurationService& BleSettingsConfigurationService::Create(
+    std::shared_ptr<ConfigurationService> configuration_service) {
+
+    instance_.reset(new BleSettingsConfigurationService(std::move(configuration_service)));
+
+    return *instance_;
+}
+
+BleSettingsConfigurationService& BleSettingsConfigurationService::GetInstance() {
+    return *instance_;
+}
+
+bool BleSettingsConfigurationService::Initialize() {
+    if (is_initialized_)
+        return true;
+
+    is_initialized_ = true;
 
     Ble::RegisterConnectedHandler(BleSettingsService::BleConnected);
     Ble::RegisterDisconnectedHandler(BleSettingsService::BleDisconnected);
 
     BleSettingsService::Initialize({
-            .on_config_write = HandleConfigWrite,
-            .on_config_read = HandleConfigRead,
+            .on_config_write = [this](uint8_t settings_id, std::span<const uint8_t> data) {
+                return HandleConfigWrite(settings_id, data);
+            },
+            .on_config_read = [this](uint8_t settings_id) {
+                return HandleConfigRead(settings_id);
+            },
         },
         Mrm::GetExtPmr(),
         64 * 1024);
 
-    return 0;
+    return true;
 }
 
 bool BleSettingsConfigurationService::HandleConfigWrite(uint8_t settings_id, std::span<const uint8_t> data) {
@@ -52,4 +75,4 @@ std::span<const uint8_t> BleSettingsConfigurationService::HandleConfigRead(uint8
     }
 }
 
-} // namespace eerie_leap::domain::ble_settings_domain::services
+} // namespace eerie_leap::domain::ble_domain::services

@@ -21,12 +21,10 @@
 #include "subsys/time/rtc_provider.h"
 #include "subsys/time/boot_elapsed_time_provider.h"
 #include "subsys/event_bus/event_bus.h"
-#include "subsys/bluetooth/ble.h"
 
 #include "configuration/services/cbor_configuration_service.h"
 
 #include "domain/configuration_domain/services/configuration_service.h"
-#include "domain/ble_settings_domain/services/ble_settings_configuration_service.h"
 
 #include "domain/system_domain/configuration/system_configuration_manager.h"
 
@@ -36,6 +34,8 @@
 #include "domain/sensor_domain/sensor_readers/sensor_reader_factory.h"
 #include "domain/sensor_domain/isr_sensor_readers/isr_sensor_reader_factory.h"
 #include "domain/sensor_domain/services/sensors_processing_service.h"
+
+#include "domain/ble_domain/services/ble_service.h"
 
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
 #include "domain/ui_domain/services/ui_renderer_service.h"
@@ -72,13 +72,12 @@ using namespace eerie_leap::subsys::device_tree;
 using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::gpio;
 using namespace eerie_leap::subsys::time;
-using namespace eerie_leap::subsys::bluetooth;
 
 using namespace eerie_leap::configuration::services;
 
 using namespace eerie_leap::domain::configuration_domain::services;
 using namespace eerie_leap::domain::system_domain::configuration;
-using namespace eerie_leap::domain::ble_settings_domain::services;
+using namespace eerie_leap::domain::ble_domain::services;
 using namespace eerie_leap::domain::ui_domain;
 using namespace eerie_leap::domain::ui_domain::configuration;
 using namespace eerie_leap::domain::ui_domain::models;
@@ -256,19 +255,10 @@ int main() {
 
     sensors_processing_service->Start();
 
-    auto ble_pairing_started = [&]() {
-        sensors_processing_service->Pause();
-    };
-
-    auto ble_pairing_finished = [&]() {
-        sensors_processing_service->Resume();
-    };
-
-    Ble::Initialize();
-    Ble::RegisterPairingStartedHandler(ble_pairing_started);
-    Ble::RegisterPairingFinishedHandler(ble_pairing_finished);
-
-    BleSettingsConfigurationService::Initialize(configuration_service);
+    auto& ble_service = BleService::Create(
+        configuration_service, sensors_processing_service);
+    ble_service.Initialize();
+    ble_service.Start();
 
 	while (true) {
         // SystemInfo::PrintHeapInfo();

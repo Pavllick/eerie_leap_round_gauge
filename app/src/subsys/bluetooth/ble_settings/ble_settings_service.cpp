@@ -11,24 +11,14 @@ LOG_MODULE_REGISTER(ble_settings_logger);
 
 namespace eerie_leap::subsys::bluetooth::ble_settings {
 
-// Custom 128-bit UUIDs for the Configuration Service
-// Base UUID: e7a1b2c3-d4e5-6f78-9a0b-c1d2e3f40000
-#define BT_UUID_CONFIG_SERVICE_VAL \
-    BT_UUID_128_ENCODE(0xe7a1b2c3, 0xd4e5, 0x6f78, 0x9a0b, 0xc1d2e3f40000)
+#define BT_UUID_SETTINGS_CONTROL_VAL BT_UUID_SETTINGS_SERVICE_ENCODE(1)
+#define BT_UUID_SETTINGS_DATA_VAL BT_UUID_SETTINGS_SERVICE_ENCODE(2)
+#define BT_UUID_SETTINGS_STATUS_VAL BT_UUID_SETTINGS_SERVICE_ENCODE(3)
 
-#define BT_UUID_CONFIG_CONTROL_VAL \
-    BT_UUID_128_ENCODE(0xe7a1b2c3, 0xd4e5, 0x6f78, 0x9a0b, 0xc1d2e3f40001)
-
-#define BT_UUID_CONFIG_DATA_VAL \
-    BT_UUID_128_ENCODE(0xe7a1b2c3, 0xd4e5, 0x6f78, 0x9a0b, 0xc1d2e3f40002)
-
-#define BT_UUID_CONFIG_STATUS_VAL \
-    BT_UUID_128_ENCODE(0xe7a1b2c3, 0xd4e5, 0x6f78, 0x9a0b, 0xc1d2e3f40003)
-
-#define BT_UUID_CONFIG_SERVICE  BT_UUID_DECLARE_128(BT_UUID_CONFIG_SERVICE_VAL)
-#define BT_UUID_CONFIG_CONTROL  BT_UUID_DECLARE_128(BT_UUID_CONFIG_CONTROL_VAL)
-#define BT_UUID_CONFIG_DATA     BT_UUID_DECLARE_128(BT_UUID_CONFIG_DATA_VAL)
-#define BT_UUID_CONFIG_STATUS   BT_UUID_DECLARE_128(BT_UUID_CONFIG_STATUS_VAL)
+#define BT_UUID_SETTINGS_SERVICE  BT_UUID_DECLARE_128(BT_UUID_SETTINGS_SERVICE_VAL)
+#define BT_UUID_SETTINGS_CONTROL  BT_UUID_DECLARE_128(BT_UUID_SETTINGS_CONTROL_VAL)
+#define BT_UUID_SETTINGS_DATA     BT_UUID_DECLARE_128(BT_UUID_SETTINGS_DATA_VAL)
+#define BT_UUID_SETTINGS_STATUS   BT_UUID_DECLARE_128(BT_UUID_SETTINGS_STATUS_VAL)
 
 bt_conn* BleSettingsService::ble_active_conn_{nullptr};
 BleSettingsService::Callbacks BleSettingsService::callbacks_;
@@ -149,9 +139,9 @@ bool BleSettingsService::SendData(uint8_t settings_id, std::span<const uint8_t> 
 
     // Find characteristics
     const bt_gatt_attr* status_attr = bt_gatt_find_by_uuid(
-        gatt_service_.attrs, gatt_service_.attr_count, BT_UUID_CONFIG_STATUS);
+        gatt_service_.attrs, gatt_service_.attr_count, BT_UUID_SETTINGS_STATUS);
     const bt_gatt_attr* data_attr = bt_gatt_find_by_uuid(
-        gatt_service_.attrs, gatt_service_.attr_count, BT_UUID_CONFIG_DATA);
+        gatt_service_.attrs, gatt_service_.attr_count, BT_UUID_SETTINGS_DATA);
 
     if(!status_attr || !data_attr) {
         LOG_ERR("SendData: BLE characteristics not found");
@@ -292,20 +282,20 @@ ssize_t StatusReadCallback(
 // NOTE: This is supposed to be defined with BT_GATT_SERVICE_DEFINE(gatt_service_, ...) macro,
 //       but in order to make gatt_service_ a class member macro has been expanded manually.
 static const bt_gatt_attr gatt_attributes_[] = {
-    BT_GATT_PRIMARY_SERVICE(BT_UUID_CONFIG_SERVICE),
+    BT_GATT_PRIMARY_SERVICE(BT_UUID_SETTINGS_SERVICE),
 
-    BT_GATT_CHARACTERISTIC(BT_UUID_CONFIG_CONTROL,
+    BT_GATT_CHARACTERISTIC(BT_UUID_SETTINGS_CONTROL,
                         BT_GATT_CHRC_WRITE | BT_GATT_CHRC_WRITE_WITHOUT_RESP,
                         BT_GATT_PERM_WRITE,
                         nullptr, &ControlWriteCallback, nullptr),
 
-    BT_GATT_CHARACTERISTIC(BT_UUID_CONFIG_DATA,
+    BT_GATT_CHARACTERISTIC(BT_UUID_SETTINGS_DATA,
                         BT_GATT_CHRC_WRITE | BT_GATT_CHRC_WRITE_WITHOUT_RESP | BT_GATT_CHRC_NOTIFY,
                         BT_GATT_PERM_WRITE,
                         nullptr, &DataWriteCallback, nullptr),
     BT_GATT_CCC(nullptr, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
 
-    BT_GATT_CHARACTERISTIC(BT_UUID_CONFIG_STATUS,
+    BT_GATT_CHARACTERISTIC(BT_UUID_SETTINGS_STATUS,
                         BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
                         BT_GATT_PERM_READ_ENCRYPT,
                         &StatusReadCallback, nullptr, nullptr),

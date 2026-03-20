@@ -15,7 +15,11 @@
 #include <zephyr/sys/atomic.h>
 #include <zephyr/kernel.h>
 
+#include "./utilities/ad_buffer.hpp"
+
 namespace eerie_leap::subsys::bluetooth {
+
+using namespace eerie_leap::subsys::bluetooth::utilities;
 
 class Ble {
 public:
@@ -25,7 +29,8 @@ public:
     using PairingFinishedHandler = std::function<void()>;
 
 private:
-    static const bt_data ad_[];
+    static AdBuffer ad_;
+    static AdBuffer sd_;
     static const bt_le_adv_param* advertising_params_;
     static bt_conn* active_conn_;
 
@@ -70,6 +75,10 @@ private:
 
 public:
     static bool Initialize();
+    static bool Start();
+
+    static void UpdateAdvertisingData(AdBuffer&& ad);
+    static void UpdateScanResponseData(AdBuffer&& sd);
 
     static int RegisterConnectedHandler(ConnectedHandler handler);
     static int RegisterDisconnectedHandler(DisconnectedHandler handler);
