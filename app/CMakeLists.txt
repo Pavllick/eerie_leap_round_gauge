@@ -43,7 +43,7 @@ function(generate_zcbor_configuration cddl_path base_name)
     endforeach()
 
     # Define output paths
-    set(output_dir "${CMAKE_CURRENT_SOURCE_DIR}/src/configuration/generated/${base_name}")
+    set(output_dir "${CMAKE_CURRENT_SOURCE_DIR}/src/configuration/cbor/generated/${base_name}")
     set(output_cbor_h "${output_dir}/${base_name}_cbor.h")
     set(output_cbor_c "${output_dir}/${base_name}_cbor.c")
     set(output_cbor_decode_h "${output_dir}/${base_name}_cbor_decode.h")
@@ -61,13 +61,13 @@ function(generate_zcbor_configuration cddl_path base_name)
             ${output_cbor_encode_c}
             ${output_types_h}
         COMMAND zcbor code -sed --default-max-qty 24
-            -c ${CMAKE_CURRENT_SOURCE_DIR}/src/configuration/cbor_schemas/${cddl_path}
+            -c ${cddl_path}
             -t ${type_name}
             --output-h ${output_cbor_h}
             --output-c ${output_cbor_c}
             --output-h-types ${output_types_h}
         DEPENDS
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/configuration/cbor_schemas/${cddl_path}
+            ${cddl_path}
         COMMENT "Generating CBOR code from ${cddl_path} for ${base_name}"
         VERBATIM
     )
@@ -83,8 +83,12 @@ function(generate_zcbor_configuration cddl_path base_name)
     )
 endfunction()
 
-# generate_zcbor_configuration("system_config.cddl" "system_config")
-# generate_zcbor_configuration("ui_config.cddl" "ui_config")
+# generate_zcbor_configuration(
+#     ${ZEPHYR_BASE}/../project/modules/eerie_leap_common/src/configuration/cbor/cbor_schemas/system_config.cddl
+#     "cbor_system_config")
+# generate_zcbor_configuration(
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/configuration/cbor/cbor_schemas/ui_config.cddl
+#     "cbor_ui_config")
 
 # Add Zephyr modules
 set(EXTRA_ZEPHYR_MODULES
