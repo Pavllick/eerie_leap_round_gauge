@@ -12,7 +12,7 @@
             "servertype": "openocd",
             "interface": "jtag",
             "toolchainPrefix": "xtensa-espressif_esp32s3_zephyr-elf",
-            "armToolchainPath": "/home/ubuntu/zephyr-sdk-0.17.4/xtensa-espressif_esp32s3_zephyr-elf/bin/",
+            "armToolchainPath": "/home/ubuntu/zephyr-sdk-1.0.1/gnu/xtensa-espressif_esp32s3_zephyr-elf/bin/",
             "serverpath": "/home/ubuntu/zephyr/workspace/utilities/openocd-esp32/bin/openocd",
             "showDevDebugOutput": "raw",
             "configFiles": [

@@ -12,7 +12,7 @@ manifest:
   projects:
     - name: zephyr
       remote: zephyrproject-rtos
-      revision: main #NOTE: v4.1.0 doesn't support exteranl RAM for WiFi
+      revision: main
       import:
         # By using name-allowlist we can clone only the modules that are
         # strictly needed by the application.
@@ -23,6 +23,7 @@ manifest:
           - hal_espressif   # required by the esp32 board
           - zcbor           # CBOR light JSON like data format
           - littlefs        # littleFS lightweight filesystem
-          - mbedtls         # esp32 WiFi
+          - mbedtls         # BLE/WiFi
+          - tf-psa-crypto   # BLE/WiFi
           - picolibc        # picolibc
           - lvgl            # LVGL

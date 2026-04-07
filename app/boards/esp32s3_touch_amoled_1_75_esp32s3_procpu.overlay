@@ -73,7 +73,7 @@
 		// But current temp setup is not stable at frequencies above 8 MHz
 		// TODO: Investigate
 		spi-max-frequency = <8000000>;
-		int-gpios = <&gpio1 11 GPIO_ACTIVE_LOW>;
+		int-gpios = <&gpio1 14 GPIO_ACTIVE_LOW>;
 		osc-freq = <20000000>;
 	};
 
@@ -94,8 +94,4 @@
 			output-low;
 		};
 	};
-};
-
-&spi3 {
-	status = "okay";
 };

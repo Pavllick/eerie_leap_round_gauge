@@ -22,8 +22,8 @@
 
 	mspi2_default: mspi2_default {
         group1 {
-            pinmux = <ESP32_PINMUX(4, ESP_FSPIQ_IN, ESP_FSPID_OUT)>, 	/* D0 */
-                     <ESP32_PINMUX(5, ESP_FSPID_IN, ESP_FSPIQ_OUT)>, 	/* D1 */
+            pinmux = <ESP32_PINMUX(4, ESP_FSPID_IN, ESP_FSPID_OUT)>, 	/* D0 */
+                     <ESP32_PINMUX(5, ESP_FSPIQ_IN, ESP_FSPIQ_OUT)>, 	/* D1 */
 					 <ESP32_PINMUX(6, ESP_FSPIWP_IN, ESP_FSPIWP_OUT)>, 	/* D2 */
 					 <ESP32_PINMUX(7, ESP_FSPIHD_IN, ESP_FSPIHD_OUT)>, 	/* D3 */
 					 <SPIM2_SCLK_GPIO38>;							 	/* CLK */

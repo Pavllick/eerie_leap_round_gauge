@@ -34,7 +34,7 @@ int co5300_te_gpio_register_callback(const struct device *dev, gpio_callback_han
 }
 
 static void co5300_get_capabilities(const struct device *dev, struct display_capabilities *capabilities) {
-	struct co5300_data *data = dev->data;
+	const struct co5300_data *data = dev->data;
 	const struct co5300_config *config = dev->config;
 
 	memset(capabilities, 0, sizeof(struct display_capabilities));
@@ -116,7 +116,7 @@ static int co5300_transmit(const struct device *dev, enum mspi_io_mode io_mode, 
 }
 
 static int co5300_reset(const struct device *dev) {
-	struct co5300_config *config = dev->config;
+	const struct co5300_config *config = dev->config;
 
 	if (config->reset_gpio.port) {
 		gpio_pin_set_dt(&config->reset_gpio, 0);
@@ -239,8 +239,6 @@ static int co5300_set_orientation(const struct device *dev, const enum display_o
 static int co5300_set_brightness(const struct device *dev, const uint8_t brightness) {
 	uint8_t cmd = CO5300_W_WDBRIGHTNESSVALNOR;
 	int ret = co5300_transmit(dev, MSPI_IO_MODE_SINGLE, &cmd, &brightness, 1U, false);
-	if (ret < 0)
-		return ret;
 
 	return ret;
 }
@@ -273,9 +271,6 @@ static int co5300_set_window(const struct device *dev, uint16_t x, uint16_t y, u
 
 	cmd = CO5300_W_PASET;
 	ret = co5300_transmit(dev, MSPI_IO_MODE_SINGLE, &cmd, tx_data, 4U, false);
-	if (ret < 0) {
-		return ret;
-	}
 
 	return ret;
 }
@@ -284,7 +279,7 @@ static int co5300_write(const struct device *dev, const uint16_t x, const uint16
 	const struct display_buffer_descriptor *desc, const void *buf) {
 
 	const struct co5300_config *config = dev->config;
-	struct co5300_data *data = dev->data;
+	const struct co5300_data *data = dev->data;
 	int ret = 0;
 
 	if(desc->width == 0U || desc->height == 0U) {
@@ -302,7 +297,7 @@ static int co5300_write(const struct device *dev, const uint16_t x, const uint16
 		return ret;
 	}
 
-	uint8_t *tx_data = (uint8_t *)buf;
+	const uint8_t *tx_data = (const uint8_t *)buf;
 	int total_len = desc->height * desc->width * data->bytes_per_pixel;
 	int remaining = total_len;
 	bool first_send = true;
@@ -317,7 +312,7 @@ static int co5300_write(const struct device *dev, const uint16_t x, const uint16
 			chunk_size = config->max_buf_size;
 		}
 
-		uint8_t cmd = CO5300_C_QUAD_1_1_4;
+		cmd = CO5300_C_QUAD_1_1_4;
 		ret = co5300_transmit(dev, MSPI_IO_MODE_QUAD_1_1_4, first_send ? &cmd : NULL, tx_data, chunk_size, !is_last_send);
 		if (ret < 0) {
 			LOG_ERR("Failed to send pixel data chunk: %d", ret);
@@ -483,7 +478,6 @@ static DEVICE_API(display, co5300_api) = {
 		.sram_size = DT_INST_PROP(inst, sram_size),          			\
 		.max_buf_size = DT_INST_PROP(inst, max_buf_size),				\
 		.mspi_dev_config = MSPI_DEVICE_CONFIG_DT_INST(inst),			\
-		.mspi_dev_config.ce_num = DT_REG_ADDR(DT_DRV_INST(inst)),		\
 	};                                                                  \
 	static struct co5300_data co5300_data_##inst;                       \
                                                                         \

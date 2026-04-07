@@ -20,7 +20,6 @@
 		sw0 = &button0;
 		uart-0 = &uart0;
 		watchdog0 = &wdt0;
-        sdhc0 = &spi_sdhc0;
 	};
 
 	chosen {
@@ -52,17 +51,19 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		peripheral-id = <0>;
+		peripheral-id = <0>; /* SPI2: peripheral_id=0, host_id=1 */
 		clocks = <&clock ESP32_SPI2_MODULE>;
 		dma-enabled;
-		dma-clk = <ESP32_GDMA_MODULE>;
-		dma-host = <0>;
+		dma-host = <0>; /* GDMA slot for SPI2 */
+		dmas = <&dma 0>, <&dma 1>;
+		dma-names = "tx", "rx";
 		duplex = "MSPI_HALF_DUPLEX";
+
 		clock-frequency = <80000000>;
 
 		pinctrl-0 = <&mspi2_default>;
 		pinctrl-names = "default";
-		ce-gpios = <&gpio0 12 GPIO_ACTIVE_LOW>;
+		ce-gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
 
 		// CO5300 display as MSPI device
 		co5300_display: co5300-display@0 {
@@ -74,9 +75,6 @@
 
 			// MSPI device properties
 			mspi-max-frequency = <40000000>;
-			mspi-io-mode = "MSPI_IO_MODE_QUAD_1_1_4";
-			mspi-cpp-mode = "MSPI_CPP_MODE_0";
-			mspi-data-rate = "MSPI_DATA_RATE_SINGLE";
 
 			// Display-specific GPIOs
 			te-gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;  // TE pin
@@ -97,6 +95,10 @@
 		compatible = "zephyr,lvgl-pointer-input";
 		input = <&cst92xx>;
 	};
+};
+
+&dma {
+	status = "okay";
 };
 
 &flash0 {
