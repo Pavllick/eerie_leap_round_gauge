@@ -58,7 +58,9 @@ bool BleSettingsConfigurationService::Initialize() {
 
 bool BleSettingsConfigurationService::HandleConfigWrite(uint8_t settings_id, std::span<const uint8_t> data) const {
     auto type = static_cast<ConfigurationService::Type>(settings_id);
-    return configuration_service_->ApplyJsonConfiguration(type, data);
+    std::string_view json_str(reinterpret_cast<const char*>(data.data()), data.size());
+
+    return configuration_service_->ApplyJsonConfiguration(type, json_str);
 }
 
 std::span<const uint8_t> BleSettingsConfigurationService::HandleConfigRead(uint8_t settings_id) const {

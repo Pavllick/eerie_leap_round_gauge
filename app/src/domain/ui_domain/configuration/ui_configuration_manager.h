@@ -33,7 +33,7 @@ private:
 
     std::shared_ptr<UiConfiguration> configuration_;
 
-    bool ApplyJsonConfiguration(bool fs_load, std::span<const uint8_t> data = {});
+    bool ApplyJsonConfiguration(bool fs_load, std::string_view json_str = {});
     bool CreateDefaultConfiguration();
 
 public:
@@ -43,7 +43,7 @@ public:
     bool Update(const UiConfiguration& configuration);
     std::shared_ptr<UiConfiguration> Get(bool force_load = false);
 
-    bool ApplyJsonConfiguration(std::span<const uint8_t> data) override;
+    bool ApplyJsonConfiguration(std::string_view json_str) override;
     std::pmr::string GetJsonConfiguration() override;
 };
 
