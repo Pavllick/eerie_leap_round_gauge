@@ -19,13 +19,13 @@ using namespace eerie_leap::subsys::bluetooth::utilities;
 using namespace eerie_leap::subsys::bluetooth::ble_settings;
 using namespace eerie_leap::domain::system_domain::models;
 
-static std::vector<uint8_t> GetManufacturerData() {
-    std::vector<uint8_t> manufacturer_data;
+std::vector<uint8_t> BleService::GetManufacturerData() {
     // 2 (SIG company ID)
     // 1 (family)
     // 2 (product ID)
     // 2 (product features)
     // 1 (revision)
+    std::vector<uint8_t> manufacturer_data;
     manufacturer_data.reserve(8);
 
     // Bluetooth SIG Company ID - must be first 2 bytes, little-endian
@@ -37,7 +37,7 @@ static std::vector<uint8_t> GetManufacturerData() {
 
     // Product family (1 byte)
     constexpr uint8_t product_family_le = std::to_underlying(ProductInfo::family);
-    const auto* product_family_ptr = reinterpret_cast<const uint8_t*>(&product_family_le);
+    const auto* product_family_ptr = &product_family_le;
     manufacturer_data.insert(manufacturer_data.end(), product_family_ptr, product_family_ptr + sizeof(product_family_le));
 
     // Product ID (2 bytes, little-endian)
@@ -52,7 +52,7 @@ static std::vector<uint8_t> GetManufacturerData() {
 
     // Product revision (1 byte)
     constexpr uint8_t product_revision_le = ProductInfo::revision;
-    const auto* product_revision_ptr = reinterpret_cast<const uint8_t*>(&product_revision_le);
+    const auto* product_revision_ptr = &product_revision_le;
     manufacturer_data.insert(manufacturer_data.end(), product_revision_ptr, product_revision_ptr + sizeof(product_revision_le));
 
     return manufacturer_data;
@@ -100,18 +100,14 @@ bool BleService::Initialize() {
         PairingFinished();
     });
 
-    auto& settings_service = BleSettingsConfigurationService::GetInstance();
-    if(!settings_service.Initialize())
-        return false;
-
-    return true;
+    return !BleSettingsConfigurationService::GetInstance().Initialize();
 }
 
-bool BleService::Start() {
+bool BleService::Start() const {
     return Ble::Start();
 }
 
-void BleService::ConfigureAdvertisingData() {
+void BleService::ConfigureAdvertisingData() const {
     BtDataBuilder ad_builder;
     // Flags: general discoverable, no BR/EDR
     const std::vector<uint8_t> flags = { BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR };
@@ -126,7 +122,7 @@ void BleService::ConfigureAdvertisingData() {
     Ble::UpdateAdvertisingData(ad_builder.Build());
 }
 
-void BleService::ConfigureScanResponseData() {
+void BleService::ConfigureScanResponseData() const {
     BtDataBuilder sd_builder;
 
     const std::vector<uint8_t> config_service_uuid = { BT_UUID_SETTINGS_SERVICE_VAL };
@@ -135,11 +131,11 @@ void BleService::ConfigureScanResponseData() {
     Ble::UpdateScanResponseData(sd_builder.Build());
 }
 
-void BleService::PairingStarted() {
+void BleService::PairingStarted() const {
     sensors_processing_service_->Pause();
 }
 
-void BleService::PairingFinished() {
+void BleService::PairingFinished() const {
     sensors_processing_service_->Resume();
 }
 

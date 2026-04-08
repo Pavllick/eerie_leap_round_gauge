@@ -15,13 +15,14 @@ class BleSettingsConfigurationService {
 private:
     static std::unique_ptr<BleSettingsConfigurationService> instance_;
     static bool is_initialized_;
+    static std::pmr::string json_str_buffer_;
 
     std::shared_ptr<ConfigurationService> configuration_service_;
 
-    BleSettingsConfigurationService(std::shared_ptr<ConfigurationService> configuration_service);
+    explicit BleSettingsConfigurationService(std::shared_ptr<ConfigurationService> configuration_service);
 
-    bool HandleConfigWrite(uint8_t settings_id, std::span<const uint8_t> data);
-    std::span<const uint8_t> HandleConfigRead(uint8_t settings_id);
+    bool HandleConfigWrite(uint8_t settings_id, std::span<const uint8_t> data) const;
+    std::span<const uint8_t> HandleConfigRead(uint8_t settings_id) const;
 
 public:
     BleSettingsConfigurationService& operator=(const BleSettingsConfigurationService&) = delete;

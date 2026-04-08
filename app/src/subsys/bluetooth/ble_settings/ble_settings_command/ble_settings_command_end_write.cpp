@@ -10,7 +10,7 @@ BleSettingsCommandEndWrite::BleSettingsCommandEndWrite(
         : BleSettingsCommandRequestBase(status),
         transfer_buffer_(std::move(transfer_buffer)) {}
 
-void BleSettingsCommandEndWrite::SetWriteHandler(WriteHandler write_handler) {
+void BleSettingsCommandEndWrite::SetWriteHandler(const WriteHandler& write_handler) {
     write_handler_ = write_handler;
 }
 

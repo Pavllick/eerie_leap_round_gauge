@@ -53,6 +53,8 @@ private:
     static BleSettingsCommandManager command_manager_;
     static atomic_t disconnected_during_read_;
 
+    static constexpr int MAX_TRANSFER_RETRIES = 4;
+
     BleSettingsService() = default;
     ~BleSettingsService() = default;
 
@@ -88,7 +90,7 @@ private:
 
 public:
     static void Initialize(
-        Callbacks callbacks,
+        const Callbacks& callbacks,
         allocator_type allocator = std::pmr::get_default_resource(),
         size_t max_transfer_size = DefaultMaxTransferSize);
 

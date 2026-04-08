@@ -19,10 +19,12 @@ private:
 
     static bool is_initialized_;
 
-    void ConfigureAdvertisingData();
-    void ConfigureScanResponseData();
-    void PairingStarted();
-    void PairingFinished();
+    static std::vector<uint8_t> GetManufacturerData();
+
+    void ConfigureAdvertisingData() const;
+    void ConfigureScanResponseData() const;
+    void PairingStarted() const;
+    void PairingFinished() const;
 
     BleService(
         std::shared_ptr<ConfigurationService> configuration_service,
@@ -37,7 +39,7 @@ public:
     static BleService& GetInstance();
 
     bool Initialize();
-    bool Start();
+    bool Start() const;
 };
 
 } // namespace eerie_leap::domain::ble_domain::services

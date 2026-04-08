@@ -8,11 +8,11 @@ BleSettingsCommandRequestRead::BleSettingsCommandRequestRead(
     std::shared_ptr<BleSettingsStatus> status)
         : BleSettingsCommandRequestBase(status) {}
 
-void BleSettingsCommandRequestRead::SetReadHandler(ReadHandler handler) {
+void BleSettingsCommandRequestRead::SetReadHandler(const ReadHandler& handler) {
     read_handler_ = handler;
 }
 
-void BleSettingsCommandRequestRead::SetSendHandler(SendHandler send_handler) {
+void BleSettingsCommandRequestRead::SetSendHandler(const SendHandler& send_handler) {
     send_handler_ = send_handler;
 }
 
@@ -63,7 +63,7 @@ void BleSettingsCommandRequestRead::Process(std::span<const uint8_t> data) {
     }
 
     if(config_data.empty()) {
-        LOG_ERR("RequestRead: handler returned empty span");
+        LOG_ERR("RequestRead: handler returned empty configuration data");
         status_->SetErrorCode(BleSettingsErrorCode::HandlerFailed);
         status_->SetState(BleSettingsState::Error);
         return;

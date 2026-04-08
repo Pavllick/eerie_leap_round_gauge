@@ -1,5 +1,8 @@
+#include <zephyr/logging/log.h>
+
 #include "utilities/cbor/cbor_helpers.hpp"
 #include "utilities/memory/heap_allocator.h"
+#include "configuration/json/json_serializer.h"
 
 #include "ui_configuration_manager.h"
 
@@ -7,6 +10,7 @@ namespace eerie_leap::domain::ui_domain::configuration {
 
 using namespace eerie_leap::utilities::cbor;
 using namespace eerie_leap::utilities::memory;
+using namespace eerie_leap::configuration::json;
 
 LOG_MODULE_REGISTER(ui_config_ctrl_logger);
 
@@ -71,6 +75,11 @@ bool UiConfigurationManager::ApplyJsonConfiguration(bool fs_load, std::span<cons
 
 bool UiConfigurationManager::ApplyJsonConfiguration(std::span<const uint8_t> data) {
     return ApplyJsonConfiguration(false, data);
+}
+
+std::pmr::string UiConfigurationManager::GetJsonConfiguration() {
+    auto json_config = json_parser_->Serialize(*configuration_);
+    return JsonSerializer<JsonUiConfig>::Serialize(*json_config);
 }
 
 bool UiConfigurationManager::Update(const UiConfiguration& configuration) {

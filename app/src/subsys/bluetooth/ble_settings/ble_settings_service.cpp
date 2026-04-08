@@ -30,7 +30,7 @@ BleSettingsCommandManager BleSettingsService::command_manager_{status_};
 atomic_t BleSettingsService::disconnected_during_read_{0};
 
 void BleSettingsService::Initialize(
-    Callbacks callbacks,
+    const Callbacks& callbacks,
     allocator_type allocator,
     size_t max_transfer_size) {
 
@@ -68,7 +68,7 @@ void BleSettingsService::BleConnected(bt_conn* conn) {
     k_mutex_unlock(&mutex_);
 }
 
-void BleSettingsService::BleDisconnected(bt_conn* conn) {
+void BleSettingsService::BleDisconnected([[maybe_unused]] bt_conn* conn) {
     // Signal any in-progress SendConfig loop to abort.
     // atomic_set(&disconnected_during_read_, 1);
 
@@ -108,7 +108,7 @@ void BleSettingsService::HandleDataChunk(std::span<const uint8_t> data) {
         return;
     }
 
-    std::copy(data.begin(), data.end(), transfer_buffer_->begin() + status_->GetTransferredBytes());
+    std::ranges::copy(data, transfer_buffer_->begin() + status_->GetTransferredBytes());
     status_->SetTransferredBytes(status_->GetTransferredBytes() + data.size());
 
     LOG_DBG("Received chunk: %u bytes (total: %u/%u)",
@@ -139,9 +139,9 @@ bool BleSettingsService::SendData(uint8_t settings_id, std::span<const uint8_t> 
 
     // Find characteristics
     const bt_gatt_attr* status_attr = bt_gatt_find_by_uuid(
-        gatt_service_.attrs, gatt_service_.attr_count, BT_UUID_SETTINGS_STATUS);
+        gatt_service_.attrs, (uint16_t)gatt_service_.attr_count, BT_UUID_SETTINGS_STATUS);
     const bt_gatt_attr* data_attr = bt_gatt_find_by_uuid(
-        gatt_service_.attrs, gatt_service_.attr_count, BT_UUID_SETTINGS_DATA);
+        gatt_service_.attrs, (uint16_t)gatt_service_.attr_count, BT_UUID_SETTINGS_DATA);
 
     if(!status_attr || !data_attr) {
         LOG_ERR("SendData: BLE characteristics not found");
@@ -163,7 +163,7 @@ bool BleSettingsService::SendData(uint8_t settings_id, std::span<const uint8_t> 
     // 1. Send StartRead notification
     {
         auto start_msg = BleSettingsCommandStartRead::Create(settings_id, data.size());
-        int err = bt_gatt_notify(ble_active_conn_, status_attr, start_msg.data(), start_msg.size());
+        int err = bt_gatt_notify(ble_active_conn_, status_attr, start_msg.data(), (uint16_t)start_msg.size());
         if(err) {
             LOG_ERR("SendData: Failed to send StartRead notification (err %d)", err);
             success = false;
@@ -175,14 +175,27 @@ bool BleSettingsService::SendData(uint8_t settings_id, std::span<const uint8_t> 
         uint16_t mtu = bt_gatt_get_mtu(ble_active_conn_);
         uint16_t chunk_size = std::min<uint16_t>(mtu - 3, 512);
 
-        for(size_t offset = 0; offset < data.size() && success; offset += chunk_size) {
+        int retry_count = 0;
+        size_t offset = 0;
+
+        while(offset < data.size() && success) {
             size_t to_send = std::min<size_t>(chunk_size, data.size() - offset);
 
-            int err = bt_gatt_notify(ble_active_conn_, data_attr, data.data() + offset, to_send);
+            int err = bt_gatt_notify(ble_active_conn_, data_attr, data.data() + offset, (uint16_t)to_send);
             if(err) {
-                LOG_ERR("SendData: Notification failed at offset %zu (err %d)", offset, err);
-                success = false;
-                break;
+                retry_count++;
+
+                if(retry_count >= MAX_TRANSFER_RETRIES) {
+                    success = false;
+                    break;
+                }
+
+                LOG_ERR("SendData: Notification failed at offset %zu (err %d). Retry %d/%d",
+                    offset, err, retry_count, MAX_TRANSFER_RETRIES);
+
+                k_sleep(K_MSEC(100));
+
+                continue;
             }
 
             if(status_->GetState() == BleSettingsState::Reading) {
@@ -193,16 +206,15 @@ bool BleSettingsService::SendData(uint8_t settings_id, std::span<const uint8_t> 
                 break;
             }
 
-            // TODO: Evaluate if this delay is necessary
-            // Small delay for flow control
-            k_sleep(K_MSEC(10));
+            offset += chunk_size;
+            retry_count = 0;
         }
     }
 
     // 3. Send EndRead notification
     if(success) {
         auto end_msg = BleSettingsCommandEndRead::Create();
-        int err = bt_gatt_notify(ble_active_conn_, status_attr, end_msg.data(), end_msg.size());
+        int err = bt_gatt_notify(ble_active_conn_, status_attr, end_msg.data(), (uint16_t)end_msg.size());
         if(err) {
             LOG_ERR("SendData: Failed to send EndRead notification (err %d)", err);
             success = false;
@@ -228,12 +240,12 @@ bool BleSettingsService::SendData(uint8_t settings_id, std::span<const uint8_t> 
 // ==============
 
 ssize_t ControlWriteCallback(
-    bt_conn* conn,
-    const bt_gatt_attr* attr,
+    [[maybe_unused]] bt_conn* conn,
+    [[maybe_unused]] const bt_gatt_attr* attr,
     const void* buf,
     uint16_t len,
     uint16_t offset,
-    uint8_t flags) {
+    [[maybe_unused]] uint8_t flags) {
 
     if(offset != 0)
         return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
@@ -247,12 +259,12 @@ ssize_t ControlWriteCallback(
 }
 
 ssize_t DataWriteCallback(
-    bt_conn* conn,
-    const bt_gatt_attr* attr,
+    [[maybe_unused]] bt_conn* conn,
+    [[maybe_unused]] const bt_gatt_attr* attr,
     const void* buf,
     uint16_t len,
     uint16_t offset,
-    uint8_t flags) {
+    [[maybe_unused]] uint8_t flags) {
 
     if(offset != 0)
         return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
@@ -273,7 +285,7 @@ ssize_t StatusReadCallback(
     uint16_t offset) {
 
     auto status_data = BleSettingsService::GetStatus().GetStatusRaw();
-    return bt_gatt_attr_read(conn, attr, buf, len, offset, status_data.data(), status_data.size());
+    return bt_gatt_attr_read(conn, attr, buf, len, offset, status_data.data(), (uint16_t)status_data.size());
 }
 
 // GATT Service Definition

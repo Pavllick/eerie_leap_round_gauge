@@ -16,6 +16,7 @@ LOG_MODULE_REGISTER(ble_scs_logger);
 
 std::unique_ptr<BleSettingsConfigurationService> BleSettingsConfigurationService::instance_;
 bool BleSettingsConfigurationService::is_initialized_ = false;
+std::pmr::string BleSettingsConfigurationService::json_str_buffer_ = "";
 
 BleSettingsConfigurationService::BleSettingsConfigurationService(std::shared_ptr<ConfigurationService> configuration_service)
     : configuration_service_(std::move(configuration_service)) {}
@@ -55,24 +56,16 @@ bool BleSettingsConfigurationService::Initialize() {
     return true;
 }
 
-bool BleSettingsConfigurationService::HandleConfigWrite(uint8_t settings_id, std::span<const uint8_t> data) {
+bool BleSettingsConfigurationService::HandleConfigWrite(uint8_t settings_id, std::span<const uint8_t> data) const {
     auto type = static_cast<ConfigurationService::Type>(settings_id);
     return configuration_service_->ApplyJsonConfiguration(type, data);
 }
 
-std::string test = "test";
-std::span<const uint8_t> BleSettingsConfigurationService::HandleConfigRead(uint8_t settings_id) {
+std::span<const uint8_t> BleSettingsConfigurationService::HandleConfigRead(uint8_t settings_id) const {
     auto type = static_cast<ConfigurationService::Type>(settings_id);
-    // return configuration_service_->GetJsonConfiguration(type);
+    json_str_buffer_ = configuration_service_->GetJsonConfiguration(type);
 
-    switch(type) {
-        case ConfigurationService::Type::CanbusJson:
-            // return config data
-            return { reinterpret_cast<const uint8_t*>(test.c_str()), test.size() };
-
-        default:
-            return {};
-    }
+    return { reinterpret_cast<const uint8_t*>(json_str_buffer_.c_str()), json_str_buffer_.size() };
 }
 
 } // namespace eerie_leap::domain::ble_domain::services

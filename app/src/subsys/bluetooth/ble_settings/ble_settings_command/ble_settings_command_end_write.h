@@ -26,7 +26,7 @@ public:
         std::shared_ptr<std::pmr::vector<uint8_t>> transfer_buffer);
     virtual ~BleSettingsCommandEndWrite() = default;
 
-    void SetWriteHandler(WriteHandler write_handler);
+    void SetWriteHandler(const WriteHandler& write_handler);
     void Process(std::span<const uint8_t> data) override;
 };
 

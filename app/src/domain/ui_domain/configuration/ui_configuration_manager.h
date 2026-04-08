@@ -44,6 +44,7 @@ public:
     std::shared_ptr<UiConfiguration> Get(bool force_load = false);
 
     bool ApplyJsonConfiguration(std::span<const uint8_t> data) override;
+    std::pmr::string GetJsonConfiguration() override;
 };
 
 } // namespace eerie_leap::domain::ui_domain::configuration
