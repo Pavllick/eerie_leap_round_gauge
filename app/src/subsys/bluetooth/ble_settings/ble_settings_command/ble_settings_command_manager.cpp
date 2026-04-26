@@ -10,7 +10,7 @@ BleSettingsCommandManager::BleSettingsCommandManager(std::shared_ptr<BleSettings
     commands_.emplace(BleSettingsCommandType::StartWrite,
         std::make_unique<BleSettingsCommandStartWrite>(status_));
     commands_.emplace(BleSettingsCommandType::EndWrite,
-        std::make_unique<BleSettingsCommandEndWrite>(status_, transfer_buffer_));
+        std::make_unique<BleSettingsCommandEndWrite>(status_));
     commands_.emplace(BleSettingsCommandType::RequestRead,
         std::make_unique<BleSettingsCommandRequestRead>(status_));
     commands_.emplace(BleSettingsCommandType::Abort,
@@ -26,16 +26,15 @@ void BleSettingsCommandManager::Initialize(
 
     auto* end_write_cmd = static_cast<BleSettingsCommandEndWrite*>(
         commands_[BleSettingsCommandType::EndWrite].get());
-    end_write_cmd->SetWriteHandler(callbacks_.on_config_write);
+    end_write_cmd->Initialize(transfer_buffer_, callbacks_.on_config_write);
 
     auto* start_write_cmd = static_cast<BleSettingsCommandStartWrite*>(
         commands_[BleSettingsCommandType::StartWrite].get());
-    start_write_cmd->SetMaxTransferSize(transfer_buffer_->size());
+    start_write_cmd->Initialize(transfer_buffer_->size());
 
     auto* request_read_cmd = static_cast<BleSettingsCommandRequestRead*>(
         commands_[BleSettingsCommandType::RequestRead].get());
-    request_read_cmd->SetReadHandler(callbacks_.on_config_read);
-    request_read_cmd->SetSendHandler(callbacks_.on_send);
+    request_read_cmd->Initialize(callbacks_.on_config_read, callbacks_.on_send);
 }
 
 void BleSettingsCommandManager::Process(std::span<const uint8_t> data) {

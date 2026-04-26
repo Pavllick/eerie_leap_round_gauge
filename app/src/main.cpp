@@ -223,9 +223,6 @@ int main() {
     SetupTestSensors(sensors_configuration_manager);
 
     auto sensors_rendering_service = std::make_shared<SensorsRenderingService>(
-        time_service,
-        canbus_configuration_manager,
-        canbus_service,
         sensor_readings_frame);
     sensors_rendering_service->Initialize();
     sensors_rendering_service->Start();
@@ -255,6 +252,16 @@ int main() {
 
     sensors_processing_service->Start();
 
+    canbus_configuration_manager->RegisterConfigurationUpdatedHandler([&] {
+        canbus_com_service->Stop();
+        sensors_processing_service->Stop();
+
+        canbus_service->Configure();
+
+        canbus_com_service->Start();
+        sensors_processing_service->Start();
+    });
+
     auto& ble_service = BleService::Create(
         configuration_service, sensors_processing_service);
     ble_service.Initialize();
@@ -263,6 +270,7 @@ int main() {
 	while (true) {
         // SystemInfo::PrintHeapInfo();
         // SystemInfo::PrintStackInfo();
+        // SystemInfo::PrintThreadIds();
         k_msleep(SLEEP_TIME_MS);
 
         // TODO: For test purposes only

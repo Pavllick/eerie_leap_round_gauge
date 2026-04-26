@@ -60,7 +60,12 @@ bool BleSettingsConfigurationService::HandleConfigWrite(uint8_t settings_id, std
     auto type = static_cast<ConfigurationService::Type>(settings_id);
     std::string_view json_str(reinterpret_cast<const char*>(data.data()), data.size());
 
-    return configuration_service_->ApplyJsonConfiguration(type, json_str);
+    try {
+        return configuration_service_->ApplyJsonConfiguration(type, json_str);
+    } catch (...) {
+        LOG_ERR("Failed to apply JSON configuration for settings_id=%d", settings_id);
+        return false;
+    }
 }
 
 std::span<const uint8_t> BleSettingsConfigurationService::HandleConfigRead(uint8_t settings_id) const {

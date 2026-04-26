@@ -5,12 +5,14 @@ LOG_MODULE_DECLARE(ble_settings_logger);
 namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command {
 
 BleSettingsCommandEndWrite::BleSettingsCommandEndWrite(
-    std::shared_ptr<BleSettingsStatus> status,
-    std::shared_ptr<std::pmr::vector<uint8_t>> transfer_buffer)
-        : BleSettingsCommandRequestBase(status),
-        transfer_buffer_(std::move(transfer_buffer)) {}
+    std::shared_ptr<BleSettingsStatus> status)
+        : BleSettingsCommandRequestBase(status) {}
 
-void BleSettingsCommandEndWrite::SetWriteHandler(const WriteHandler& write_handler) {
+void BleSettingsCommandEndWrite::Initialize(
+    std::shared_ptr<std::pmr::vector<uint8_t>> transfer_buffer,
+    const WriteHandler& write_handler) {
+
+    transfer_buffer_ = std::move(transfer_buffer);
     write_handler_ = write_handler;
 }
 

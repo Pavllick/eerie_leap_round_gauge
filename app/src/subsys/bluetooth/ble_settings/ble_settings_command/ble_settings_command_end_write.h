@@ -22,11 +22,11 @@ private:
 
 public:
     explicit BleSettingsCommandEndWrite(
-        std::shared_ptr<BleSettingsStatus> status,
-        std::shared_ptr<std::pmr::vector<uint8_t>> transfer_buffer);
+        std::shared_ptr<BleSettingsStatus> status);
     virtual ~BleSettingsCommandEndWrite() = default;
 
-    void SetWriteHandler(const WriteHandler& write_handler);
+    void Initialize(std::shared_ptr<std::pmr::vector<uint8_t>> transfer_buffer, const WriteHandler& write_handler);
+
     void Process(std::span<const uint8_t> data) override;
 };
 

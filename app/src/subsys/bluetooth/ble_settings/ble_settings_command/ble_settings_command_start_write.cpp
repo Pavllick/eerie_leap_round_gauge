@@ -7,7 +7,7 @@ namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command {
 BleSettingsCommandStartWrite::BleSettingsCommandStartWrite(std::shared_ptr<BleSettingsStatus> status)
     : BleSettingsCommandRequestBase(status) {}
 
-void BleSettingsCommandStartWrite::SetMaxTransferSize(size_t max_transfer_size) {
+void BleSettingsCommandStartWrite::Initialize(size_t max_transfer_size) {
     max_transfer_size_ = max_transfer_size;
 }
 

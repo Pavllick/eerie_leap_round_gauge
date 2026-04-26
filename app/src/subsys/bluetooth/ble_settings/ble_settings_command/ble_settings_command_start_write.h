@@ -20,7 +20,8 @@ public:
     explicit BleSettingsCommandStartWrite(std::shared_ptr<BleSettingsStatus> status);
     virtual ~BleSettingsCommandStartWrite() = default;
 
-    void SetMaxTransferSize(size_t max_transfer_size);
+    void Initialize(size_t max_transfer_size);
+
     void Process(std::span<const uint8_t> data) override;
 };
 

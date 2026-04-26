@@ -8,11 +8,8 @@ BleSettingsCommandRequestRead::BleSettingsCommandRequestRead(
     std::shared_ptr<BleSettingsStatus> status)
         : BleSettingsCommandRequestBase(status) {}
 
-void BleSettingsCommandRequestRead::SetReadHandler(const ReadHandler& handler) {
+void BleSettingsCommandRequestRead::Initialize(const ReadHandler& handler, const SendHandler& send_handler) {
     read_handler_ = handler;
-}
-
-void BleSettingsCommandRequestRead::SetSendHandler(const SendHandler& send_handler) {
     send_handler_ = send_handler;
 }
 

@@ -14,14 +14,8 @@ using namespace eerie_leap::domain::ui_domain::event_bus;
 LOG_MODULE_REGISTER(sensors_rendering_logger);
 
 SensorsRenderingService::SensorsRenderingService(
-    std::shared_ptr<TimeService> time_service,
-    std::shared_ptr<CanbusConfigurationManager> canbus_configuration_manager,
-    std::shared_ptr<CanbusService> canbus_service,
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame)
         : work_queue_thread_(nullptr),
-        time_service_(std::move(time_service)),
-        canbus_configuration_manager_(std::move(canbus_configuration_manager)),
-        canbus_service_(std::move(canbus_service)),
         sensor_readings_frame_(std::move(sensor_readings_frame)) {};
 
 void SensorsRenderingService::Initialize() {

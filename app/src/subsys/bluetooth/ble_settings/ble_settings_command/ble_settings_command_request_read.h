@@ -24,8 +24,7 @@ public:
     explicit BleSettingsCommandRequestRead(std::shared_ptr<BleSettingsStatus> status);
     virtual ~BleSettingsCommandRequestRead() = default;
 
-    void SetReadHandler(const ReadHandler& handler);
-    void SetSendHandler(const SendHandler& send_handler);
+    void Initialize(const ReadHandler& handler, const SendHandler& send_handler);
 
     void Process(std::span<const uint8_t> data) override;
 };

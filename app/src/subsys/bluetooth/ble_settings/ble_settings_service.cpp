@@ -39,7 +39,7 @@ void BleSettingsService::Initialize(
     k_mutex_lock(&mutex_, K_FOREVER);
 
     max_transfer_size_ = max_transfer_size;
-    transfer_buffer_ = std::make_shared<std::pmr::vector<uint8_t>>(max_transfer_size_, uint8_t{0}, allocator);
+    transfer_buffer_ = std::make_shared<std::pmr::vector<uint8_t>>(max_transfer_size_, allocator);
     transfer_buffer_->resize(max_transfer_size_);
 
     callbacks_ = callbacks;
