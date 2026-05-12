@@ -9,7 +9,7 @@
 
 namespace eerie_leap::subsys::event_bus {
 
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
+template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 struct EventBusTask {
     k_sem* processing_semaphore;
     std::shared_ptr<std::unordered_map<EventTypeEnum, std::vector<std::unique_ptr<Subscription<EventTypeEnum, PayloadTypeEnum>>>>> subscribers;

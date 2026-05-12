@@ -1,5 +1,7 @@
 #include <zephyr/kernel.h>
 
+#include "domain/ui_domain/models/widget_property.h"
+
 #include "views/widgets/indicators/indicator_base.h"
 #include "views/themes/theme_manager.h"
 

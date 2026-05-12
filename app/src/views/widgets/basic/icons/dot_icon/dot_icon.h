@@ -22,7 +22,7 @@ public:
 
     int ApplyTheme(const ITheme& theme) override;
     int DoRender() override;
-    IconType GetIconType() const override { return IconType::Dot; }
+    [[nodiscard]] IconType GetIconType() const override { return IconType::Dot; }
 };
 
 } // namespace eerie_leap::views::widgets::basic::icons

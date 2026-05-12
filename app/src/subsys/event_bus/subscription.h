@@ -7,7 +7,7 @@
 
 namespace eerie_leap::subsys::event_bus {
 
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
+template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 struct Subscription {
     size_t id;
     EventTypeEnum event_type;

@@ -8,8 +8,9 @@
 
 namespace eerie_leap::views {
 
-using namespace eerie_leap::views::themes;
-using namespace eerie_leap::views::utilitites;
+using eerie_leap::views::utilitites::Frame;
+using eerie_leap::views::themes::ITheme;
+using eerie_leap::views::themes::IThemeObserver;
 
 class IRenderable : public IThemeObserver {
 protected:

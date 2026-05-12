@@ -13,12 +13,8 @@
 
 namespace eerie_leap::views::screens {
 
-using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::domain::ui_domain::assets_manager;
-
-using namespace eerie_leap::views;
-using namespace eerie_leap::views::utilitites;
-using namespace eerie_leap::views::widgets;
+using eerie_leap::domain::ui_domain::models::GridSettings;
+using eerie_leap::domain::ui_domain::assets_manager::UiAssetsManager;
 
 class Screen : public RenderableBase, public IScreen {
 protected:

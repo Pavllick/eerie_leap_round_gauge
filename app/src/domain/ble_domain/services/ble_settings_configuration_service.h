@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atomic>
 #include <memory>
 
 #include <zephyr/kernel.h>
@@ -9,7 +8,7 @@
 
 namespace eerie_leap::domain::ble_domain::services {
 
-using namespace eerie_leap::domain::configuration_domain::services;
+using eerie_leap::domain::configuration_domain::services::ConfigurationService;
 
 class BleSettingsConfigurationService {
 private:

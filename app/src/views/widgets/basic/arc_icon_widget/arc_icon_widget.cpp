@@ -1,3 +1,5 @@
+#include "domain/ui_domain/models/widget_property.h"
+
 #include "views/utilitites/positioning_helpers.h"
 #include "views/themes/theme_manager.h"
 

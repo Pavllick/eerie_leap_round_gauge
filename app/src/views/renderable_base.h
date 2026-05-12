@@ -3,14 +3,12 @@
 #include <memory>
 #include <zephyr/kernel.h>
 
-#include "views/utilitites/frame.h"
 #include "views/i_renderable.h"
 #include "views/themes/theme_manager.h"
 
 namespace eerie_leap::views {
 
-using namespace eerie_leap::views::utilitites;
-using namespace eerie_leap::views::themes;
+using eerie_leap::views::themes::ThemeManager;
 
 class RenderableBase : public virtual IRenderable {
 protected:

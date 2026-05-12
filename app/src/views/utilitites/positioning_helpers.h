@@ -6,7 +6,7 @@
 
 namespace eerie_leap::views::utilitites {
 
-using namespace eerie_leap::domain::ui_domain::models;
+using eerie_leap::domain::ui_domain::models::WidgetPosition;
 
 class PositioningHelpers {
 public:

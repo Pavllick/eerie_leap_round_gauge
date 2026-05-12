@@ -10,6 +10,7 @@
 namespace eerie_leap::views::widgets::indicators {
 
 using namespace eerie_leap::utilities::string;
+using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::event_bus;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::widgets::event_bus_filters;

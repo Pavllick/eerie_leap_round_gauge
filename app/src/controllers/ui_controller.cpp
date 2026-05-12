@@ -18,7 +18,7 @@ UiController::UiController(
     : ui_configuration_manager_(std::move(ui_configuration_manager)),
       ui_assets_manager_(std::move(ui_assets_manager)) {
 
-    main_view_ = make_unique_ext<MainView>();
+    main_view_ = std::make_unique<MainView>();
     Configure(ui_configuration_manager_->Get());
 }
 

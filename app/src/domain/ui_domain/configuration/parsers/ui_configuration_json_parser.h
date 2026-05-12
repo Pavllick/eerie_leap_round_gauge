@@ -1,16 +1,17 @@
 #pragma once
 
-#include "utilities/memory/memory_resource_manager.h"
+#include "eerie_memory.hpp"
+
 #include "utilities/type/config_value.h"
 #include "configuration/json/configs/json_ui_config.h"
 #include "domain/ui_domain/models/ui_configuration.h"
 
 namespace eerie_leap::domain::ui_domain::configuration::parsers {
 
-using namespace eerie_leap::utilities::memory;
-using namespace eerie_leap::utilities::type;
-using namespace eerie_leap::configuration::json::configs;
-using namespace eerie_leap::domain::ui_domain::models;
+using eerie_leap::utilities::type::ConfigValue;
+using eerie_leap::configuration::json::configs::JsonUiConfig;
+using eerie_leap::configuration::json::configs::JsonPropertiesConfig;
+using eerie_leap::domain::ui_domain::models::UiConfiguration;
 
 class UiConfigurationJsonParser {
 private:
@@ -25,8 +26,8 @@ private:
 public:
     UiConfigurationJsonParser() = default;
 
-    pmr_unique_ptr<JsonUiConfig> Serialize(const UiConfiguration& configuration);
-    pmr_unique_ptr<UiConfiguration> Deserialize(std::pmr::memory_resource* mr, const JsonUiConfig& config);
+    eerie_memory::pmr_unique_ptr<JsonUiConfig> Serialize(const UiConfiguration& configuration);
+    eerie_memory::pmr_unique_ptr<UiConfiguration> Deserialize(std::pmr::memory_resource* mr, const JsonUiConfig& config);
 };
 
 } // namespace eerie_leap::domain::ui_domain::configuration::parsers

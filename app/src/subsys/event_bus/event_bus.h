@@ -21,9 +21,12 @@
 
 namespace eerie_leap::subsys::event_bus {
 
-using namespace eerie_leap::subsys::threading;
+namespace threading = eerie_leap::subsys::threading;
+namespace concepts = eerie_leap::utilities::concepts;
 
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
+using threading::WorkQueueThread;
+
+template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 class EventBus {
 private:
     std::string bus_name_;
@@ -33,14 +36,14 @@ private:
     using EventBusTaskType = EventBusTask<EventTypeEnum, PayloadTypeEnum>;
 
     std::unique_ptr<WorkQueueThread> work_queue_thread_;
-    std::optional<WorkQueueTask<EventBusTaskType>> work_queue_task_;
+    std::optional<threading::WorkQueueTask<EventBusTaskType>> work_queue_task_;
 
     k_sem processing_semaphore_;
     static constexpr k_timeout_t PROCESSING_TIMEOUT = K_MSEC(200);
 
     void Initialize();
 
-    static WorkQueueTaskResult ProcessEventWork(EventBusTaskType* task);
+    static threading::WorkQueueTaskResult ProcessEventWork(EventBusTaskType* task);
     static void ProcessEvent(
         std::shared_ptr<std::unordered_map<EventTypeEnum, std::vector<std::unique_ptr<Subscription<EventTypeEnum, PayloadTypeEnum>>>>>& subscribers,
         const Event<EventTypeEnum, PayloadTypeEnum>& event);

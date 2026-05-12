@@ -4,6 +4,7 @@
 #include <cstdbool>
 #include <cstddef>
 #include <cstring>
+
 #include "cbor_ui_config.h"
 
 int cbor_encode_CborUiConfig(

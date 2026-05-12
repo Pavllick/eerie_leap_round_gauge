@@ -9,6 +9,8 @@
 
 namespace eerie_leap::views::screens {
 
+using namespace eerie_leap::views::widgets;
+
 LOG_MODULE_REGISTER(screen_logger);
 
 Screen::Screen(

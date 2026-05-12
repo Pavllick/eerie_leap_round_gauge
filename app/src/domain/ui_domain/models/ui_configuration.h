@@ -10,8 +10,6 @@
 
 namespace eerie_leap::domain::ui_domain::models {
 
-using namespace eerie_leap::domain::ui_domain::models;
-
 struct UiConfiguration {
     using allocator_type = std::pmr::polymorphic_allocator<>;
 

@@ -4,7 +4,7 @@
 
 #include "cbor_ui_config.h"
 
-using namespace eerie_leap::utilities::cbor;
+using eerie_leap::utilities::cbor::CborSizeBuilder;
 
 static size_t GetCborPropertyValueTypeSize(const CborPropertyValueType_r& value) {
     CborSizeBuilder builder;

@@ -4,13 +4,9 @@
 
 #include <lvgl.h>
 
-#include "views/widgets/widget_base.h"
 #include "views/widgets/basic/icon_widget/icon_widget.h"
 
 namespace eerie_leap::views::widgets::basic {
-
-using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::views::widgets;
 
 class ArcIconWidget : public IconWidget {
 private:
@@ -20,8 +16,8 @@ private:
     int ApplyTheme(const ITheme& theme) override;
 
 public:
-    explicit ArcIconWidget(uint32_t id, std::shared_ptr<Frame> parent, IconType icon_type = IconType::None);
-    WidgetType GetType() const override { return WidgetType::BasicArcIcon; }
+    ArcIconWidget(uint32_t id, std::shared_ptr<Frame> parent, IconType icon_type = IconType::None);
+    [[nodiscard]] WidgetType GetType() const override { return WidgetType::BasicArcIcon; }
 
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
 };

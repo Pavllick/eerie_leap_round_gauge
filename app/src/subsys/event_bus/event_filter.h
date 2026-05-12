@@ -11,7 +11,7 @@ concept EventFilter = requires(T filter, const Event<EventTypeEnum, PayloadTypeE
     { filter(event) } -> std::convertible_to<bool>;
 };
 
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
+template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 struct AcceptAllFilter {
     bool operator()(const Event<EventTypeEnum, PayloadTypeEnum>&) const { return true; }
 };

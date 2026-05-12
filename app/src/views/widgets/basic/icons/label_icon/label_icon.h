@@ -22,7 +22,7 @@ public:
     int DoRender() override;
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
 
-    IconType GetIconType() const override { return IconType::Label; }
+    [[nodiscard]] IconType GetIconType() const override { return IconType::Label; }
 };
 
 } // namespace eerie_leap::views::widgets::basic::icons

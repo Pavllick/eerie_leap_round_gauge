@@ -5,7 +5,6 @@
 
 #include "views/i_renderable.h"
 #include "domain/ui_domain/models/widget_type.h"
-#include "domain/ui_domain/models/widget_property.h"
 #include "domain/ui_domain/models/widget_position.h"
 #include "domain/ui_domain/models/widget_size.h"
 #include "domain/ui_domain/models/widget_configuration.h"
@@ -13,9 +12,11 @@
 
 namespace eerie_leap::views::widgets {
 
-using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::domain::ui_domain::assets_manager;
-using namespace eerie_leap::views;
+using eerie_leap::domain::ui_domain::models::WidgetConfiguration;
+using eerie_leap::domain::ui_domain::models::WidgetPosition;
+using eerie_leap::domain::ui_domain::models::WidgetSize;
+using eerie_leap::domain::ui_domain::models::WidgetType;
+using eerie_leap::domain::ui_domain::assets_manager::UiAssetsManager;
 
 class IWidget : public virtual IRenderable {
 public:

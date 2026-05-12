@@ -7,7 +7,7 @@
 
 namespace eerie_leap::views::widgets::indicators {
 
-using namespace eerie_leap::domain::ui_domain::models;
+using eerie_leap::domain::ui_domain::models::InidicatorDirection;
 
 class BarIndicator : public IndicatorBase {
 protected:

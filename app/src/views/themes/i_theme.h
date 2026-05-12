@@ -6,24 +6,25 @@
 
 namespace eerie_leap::views::themes {
 
-using namespace eerie_leap::views::themes::types;
+using eerie_leap::views::themes::types::Color;
+using eerie_leap::views::themes::types::Font;
 
 class ITheme {
 public:
     virtual ~ITheme() = default;
 
     // Colors
-    virtual Color GetPrimaryColor() const = 0;
-    virtual Color GetSecondaryColor() const = 0;
-    virtual Color GetInactiveColor() const = 0;
-    virtual Color GetBackgroundColor() const = 0;
-    virtual Color GetSurfaceColor() const = 0;
-    virtual Color GetAccentColor() const = 0;
-    virtual Color GetErrorColor() const = 0;
+    [[nodiscard]] virtual Color GetPrimaryColor() const = 0;
+    [[nodiscard]] virtual Color GetSecondaryColor() const = 0;
+    [[nodiscard]] virtual Color GetInactiveColor() const = 0;
+    [[nodiscard]] virtual Color GetBackgroundColor() const = 0;
+    [[nodiscard]] virtual Color GetSurfaceColor() const = 0;
+    [[nodiscard]] virtual Color GetAccentColor() const = 0;
+    [[nodiscard]] virtual Color GetErrorColor() const = 0;
 
-    virtual Font GetPrimaryFont() const = 0;
-    virtual Font GetSecondaryFont() const = 0;
-    virtual Font GetPrimaryFontLarge() const = 0;
+    [[nodiscard]] virtual Font GetPrimaryFont() const = 0;
+    [[nodiscard]] virtual Font GetSecondaryFont() const = 0;
+    [[nodiscard]] virtual Font GetPrimaryFontLarge() const = 0;
 };
 
 } // namespace eerie_leap::views::themes

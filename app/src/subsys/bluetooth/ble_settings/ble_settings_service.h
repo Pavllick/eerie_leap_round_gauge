@@ -20,7 +20,9 @@
 
 namespace eerie_leap::subsys::bluetooth::ble_settings {
 
-using namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command;
+using eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command::BleSettingsCommandManager;
+using eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command::BleSettingsCommandEndWrite;
+using eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command::BleSettingsCommandRequestRead;
 
 // Base UUID: e7a1b2c3-d4e5-6f78-9a0b-c1d2e3f40000
 #define BT_UUID_SETTINGS_SERVICE_ENCODE(characteristic_id) \

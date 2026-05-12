@@ -7,17 +7,17 @@
 
 namespace eerie_leap::domain::ui_domain::event_bus {
 
-using namespace eerie_leap::subsys::event_bus;
+namespace event_bus = eerie_leap::subsys::event_bus;
 
-using UiEventPayload = EventPayload<UiPayloadType>;
-using UiEvent = Event<UiEventType, UiPayloadType>;
-using UiSubscriptionHandle = SubscriptionHandle<UiEventType>;
+using UiEventPayload = event_bus::EventPayload<UiPayloadType>;
+using UiEvent = event_bus::Event<UiEventType, UiPayloadType>;
+using UiSubscriptionHandle = event_bus::SubscriptionHandle<UiEventType>;
 
-class UiEventBus : public EventBus<UiEventType, UiPayloadType> {
+class UiEventBus : public event_bus::EventBus<UiEventType, UiPayloadType> {
 private:
     static constexpr int event_bus_stack_size_ = 4096;
 
-    UiEventBus() : EventBus<UiEventType, UiPayloadType>("ui_event_bus", event_bus_stack_size_) { }
+    UiEventBus() : event_bus::EventBus<UiEventType, UiPayloadType>("ui_event_bus", event_bus_stack_size_) { }
 
 public:
     static UiEventBus& GetInstance() {

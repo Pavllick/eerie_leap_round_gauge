@@ -9,13 +9,11 @@
 #include <zephyr/kernel.h>
 #include <lvgl.h>
 
-#include "utilities/memory/memory_resource_manager.h"
 #include "subsys/fs/services/i_fs_service.h"
 
 namespace eerie_leap::domain::ui_domain::assets_manager {
 
-using namespace eerie_leap::utilities::memory;
-using namespace eerie_leap::subsys::fs::services;
+using eerie_leap::subsys::fs::services::IFsService;
 
 class UiAssetsManager {
 private:

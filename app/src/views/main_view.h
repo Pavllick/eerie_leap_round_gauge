@@ -10,7 +10,7 @@
 
 namespace eerie_leap::views {
 
-using namespace eerie_leap::views::screens;
+using eerie_leap::views::screens::IScreen;
 
 class MainView : public RenderableBase {
 private:

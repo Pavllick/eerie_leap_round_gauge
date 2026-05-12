@@ -5,15 +5,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "domain/ui_domain/models/icon_type.h"
-
 #include "views/widgets/basic/icons/i_icon.h"
-#include "views/utilitites/frame.h"
 
 namespace eerie_leap::views::widgets::basic::icons {
-
-using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::views::utilitites;
 
 class IconFactory {
 public:

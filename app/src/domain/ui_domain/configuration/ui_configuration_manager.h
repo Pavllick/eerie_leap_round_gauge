@@ -16,17 +16,18 @@
 
 namespace eerie_leap::domain::ui_domain::configuration {
 
-using namespace eerie_leap::utilities::memory;
-using namespace eerie_leap::configuration::services;
-using namespace eerie_leap::configuration::json::configs;
-using namespace eerie_leap::domain::configuration_domain::utilities;
-using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::domain::ui_domain::configuration::parsers;
+namespace config_services = eerie_leap::configuration::services;
+using eerie_leap::configuration::json::configs::JsonUiConfig;
+using eerie_leap::domain::configuration_domain::utilities::IJsonConfigurationManager;
+
+using eerie_leap::domain::ui_domain::models::UiConfiguration;
+using eerie_leap::domain::ui_domain::configuration::parsers::UiConfigurationCborParser;
+using eerie_leap::domain::ui_domain::configuration::parsers::UiConfigurationJsonParser;
 
 class UiConfigurationManager : public IJsonConfigurationManager {
 private:
-    std::unique_ptr<CborConfigurationService<CborUiConfig>> cbor_configuration_service_;
-    std::unique_ptr<JsonConfigurationService<JsonUiConfig>> json_configuration_service_;
+    std::unique_ptr<config_services::CborConfigurationService<CborUiConfig>> cbor_configuration_service_;
+    std::unique_ptr<config_services::JsonConfigurationService<JsonUiConfig>> json_configuration_service_;
 
     std::unique_ptr<UiConfigurationCborParser> cbor_parser_;
     std::unique_ptr<UiConfigurationJsonParser> json_parser_;
@@ -38,8 +39,8 @@ private:
 
 public:
     explicit UiConfigurationManager(
-        std::unique_ptr<CborConfigurationService<CborUiConfig>> cbor_configuration_service,
-        std::unique_ptr<JsonConfigurationService<JsonUiConfig>> json_configuration_service);
+        std::unique_ptr<config_services::CborConfigurationService<CborUiConfig>> cbor_configuration_service,
+        std::unique_ptr<config_services::JsonConfigurationService<JsonUiConfig>> json_configuration_service);
     bool Update(const UiConfiguration& configuration);
     std::shared_ptr<UiConfiguration> Get(bool force_load = false);
 

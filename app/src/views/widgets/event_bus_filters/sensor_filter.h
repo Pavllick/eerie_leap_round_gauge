@@ -8,16 +8,16 @@
 
 namespace eerie_leap::views::widgets::event_bus_filters {
 
-using namespace eerie_leap::domain::ui_domain::event_bus;
+using eerie_leap::domain::ui_domain::event_bus::UiEvent;
+using eerie_leap::domain::ui_domain::event_bus::UiPayloadType;
 
 struct SensorFilter {
     uint32_t sensor_id;
 
     bool operator()(const UiEvent& event) const {
-        if (auto it = event.payload.find(UiPayloadType::SensorId); it != event.payload.end()) {
-            if (auto id = std::get_if<uint32_t>(&it->second)) {
+        if(auto it = event.payload.find(UiPayloadType::SensorId); it != event.payload.end()) {
+            if(auto id = std::get_if<uint32_t>(&it->second))
                 return *id == sensor_id;
-            }
         }
 
         return false;

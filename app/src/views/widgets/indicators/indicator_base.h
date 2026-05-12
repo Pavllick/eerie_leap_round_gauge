@@ -8,14 +8,13 @@
 
 namespace eerie_leap::views::widgets::indicators {
 
-using namespace eerie_leap::utilities::math;
-using namespace eerie_leap::views::widgets;
+using EmaFilterInt32 = eerie_leap::utilities::math::EmaFilter<int32_t>;
 
 class IndicatorBase : public WidgetBase, public IIndicator {
 private:
     static void UpdateIndicatorCallback(void* obj, int32_t value);
 
-    EmaFilter<int32_t> value_filter_;
+    EmaFilterInt32 value_filter_;
     uint8_t smoothing_factor_ = 4;
 
 protected:

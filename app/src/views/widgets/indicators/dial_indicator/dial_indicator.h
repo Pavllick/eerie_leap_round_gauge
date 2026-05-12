@@ -7,7 +7,7 @@
 
 namespace eerie_leap::views::widgets::indicators {
 
-using namespace eerie_leap::views::widgets::basic;
+using eerie_leap::views::widgets::basic::IconWidget;
 
 class DialIndicator : public IndicatorBase {
 private:
@@ -33,7 +33,7 @@ private:
 
 public:
     explicit DialIndicator(uint32_t id, std::shared_ptr<Frame> parent);
-    WidgetType GetType() const override { return WidgetType::IndicatorDial; }
+    [[nodiscard]] WidgetType GetType() const override { return WidgetType::IndicatorDial; }
 };
 
 } // namespace eerie_leap::views::widgets::indicators

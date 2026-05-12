@@ -8,9 +8,11 @@
 
 namespace eerie_leap::domain::ui_domain::configuration {
 
+using namespace eerie_memory;
 using namespace eerie_leap::utilities::cbor;
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::configuration::json;
+using namespace eerie_leap::configuration::services;
 
 LOG_MODULE_REGISTER(ui_config_ctrl_logger);
 

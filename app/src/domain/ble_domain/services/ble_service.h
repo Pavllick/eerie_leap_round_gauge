@@ -7,8 +7,8 @@
 
 namespace eerie_leap::domain::ble_domain::services {
 
-using namespace eerie_leap::domain::configuration_domain::services;
-using namespace eerie_leap::domain::sensor_domain::services;
+using eerie_leap::domain::configuration_domain::services::ConfigurationService;
+using eerie_leap::domain::sensor_domain::services::SensorsProcessingService;
 
 class BleService {
 private:

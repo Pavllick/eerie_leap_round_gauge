@@ -1,3 +1,5 @@
+#include "domain/ui_domain/models/widget_property.h"
+
 #include "views/utilitites/positioning_helpers.h"
 #include "views/themes/theme_manager.h"
 
@@ -9,6 +11,7 @@ namespace eerie_leap::views::widgets::basic {
 
 using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::models;
+using namespace eerie_leap::domain::ui_domain::event_bus;
 using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::themes;
 using namespace eerie_leap::views::widgets::basic::icons;

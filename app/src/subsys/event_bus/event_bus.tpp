@@ -4,9 +4,9 @@
 
 namespace eerie_leap::subsys::event_bus {
 
-using namespace eerie_leap::utilities::memory;
+using eerie_leap::utilities::memory::Mrm;
 
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
+template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 EventBus<EventTypeEnum, PayloadTypeEnum>::EventBus(std::string bus_name, int k_stack_size)
     : bus_name_(std::move(bus_name)) {
 
@@ -23,7 +23,7 @@ EventBus<EventTypeEnum, PayloadTypeEnum>::EventBus(std::string bus_name, int k_s
     Initialize();
 }
 
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
+template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 void EventBus<EventTypeEnum, PayloadTypeEnum>::Initialize() {
     work_queue_thread_->Initialize();
 
@@ -33,7 +33,7 @@ void EventBus<EventTypeEnum, PayloadTypeEnum>::Initialize() {
     work_queue_task_ = work_queue_thread_->CreateTask(ProcessEventWork, std::move(event_task));
 }
 
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
+template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 template<EventFilter<EventTypeEnum, PayloadTypeEnum> FilterType>
 std::expected<SubscriptionHandle<EventTypeEnum>, std::string>
 EventBus<EventTypeEnum, PayloadTypeEnum>::Subscribe(EventTypeEnum type, FilterType filter, EventHandler<EventTypeEnum, PayloadTypeEnum> handler) {
@@ -51,7 +51,7 @@ EventBus<EventTypeEnum, PayloadTypeEnum>::Subscribe(EventTypeEnum type, FilterTy
     }
 }
 
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
+template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 bool EventBus<EventTypeEnum, PayloadTypeEnum>::Unsubscribe(SubscriptionHandle<EventTypeEnum>& handle) {
     if(!handle.IsValid())
         return false;
@@ -76,12 +76,12 @@ bool EventBus<EventTypeEnum, PayloadTypeEnum>::Unsubscribe(SubscriptionHandle<Ev
     return false;
 }
 
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
+template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 void EventBus<EventTypeEnum, PayloadTypeEnum>::Publish(const Event<EventTypeEnum, PayloadTypeEnum>& event) {
     ProcessEvent(subscribers_, event);
 }
 
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
+template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 void EventBus<EventTypeEnum, PayloadTypeEnum>::PublishAsync(const Event<EventTypeEnum, PayloadTypeEnum>& event) {
     if(work_queue_task_ && k_mutex_lock(&work_queue_task_.value().GetUserdata()->queue_mutex, K_FOREVER) == 0) {
         work_queue_task_.value().GetUserdata()->event_queue.push(event);
@@ -92,7 +92,7 @@ void EventBus<EventTypeEnum, PayloadTypeEnum>::PublishAsync(const Event<EventTyp
     }
 }
 
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
+template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 void EventBus<EventTypeEnum, PayloadTypeEnum>::ProcessEvent(
     std::shared_ptr<std::unordered_map<EventTypeEnum, std::vector<std::unique_ptr<Subscription<EventTypeEnum, PayloadTypeEnum>>>>>& subscribers,
     const Event<EventTypeEnum, PayloadTypeEnum>& event) {
@@ -106,8 +106,8 @@ void EventBus<EventTypeEnum, PayloadTypeEnum>::ProcessEvent(
     }
 }
 
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
-WorkQueueTaskResult EventBus<EventTypeEnum, PayloadTypeEnum>::ProcessEventWork(EventBusTaskType* task) {
+template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
+threading::WorkQueueTaskResult EventBus<EventTypeEnum, PayloadTypeEnum>::ProcessEventWork(EventBusTaskType* task) {
     if(k_sem_take(task->processing_semaphore, K_NO_WAIT) != 0)
         return {
             .reschedule = false

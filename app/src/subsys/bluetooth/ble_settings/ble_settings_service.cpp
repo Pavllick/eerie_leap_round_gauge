@@ -11,6 +11,8 @@ LOG_MODULE_REGISTER(ble_settings_logger);
 
 namespace eerie_leap::subsys::bluetooth::ble_settings {
 
+using namespace eerie_leap::subsys::bluetooth::ble_settings::ble_settings_command;
+
 #define BT_UUID_SETTINGS_CONTROL_VAL BT_UUID_SETTINGS_SERVICE_ENCODE(1)
 #define BT_UUID_SETTINGS_DATA_VAL BT_UUID_SETTINGS_SERVICE_ENCODE(2)
 #define BT_UUID_SETTINGS_STATUS_VAL BT_UUID_SETTINGS_SERVICE_ENCODE(3)

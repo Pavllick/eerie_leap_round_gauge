@@ -12,15 +12,19 @@
 
 namespace eerie_leap::domain::ui_domain::services {
 
-using namespace eerie_leap::subsys::threading;
-using namespace eerie_leap::domain::sensor_domain::utilities;
+using eerie_leap::subsys::threading::WorkQueueThread;
+using eerie_leap::subsys::threading::WorkQueueTaskResult;
+using eerie_leap::domain::sensor_domain::utilities::SensorReadingsFrame;
+using eerie_leap::domain::sensor_domain::models::SensorReading;
+
+namespace threading = eerie_leap::subsys::threading;
 
 class SensorsRenderingService {
 private:
     static constexpr int thread_stack_size_ = 4096;
     static constexpr int thread_priority_ = 6;
     std::unique_ptr<WorkQueueThread> work_queue_thread_;
-    std::optional<WorkQueueTask<SensorsRenderingTask>> work_queue_task_;
+    std::optional<threading::WorkQueueTask<SensorsRenderingTask>> work_queue_task_;
 
     static constexpr uint32_t SENSORS_REFRESH_RATE_MS = 30;
 

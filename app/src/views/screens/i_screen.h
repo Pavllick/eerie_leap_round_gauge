@@ -9,9 +9,8 @@
 
 namespace eerie_leap::views::screens {
 
-using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::views;
-using namespace eerie_leap::views::widgets;
+using eerie_leap::domain::ui_domain::models::ScreenConfiguration;
+using eerie_leap::views::widgets::IWidget;
 
 class IScreen : public virtual IRenderable {
 public:

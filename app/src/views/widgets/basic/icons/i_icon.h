@@ -10,9 +10,12 @@
 
 namespace eerie_leap::views::widgets::basic::icons {
 
-using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::domain::ui_domain::assets_manager;
-using namespace eerie_leap::views;
+using eerie_leap::domain::ui_domain::models::WidgetConfiguration;
+using eerie_leap::domain::ui_domain::models::IconType;
+using eerie_leap::domain::ui_domain::assets_manager::UiAssetsManager;
+
+using eerie_leap::views::utilitites::Frame;
+using eerie_leap::views::IRenderable;
 
 class IIcon : public virtual IRenderable {
 public:

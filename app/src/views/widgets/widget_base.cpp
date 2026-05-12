@@ -5,6 +5,10 @@
 
 namespace eerie_leap::views::widgets {
 
+using namespace eerie_leap::utilities::type;
+using namespace eerie_leap::domain::ui_domain::models;
+using namespace eerie_leap::domain::ui_domain::event_bus;
+
 WidgetBase::WidgetBase(uint32_t id, std::shared_ptr<Frame> parent)
     : id_(id), parent_(std::move(parent)) {
 

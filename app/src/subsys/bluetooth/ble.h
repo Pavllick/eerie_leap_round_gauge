@@ -19,7 +19,7 @@
 
 namespace eerie_leap::subsys::bluetooth {
 
-using namespace eerie_leap::subsys::bluetooth::utilities;
+using eerie_leap::subsys::bluetooth::utilities::AdBuffer;
 
 class Ble {
 public:

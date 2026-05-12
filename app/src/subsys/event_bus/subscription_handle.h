@@ -6,7 +6,7 @@
 
 namespace eerie_leap::subsys::event_bus {
 
-template<EnumClassUint32 EventTypeEnum>
+template<concepts::EnumClassUint32 EventTypeEnum>
 class SubscriptionHandle {
 private:
     size_t id_;

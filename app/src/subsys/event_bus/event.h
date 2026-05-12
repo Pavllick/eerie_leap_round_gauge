@@ -12,21 +12,21 @@
 
 namespace eerie_leap::subsys::event_bus {
 
-using namespace eerie_leap::utilities::concepts;
+namespace concepts = eerie_leap::utilities::concepts;
 
 using EventData = std::variant<int, uint32_t, float, std::string, bool>;
 
-template<EnumClassUint32 PayloadTypeEnum>
+template<concepts::EnumClassUint32 PayloadTypeEnum>
 using EventPayload = std::unordered_map<PayloadTypeEnum, EventData>;
 
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
+template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 struct Event {
     EventTypeEnum type;
     EventPayload<PayloadTypeEnum> payload;
     std::string source_id;
 };
 
-template<EnumClassUint32 EventTypeEnum, EnumClassUint32 PayloadTypeEnum>
+template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 using EventHandler = std::function<void(const Event<EventTypeEnum, PayloadTypeEnum>&)>;
 
 } // namespace eerie_leap::subsys::event_bus

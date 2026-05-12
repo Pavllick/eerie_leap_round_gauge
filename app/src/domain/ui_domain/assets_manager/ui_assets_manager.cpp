@@ -1,8 +1,12 @@
 #include <filesystem>
 
+#include "utilities/memory/memory_resource_manager.h"
+
 #include "ui_assets_manager.h"
 
 namespace eerie_leap::domain::ui_domain::assets_manager {
+
+using namespace eerie_leap::utilities::memory;
 
 UiAssetsManager::UiAssetsManager(std::shared_ptr<IFsService> fs_service)
     : fs_service_(std::move(fs_service)) {

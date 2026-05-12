@@ -1,8 +1,14 @@
+#include "utilities/memory/memory_resource_manager.h"
+
 #include "ui_configuration_json_parser.h"
 
 namespace eerie_leap::domain::ui_domain::configuration::parsers {
 
 namespace json = boost::json;
+using namespace eerie_memory;
+using namespace eerie_leap::utilities::memory;
+using namespace eerie_leap::configuration::json::configs;
+using namespace eerie_leap::domain::ui_domain::models;
 
 pmr_unique_ptr<JsonUiConfig> UiConfigurationJsonParser::Serialize(const UiConfiguration& configuration) {
     auto config = make_unique_pmr<JsonUiConfig>(Mrm::GetExtPmr());

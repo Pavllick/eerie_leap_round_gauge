@@ -4,6 +4,7 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <eerie_memory.hpp>
 
 #include "utilities/memory/memory_resource_manager.h"
 #include "utilities/dev_tools/system_info.h"
@@ -20,9 +21,6 @@
 #include "subsys/time/time_service.h"
 #include "subsys/time/rtc_provider.h"
 #include "subsys/time/boot_elapsed_time_provider.h"
-#include "subsys/event_bus/event_bus.h"
-
-#include "configuration/services/cbor_configuration_service.h"
 
 #include "domain/configuration_domain/services/configuration_service.h"
 
@@ -31,7 +29,6 @@
 #include "domain/canbus_domain/configuration/canbus_configuration_manager.h"
 #include "domain/canbus_domain/services/canbus_service.h"
 
-#include "domain/sensor_domain/sensor_readers/sensor_reader_factory.h"
 #include "domain/sensor_domain/isr_sensor_readers/isr_sensor_reader_factory.h"
 #include "domain/sensor_domain/services/sensors_processing_service.h"
 
@@ -43,11 +40,8 @@
 
 #include "domain/ui_domain/models/ui_configuration.h"
 #include "domain/ui_domain/models/screen_configuration.h"
-#include "domain/ui_domain/models/grid_settings.h"
 #include "domain/ui_domain/models/widget_configuration.h"
 #include "domain/ui_domain/models/widget_type.h"
-#include "domain/ui_domain/models/widget_size.h"
-#include "domain/ui_domain/models/widget_position.h"
 #include "domain/ui_domain/models/widget_property.h"
 #include "domain/ui_domain/models/icon_type.h"
 #include "domain/ui_domain/models/indicator_direction.h"
@@ -63,6 +57,7 @@
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 #include "views/assets/images/images_register.h"
 
+using namespace eerie_memory;
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::utilities::dev_tools;
 using namespace eerie_leap::utilities::guid;
@@ -73,6 +68,7 @@ using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::gpio;
 using namespace eerie_leap::subsys::time;
 
+using namespace eerie_leap::configuration::json::configs;
 using namespace eerie_leap::configuration::services;
 
 using namespace eerie_leap::domain::configuration_domain::services;
@@ -88,6 +84,8 @@ using namespace eerie_leap::domain::canbus_domain::configuration;
 using namespace eerie_leap::domain::canbus_domain::services;
 using namespace eerie_leap::domain::canbus_domain::models;
 using namespace eerie_leap::domain::canbus_com_domain::services;
+using namespace eerie_leap::domain::sensor_domain::models::sources;
+using namespace eerie_leap::domain::sensor_domain::models;
 using namespace eerie_leap::domain::sensor_domain::services;
 using namespace eerie_leap::domain::sensor_domain::sensor_readers;
 using namespace eerie_leap::domain::sensor_domain::isr_sensor_readers;
@@ -115,15 +113,15 @@ void EmulateReadings(
 int main() {
     DtConfigurator::Initialize();
 
-    auto dark_theme = make_shared_ext<DarkBWTheme>();
+    auto dark_theme = make_shared_pmr<DarkBWTheme>(Mrm::GetExtPmr());
     ThemeManager::GetInstance().SetTheme(dark_theme);
 
-    auto ui_renderer_service = make_shared_ext<UiRendererService>();
+    auto ui_renderer_service = make_shared_pmr<UiRendererService>(Mrm::GetExtPmr());
     if(ui_renderer_service->Initialize() != 0)
         return -1;
     ui_renderer_service->Start();
 
-    auto fs_service = make_shared_ext<FsService>(DtFs::GetInternalFsMp().value());
+    auto fs_service = make_shared_pmr<FsService>(Mrm::GetExtPmr(), DtFs::GetInternalFsMp().value());
     if(!fs_service->Initialize()) {
         LOG_ERR("Failed to initialize File System.");
         return -1;
@@ -134,12 +132,12 @@ int main() {
     auto time_service = std::make_shared<TimeService>(rtc_provider, boot_elapsed_time_provider);
     time_service->Initialize();
 
-    auto guid_generator = make_shared_ext<GuidGenerator>();
+    auto guid_generator = make_shared_pmr<GuidGenerator>(Mrm::GetExtPmr());
 
     auto system_config_service = std::make_unique<CborConfigurationService<CborSystemConfig>>(
         "system_config", fs_service);
-    auto system_configuration_manager = make_shared_ext<SystemConfigurationManager>(
-        std::move(system_config_service));
+    auto system_configuration_manager = make_shared_pmr<SystemConfigurationManager>(
+        Mrm::GetExtPmr(), std::move(system_config_service));
 
     auto cbor_canbus_config_service = std::make_unique<CborConfigurationService<CborCanbusConfig>>(
         "canbus_config", fs_service);
@@ -162,8 +160,8 @@ int main() {
         "ui_config", fs_service);
     auto json_ui_config_service = std::make_unique<JsonConfigurationService<JsonUiConfig>>(
         "ui_config", nullptr);
-    auto ui_configuration_manager = make_shared_ext<UiConfigurationManager>(
-        std::move(cbor_ui_config_service), std::move(json_ui_config_service));
+    auto ui_configuration_manager = make_shared_pmr<UiConfigurationManager>(
+        Mrm::GetExtPmr(), std::move(cbor_ui_config_service), std::move(json_ui_config_service));
 
     auto configuration_service = std::make_shared<ConfigurationService>();
     configuration_service->RegisterJsonConfigurationManager(
@@ -181,7 +179,8 @@ int main() {
     // TODO: For test purposes only
     SetupTestUiAssets(ui_assets_manager);
 
-    auto ui_controller = make_shared_ext<UiController>(ui_configuration_manager, ui_assets_manager);
+    auto ui_controller = make_shared_pmr<UiController>(
+        Mrm::GetExtPmr(), ui_configuration_manager, ui_assets_manager);
     ui_controller->Render();
 
     int input_work_queue_stack_size = 4096;
@@ -239,14 +238,15 @@ int main() {
             break;
         }
 
-        auto gpio_buttons = make_shared_ext<GpioButtons>(DtGpio::GetButtons().value());
+        auto gpio_buttons = make_shared_pmr<GpioButtons>(
+            Mrm::GetExtPmr(), DtGpio::GetButtons().value());
         if(gpio_buttons->Initialize() != 0) {
             LOG_ERR("Failed to initialize buttons.");
             break;
         }
 
-        logging_controller = make_shared_ext<LoggingController>(
-            gpio_buttons, input_work_queue_thread, canbus_com_service);
+        logging_controller = make_shared_pmr<LoggingController>(
+            Mrm::GetExtPmr(), gpio_buttons, input_work_queue_thread, canbus_com_service);
         logging_controller->Initialize();
     } while(false);
 

@@ -10,7 +10,8 @@
 
 namespace eerie_leap::domain::ui_domain::services {
 
-using namespace eerie_leap::subsys::threading;
+using eerie_leap::subsys::threading::IThread;
+using eerie_leap::subsys::threading::Thread;
 
 class UiRendererService : public IThread {
 private:

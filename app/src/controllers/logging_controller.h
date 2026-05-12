@@ -4,23 +4,24 @@
 #include <vector>
 #include <unordered_map>
 
-#include "subsys/device_tree/dt_gpio.h"
 #include "subsys/gpio/gpio_buttons.h"
 #include "subsys/threading/work_queue_thread.h"
 
 #include "domain/canbus_com_domain/services/canbus_com_service.h"
 #include "domain/ui_domain/event_bus/ui_event_bus.h"
 
-#include "controllers/ui_controller.h"
-
 namespace eerie_leap::controllers {
 
-using namespace eerie_leap::subsys::device_tree;
-using namespace eerie_leap::subsys::gpio;
-using namespace eerie_leap::subsys::threading;
+using eerie_leap::subsys::gpio::GpioButtons;
+using eerie_leap::subsys::threading::WorkQueueThread;
 
-using namespace eerie_leap::domain::canbus_com_domain::services;
-using namespace eerie_leap::domain::ui_domain::event_bus;
+using eerie_leap::domain::canbus_com_domain::services::CanbusComService;
+
+using eerie_leap::domain::ui_domain::event_bus::UiEventBus;
+using eerie_leap::domain::ui_domain::event_bus::UiEvent;
+using eerie_leap::domain::ui_domain::event_bus::UiEventType;
+using eerie_leap::domain::ui_domain::event_bus::UiEventPayload;
+using eerie_leap::domain::ui_domain::event_bus::UiPayloadType;
 
 class LoggingController {
 private:
