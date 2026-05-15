@@ -84,7 +84,7 @@ function(generate_zcbor_configuration cddl_path base_name)
 endfunction()
 
 # generate_zcbor_configuration(
-#     ${ZEPHYR_BASE}/../project/modules/eerie_leap_common/src/configuration/cbor/cbor_schemas/system_config.cddl
+#     ${ZEPHYR_BASE}/../project/modules/eerie_leap_rt_core/src/configuration/cbor/cbor_schemas/system_config.cddl
 #     "cbor_system_config")
 # generate_zcbor_configuration(
 #     ${CMAKE_CURRENT_SOURCE_DIR}/src/configuration/cbor/cbor_schemas/ui_config.cddl
@@ -93,9 +93,9 @@ endfunction()
 # Add Zephyr modules
 set(EXTRA_ZEPHYR_MODULES
     "${CMAKE_CURRENT_SOURCE_DIR}/../modules/eerie_leap_lua"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../modules/eerie_leap_common")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../modules/eerie_leap_rt_core")
 
-# Boost is linked through eerie_leap_common module
+# Boost is linked through eerie_leap_rt_core module
 # but has to be configured here
 add_definitions(-DBOOST_SYSTEM_DISABLE_THREADS)
 add_definitions(-DBOOST_JSON_STACK_BUFFER_SIZE=1024)
