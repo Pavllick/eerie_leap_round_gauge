@@ -3,6 +3,7 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
+#include <eerie_memory.hpp>
 
 #include "configuration/services/cbor_configuration_service.h"
 #include "configuration/services/json_configuration_service.h"
@@ -15,6 +16,8 @@
 
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 
+using namespace eerie_memory;
+using namespace eerie_leap::configuration::json;
 using namespace eerie_leap::configuration::services;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::domain::ui_domain::configuration;
@@ -134,11 +137,10 @@ ZTEST(ui_configuration_parser, test_JsonSerializeDeserialize) {
 
 ZTEST(ui_configuration_parser, test_JsonSaveFile) {
     UiConfigurationJsonParser ui_configuration_json_parser;
-    auto ui_config_json_serializer = std::make_unique<JsonSerializer<JsonUiConfig>>();
 
     auto ui_configuration = ui_configuration_parser_GetTestUiConfiguration();
     auto ui_config = ui_configuration_json_parser.Serialize(*ui_configuration);
-    auto json = ui_config_json_serializer->Serialize(*ui_config);
+    auto json = JsonSerializer<JsonUiConfig>::Serialize(*ui_config);
 
     // Will create file in the twister-out directory
     std::ofstream file("../../../../../../../ui_config.json", std::ios::binary);

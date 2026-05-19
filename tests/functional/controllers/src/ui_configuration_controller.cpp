@@ -1,6 +1,7 @@
 #include <memory>
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
+#include <eerie_memory.hpp>
 
 #include "configuration/cbor/cbor_ui_config/cbor_ui_config.h"
 #include "configuration/services/cbor_configuration_service.h"
@@ -13,6 +14,7 @@
 
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 
+using namespace eerie_memory;
 using namespace eerie_leap::configuration::services;
 using namespace eerie_leap::subsys::device_tree;
 using namespace eerie_leap::subsys::fs::services;

@@ -1,6 +1,6 @@
 services:
   zephyr-dev:
-    container_name: eerie_leap_round_gauge
+    container_name: eerie_leap_rt_gauge
     build:
       context: .
       dockerfile: Dockerfile.dev

@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include <cstring>
+#include <eerie_memory.hpp>
 
 #include <zephyr/ztest.h>
 
@@ -15,6 +16,7 @@
 #include "subsys/fs/services/i_fs_service.h"
 #include "subsys/fs/services/fs_service.h"
 
+using namespace eerie_memory;
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::utilities::cbor;
 using namespace eerie_leap::configuration::services;
