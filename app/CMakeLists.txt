@@ -27,7 +27,7 @@ function(apply_patches patch_dir target_dir)
     endforeach()
 endfunction()
 
-apply_patches("patches/zephyr" $ENV{ZEPHYR_BASE})
+# apply_patches("patches/zephyr" $ENV{ZEPHYR_BASE})
 apply_patches("patches/modules/lvgl" $ENV{ZEPHYR_BASE}/../modules/lib/gui/lvgl)
 
 # ZCBOR code generation function
