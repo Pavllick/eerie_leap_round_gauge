@@ -7,8 +7,15 @@ namespace eerie_leap::subsys::event_bus {
 using eerie_leap::utilities::memory::Mrm;
 
 template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
-EventBus<EventTypeEnum, PayloadTypeEnum>::EventBus(std::string bus_name, int k_stack_size)
-    : bus_name_(std::move(bus_name)) {
+EventBus<EventTypeEnum, PayloadTypeEnum>::EventBus(
+    std::string bus_name,
+    int k_stack_size,
+    DispatchGuardFn dispatch_guard_before,
+    DispatchGuardFn dispatch_guard_after)
+        : bus_name_(
+            std::move(bus_name)),
+            dispatch_guard_before_(dispatch_guard_before),
+            dispatch_guard_after_(dispatch_guard_after) {
 
     subscribers_ = std::make_shared<std::unordered_map<EventTypeEnum, std::vector<std::unique_ptr<Subscription<EventTypeEnum, PayloadTypeEnum>>>>>();
     k_sem_init(&processing_semaphore_, 1, 1);
@@ -30,6 +37,8 @@ void EventBus<EventTypeEnum, PayloadTypeEnum>::Initialize() {
     auto event_task = std::make_unique<EventBusTaskType>();
     event_task->processing_semaphore = &processing_semaphore_;
     event_task->subscribers = subscribers_;
+    event_task->dispatch_guard_before = dispatch_guard_before_;
+    event_task->dispatch_guard_after = dispatch_guard_after_;
     work_queue_task_ = work_queue_thread_->CreateTask(ProcessEventWork, std::move(event_task));
 }
 
@@ -78,7 +87,7 @@ bool EventBus<EventTypeEnum, PayloadTypeEnum>::Unsubscribe(SubscriptionHandle<Ev
 
 template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 void EventBus<EventTypeEnum, PayloadTypeEnum>::Publish(const Event<EventTypeEnum, PayloadTypeEnum>& event) {
-    ProcessEvent(subscribers_, event);
+    ProcessEvent(subscribers_, event, dispatch_guard_before_, dispatch_guard_after_);
 }
 
 template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
@@ -95,7 +104,12 @@ void EventBus<EventTypeEnum, PayloadTypeEnum>::PublishAsync(const Event<EventTyp
 template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 void EventBus<EventTypeEnum, PayloadTypeEnum>::ProcessEvent(
     std::shared_ptr<std::unordered_map<EventTypeEnum, std::vector<std::unique_ptr<Subscription<EventTypeEnum, PayloadTypeEnum>>>>>& subscribers,
-    const Event<EventTypeEnum, PayloadTypeEnum>& event) {
+    const Event<EventTypeEnum, PayloadTypeEnum>& event,
+    DispatchGuardFn dispatch_guard_before,
+    DispatchGuardFn dispatch_guard_after) {
+
+    if(dispatch_guard_before)
+        dispatch_guard_before();
 
     if(auto it = subscribers->find(event.type); it != subscribers->end()) {
         for(const auto& subscription : it->second) {
@@ -104,6 +118,9 @@ void EventBus<EventTypeEnum, PayloadTypeEnum>::ProcessEvent(
             }
         }
     }
+
+    if(dispatch_guard_after)
+        dispatch_guard_after();
 }
 
 template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
@@ -128,7 +145,7 @@ threading::WorkQueueTaskResult EventBus<EventTypeEnum, PayloadTypeEnum>::Process
         if(!event)
             break;
 
-        ProcessEvent(task->subscribers, event.value());
+        ProcessEvent(task->subscribers, event.value(), task->dispatch_guard_before, task->dispatch_guard_after);
     }
 
     k_sem_give(task->processing_semaphore);

@@ -1,0 +1,30 @@
+#pragma once
+
+namespace eerie_leap::domain::ui_domain {
+
+// Serializes all access to LVGL.
+//
+// LVGL's object/animation/event data structures are not thread-safe. In this
+// app, lv_timer_handler() runs on the UI renderer thread while UiEventBus
+// dispatches subscriber handlers (which routinely touch LVGL objects and
+// animations - see indicator/icon widgets) on its own worker thread. Every
+// thread that can call into LVGL must hold this lock for the duration of
+// that call, or LVGL's internal lists can be corrupted by concurrent access.
+class LvglLock {
+private:
+    k_mutex lock_;
+
+    LvglLock();
+    ~LvglLock() = default;
+
+    LvglLock(const LvglLock&) = delete;
+    LvglLock& operator=(const LvglLock&) = delete;
+
+public:
+    static LvglLock& GetInstance();
+
+    void Lock();
+    void Unlock();
+};
+
+} // namespace eerie_leap::domain::ui_domain

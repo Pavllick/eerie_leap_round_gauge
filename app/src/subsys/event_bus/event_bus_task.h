@@ -17,6 +17,9 @@ struct EventBusTask {
     std::queue<Event<EventTypeEnum, PayloadTypeEnum>> event_queue;
     k_mutex queue_mutex;
 
+    void (*dispatch_guard_before)() = nullptr;
+    void (*dispatch_guard_after)() = nullptr;
+
     EventBusTask() {
         k_mutex_init(&queue_mutex);
     }

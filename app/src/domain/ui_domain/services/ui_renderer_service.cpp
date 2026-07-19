@@ -5,6 +5,7 @@
 #include <lvgl_mem.h>
 
 #include "subsys/device_tree/dt_display.h"
+#include "domain/ui_domain/lvgl_lock.h"
 
 #include "ui_renderer_service.h"
 
@@ -21,7 +22,7 @@ UiRendererService::UiRendererService() {
         this,
         UiRendererService::k_stack_size_,
         UiRendererService::k_priority_,
-        true);
+        false);
 }
 
 UiRendererService::~UiRendererService() {
@@ -72,7 +73,10 @@ void UiRendererService::ThreadEntry() {
 }
 
 void UiRendererService::Render() {
+    LvglLock::GetInstance().Lock();
     uint32_t sleep_ms = lv_timer_handler();
+    LvglLock::GetInstance().Unlock();
+
     k_msleep(MIN(sleep_ms, INT32_MAX));
 }
 

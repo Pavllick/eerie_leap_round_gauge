@@ -28,6 +28,9 @@ using threading::WorkQueueThread;
 
 template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>
 class EventBus {
+public:
+    using DispatchGuardFn = void (*)();
+
 private:
     std::string bus_name_;
     std::shared_ptr<std::unordered_map<EventTypeEnum, std::vector<std::unique_ptr<Subscription<EventTypeEnum, PayloadTypeEnum>>>>> subscribers_;
@@ -41,15 +44,25 @@ private:
     k_sem processing_semaphore_;
     static constexpr k_timeout_t PROCESSING_TIMEOUT = K_MSEC(200);
 
+    // Optional hooks invoked around subscriber dispatch for custom behavior before and after event handling
+    DispatchGuardFn dispatch_guard_before_ = nullptr;
+    DispatchGuardFn dispatch_guard_after_ = nullptr;
+
     void Initialize();
 
     static threading::WorkQueueTaskResult ProcessEventWork(EventBusTaskType* task);
     static void ProcessEvent(
         std::shared_ptr<std::unordered_map<EventTypeEnum, std::vector<std::unique_ptr<Subscription<EventTypeEnum, PayloadTypeEnum>>>>>& subscribers,
-        const Event<EventTypeEnum, PayloadTypeEnum>& event);
+        const Event<EventTypeEnum, PayloadTypeEnum>& event,
+        DispatchGuardFn dispatch_guard_before,
+        DispatchGuardFn dispatch_guard_after);
 
 protected:
-    EventBus(std::string bus_name, int k_stack_size);
+    EventBus(
+        std::string bus_name,
+        int k_stack_size,
+        DispatchGuardFn dispatch_guard_before = nullptr,
+        DispatchGuardFn dispatch_guard_after = nullptr);
 
 public:
     virtual ~EventBus() = default;

@@ -2,6 +2,8 @@
 
 #include "subsys/event_bus/event_bus.h"
 
+#include "domain/ui_domain/lvgl_lock.h"
+
 #include "ui_event_type.h"
 #include "ui_payload_type.h"
 
@@ -17,7 +19,11 @@ class UiEventBus : public event_bus::EventBus<UiEventType, UiPayloadType> {
 private:
     static constexpr int event_bus_stack_size_ = 4096;
 
-    UiEventBus() : event_bus::EventBus<UiEventType, UiPayloadType>("ui_event_bus", event_bus_stack_size_) { }
+    UiEventBus() : event_bus::EventBus<UiEventType, UiPayloadType>(
+        "ui_event_bus",
+        event_bus_stack_size_,
+        []() { LvglLock::GetInstance().Lock(); },
+        []() { LvglLock::GetInstance().Unlock(); }) { }
 
 public:
     static UiEventBus& GetInstance() {
