@@ -43,6 +43,9 @@ struct mspi_esp32_config {
 	uint32_t duty_cycle;
 	uint32_t input_delay_ns;
 	uint32_t transfer_timeout;
+	int irq_source;
+	int irq_priority;
+	int irq_flags;
 };
 
 struct mspi_esp32_data {
@@ -52,6 +55,19 @@ struct mspi_esp32_data {
 
 	struct mspi_dev_cfg mspi_dev_config;
 	struct k_mutex lock;
+	struct k_sem xfer_sem;
+
+	/*
+	 * True when device-level HW registers (mode/clock/CS timing) must be
+	 * reprogrammed before the next transfer. Set whenever dev_config()
+	 * changes CPP/CE/frequency; io_mode-only changes don't need it.
+	 */
+	bool dev_hw_dirty;
+
+	bool tx_dma_configured;
+	bool rx_dma_configured;
+
+	bool cs_active;
 
 	mspi_callback_handler_t callback;
 	void *callback_ctx;

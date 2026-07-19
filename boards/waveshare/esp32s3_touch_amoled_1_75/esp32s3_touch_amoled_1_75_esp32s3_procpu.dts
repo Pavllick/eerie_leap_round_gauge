@@ -53,6 +53,8 @@
 
 		peripheral-id = <0>; /* SPI2: peripheral_id=0, host_id=1 */
 		clocks = <&clock ESP32_SPI2_MODULE>;
+		interrupts = <SPI2_INTR_SOURCE IRQ_DEFAULT_PRIORITY 0>;
+		interrupt-parent = <&intc>;
 		dma-enabled;
 		dma-host = <0>; /* GDMA slot for SPI2 */
 		dmas = <&dma 0>, <&dma 1>;

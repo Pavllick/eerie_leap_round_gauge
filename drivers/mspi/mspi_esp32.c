@@ -15,15 +15,13 @@
 #include <esp_attr.h>
 #include <esp_clk_tree.h>
 
-#if defined(CONFIG_SOC_SERIES_ESP32S3) || defined(CONFIG_SOC_SERIES_ESP32S2)
-#include <esp_cache.h>
-#endif
-
 #include <zephyr/kernel.h>
+#include <zephyr/cache.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/clock_control.h>
+#include <zephyr/drivers/interrupt_controller/intc_esp32.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/logging/log.h>
 #include <soc.h>
@@ -188,12 +186,11 @@ static int update_timing_config(
 static int mspi_gdma_config(const struct device *dev, uint8_t dir, uint8_t *buf, size_t len)
 {
 	const struct mspi_esp32_config *cfg = dev->config;
-	struct dma_config dma_cfg = {};
-	struct dma_status dma_status = {};
-	struct dma_block_config dma_blk = {};
-	int err = 0;
-
+	struct mspi_esp32_data *data = dev->data;
 	uint8_t dma_channel = (dir == SPI_DMA_RX) ? cfg->dma_rx_ch : cfg->dma_tx_ch;
+	bool *configured = (dir == SPI_DMA_RX) ? &data->rx_dma_configured : &data->tx_dma_configured;
+	struct dma_status dma_status = {};
+	int err = 0;
 
 	if (dma_channel == 0xFF) {
 		LOG_ERR("DMA channel is not configured in device tree");
@@ -209,6 +206,31 @@ static int mspi_gdma_config(const struct device *dev, uint8_t dir, uint8_t *buf,
 		LOG_ERR("DMA channel %d is busy", dma_channel);
 		return -EBUSY;
 	}
+
+	if (*configured) {
+		/*
+		 * A fixed TX or RX channel's direction/slot/burst length never
+		 * change once configured, so just rebind the descriptor chain to
+		 * the new buffer/length instead of paying for a full dma_config()
+		 * (channel/periph_id lookup + burst-length validation) on every
+		 * chunk. Measured overhead made this worth it: per-chunk driver
+		 * overhead was a significant fraction of each flush's SPI time.
+		 */
+		uint32_t addr = (uint32_t)buf;
+
+		err = dma_reload(cfg->dma_dev, dma_channel,
+			(dir == SPI_DMA_RX) ? 0 : addr,
+			(dir == SPI_DMA_RX) ? addr : 0,
+			len);
+		if (err) {
+			LOG_ERR("Error reloading DMA (%d)", err);
+		}
+
+		return err;
+	}
+
+	struct dma_config dma_cfg = {};
+	struct dma_block_config dma_blk = {};
 
 	if (dir == SPI_DMA_RX) {
 		dma_cfg.channel_direction = PERIPHERAL_TO_MEMORY;
@@ -232,6 +254,8 @@ static int mspi_gdma_config(const struct device *dev, uint8_t dir, uint8_t *buf,
 	err = dma_config(cfg->dma_dev, dma_channel, &dma_cfg);
 	if (err) {
 		LOG_ERR("Error configuring DMA (%d)", err);
+	} else {
+		*configured = true;
 	}
 
 	return err;
@@ -364,7 +388,7 @@ static uint8_t *transfer_prepare_data(
 
 	if (packet->dir == MSPI_TX) {
 		uint8_t *src = packet->data_buf;
-		bool need_bounce = config->dma_enabled ||
+		bool need_bounce = config->dma_enabled &&
 			!esp_ptr_dma_capable((uint32_t *)src);
 
 		if (need_bounce) {
@@ -429,13 +453,22 @@ static int transfer_start_gdma(
 {
 	int res = 0;
 
+	/*
+	 * GDMA reads/writes physical RAM directly and bypasses the CPU data
+	 * cache. Buffers can live in cached PSRAM, so without explicit cache
+	 * maintenance the peripheral may read stale TX data, or the CPU may
+	 * read stale RX data after the transfer — an intermittent-corruption
+	 * bug that only shows up under cache pressure.
+	 */
 	if (tc->rcv_buffer) {
+		sys_cache_data_flush_and_invd_range(tc->rcv_buffer, dma_buf_len);
 		res = mspi_gdma_config(dev, SPI_DMA_RX, tc->rcv_buffer, dma_buf_len);
 		if (res) {
 			return res;
 		}
 	}
 	if (tc->send_buffer) {
+		sys_cache_data_flush_range(tc->send_buffer, dma_buf_len);
 		res = mspi_gdma_config(dev, SPI_DMA_TX, tc->send_buffer, dma_buf_len);
 		if (res) {
 			return res;
@@ -519,21 +552,64 @@ static int transfer_start_intdma(
 
 #endif /* SOC_GDMA_SUPPORTED */
 
-static void transfer_start_nodma(spi_hal_context_t *hal, const spi_hal_trans_config_t *tc)
+#ifdef CONFIG_MSPI_ESP32_INTERRUPT
+
+static void IRAM_ATTR mspi_esp32_isr(void *arg)
 {
-	LOG_DBG("transfer: non-DMA path, pushing TX buffer to FIFO");
-	spi_ll_cpu_tx_fifo_reset(hal->hw);
-	spi_hal_push_tx_buffer(hal, tc);
-	spi_hal_enable_data_line(hal->hw,
-		tc->send_buffer != NULL,
-		tc->rcv_buffer != NULL);
+	const struct device *dev = (const struct device *)arg;
+	const struct mspi_esp32_config *config = dev->config;
+	struct mspi_esp32_data *data = dev->data;
+
+	spi_ll_disable_int(config->spi);
+	spi_ll_clear_int_stat(config->spi);
+
+	k_sem_give(&data->xfer_sem);
 }
 
-static int transfer_wait(const spi_hal_context_t *hal)
+#endif /* CONFIG_MSPI_ESP32_INTERRUPT */
+
+/*
+ * Start the HW transaction configured by spi_hal_setup_trans() and block
+ * until it completes or timeout_ms elapses.
+ *
+ * With CONFIG_MSPI_ESP32_INTERRUPT, the caller blocks on a semaphore signalled
+ * by the SPI "transaction done" interrupt, freeing this thread's CPU core for
+ * other work while the transfer is in flight. Without it, fall back to a
+ * time-bounded poll so a stuck peripheral can never hang the caller (and thus
+ * the rest of the system) forever.
+ */
+static int IRAM_ATTR transfer_start_and_wait(const struct device *dev, uint32_t timeout_ms)
 {
-	while (!spi_hal_usr_is_done(hal)) {
-		// Wait for transfer to complete
+	struct mspi_esp32_data *data = dev->data;
+	spi_hal_context_t *hal = &data->hal;
+
+#ifdef CONFIG_MSPI_ESP32_INTERRUPT
+	const struct mspi_esp32_config *config = dev->config;
+
+	k_sem_reset(&data->xfer_sem);
+	spi_ll_clear_int_stat(config->spi);
+	spi_ll_enable_int(config->spi);
+
+	spi_hal_user_start(hal);
+
+	if (k_sem_take(&data->xfer_sem, K_MSEC(timeout_ms)) != 0) {
+		spi_ll_disable_int(config->spi);
+		spi_ll_clear_int_stat(config->spi);
+		LOG_ERR("Transfer timed out after %u ms", timeout_ms);
+		return -ETIMEDOUT;
 	}
+#else
+	int64_t deadline = k_uptime_get() + timeout_ms;
+
+	spi_hal_user_start(hal);
+
+	while (!spi_hal_usr_is_done(hal)) {
+		if (k_uptime_get() > deadline) {
+			LOG_ERR("Transfer timed out after %u ms", timeout_ms);
+			return -ETIMEDOUT;
+		}
+	}
+#endif
 
 	return 0;
 }
@@ -546,12 +622,10 @@ static void transfer_post_gdma(
 #ifdef SOC_GDMA_SUPPORTED
 	if (tc->rcv_buffer) {
 		mspi_gdma_stop(dev, SPI_DMA_RX);
-#if defined(CONFIG_SOC_SERIES_ESP32S3) || defined(CONFIG_SOC_SERIES_ESP32S2)
-		LOG_DBG("transfer: cache msync RX buf=%p len=%zu",
+		LOG_DBG("transfer: cache invalidate RX buf=%p len=%zu",
 			tc->rcv_buffer, dma_buf_len);
-		esp_cache_msync(tc->rcv_buffer, dma_buf_len,
-			ESP_CACHE_MSYNC_FLAG_DIR_M2C);
-#endif
+		/* Force the CPU to re-read the data the DMA just wrote. */
+		sys_cache_data_invd_range(tc->rcv_buffer, dma_buf_len);
 	}
 	if (tc->send_buffer) {
 		mspi_gdma_stop(dev, SPI_DMA_TX);
@@ -575,8 +649,26 @@ static int IRAM_ATTR transfer(
 
 	const struct mspi_xfer_packet *packet = &xfer->packets[packet_index];
 
+	if (packet->num_bytes > CONFIG_MSPI_DMA_MAX_BUFFER_SIZE) {
+		LOG_ERR("Packet %zu: %u bytes exceeds MSPI_DMA_MAX_BUFFER_SIZE (%u); "
+			"caller must chunk large transfers",
+			packet_index, packet->num_bytes,
+			(unsigned)CONFIG_MSPI_DMA_MAX_BUFFER_SIZE);
+		return -EMSGSIZE;
+	}
+
+	const uint32_t timeout_ms = xfer->timeout ? xfer->timeout : config->transfer_timeout;
+
 	spi_hal_trans_config_t tc = {0};
-	tc.dummy_bits = data->trans_config.dummy_bits;
+	/*
+	 * These dummy cycles exist purely to give the master extra settling
+	 * time before it samples MISO on a read — ESP-IDF's own
+	 * spi_hal_setup_trans() only ever applies its equivalent compensation
+	 * when trans->rcv_buffer is set. Applying them unconditionally (as the
+	 * upstream spi_esp32_spim.c reference driver also does) wastes bus
+	 * time on every TX-only transaction.
+	 */
+	tc.dummy_bits = (packet->dir == MSPI_RX) ? data->trans_config.dummy_bits : 0;
 	tc.line_mode = data->trans_config.line_mode;
 	tc.cs_keep_active = xfer->hold_ce || (packet_index < (xfer->num_packet - 1));
 
@@ -602,11 +694,7 @@ static int IRAM_ATTR transfer(
 
 	spi_hal_setup_trans(hal, hal_dev, &tc);
 
-	spi_hal_user_start(hal);
-
-	// NOTE: timeout is not used in transfer_wait
-	// const uint32_t timeout_ms = xfer->timeout ? xfer->timeout : config->transfer_timeout;
-	res = transfer_wait(hal);
+	res = transfer_start_and_wait(dev, timeout_ms);
 	if (res != 0) {
 		goto cleanup;
 	}
@@ -660,6 +748,18 @@ static int IRAM_ATTR update_transfer_config(const struct device *dev)
 		data->trans_config.line_mode.addr_lines,
 		data->trans_config.line_mode.data_lines);
 
+	/*
+	 * The rest of this function reprograms device-level SPI registers and,
+	 * on some SoCs, runs an extra dummy transaction below. Neither depends
+	 * on io_mode, so skip both unless mspi_esp32_dev_config() actually
+	 * changed CPP/CE/frequency. Without this, every single transceive()
+	 * call — i.e. every command byte and every data chunk — pays for
+	 * a full device reconfiguration plus an extra SPI transaction.
+	 */
+	if (!data->dev_hw_dirty) {
+		return 0;
+	}
+
 	/* Program device-level SPI registers */
 	spi_hal_setup_device(hal, hal_dev);
 
@@ -711,6 +811,8 @@ static int IRAM_ATTR update_transfer_config(const struct device *dev)
 	}
 #endif
 
+	data->dev_hw_dirty = false;
+
 	return 0;
 }
 
@@ -740,6 +842,16 @@ static int mspi_esp32_dev_config(
 		return -ENOTSUP;
 	}
 
+	/*
+	 * Only these fields feed spi_hal_setup_device() / the mode-3 dummy
+	 * workaround in update_transfer_config(). io_mode alone must not force
+	 * a device-register reprogram on every single transfer.
+	 */
+	if (cfg_mask & (MSPI_DEVICE_CONFIG_CPP | MSPI_DEVICE_CONFIG_CE_NUM |
+			MSPI_DEVICE_CONFIG_CE_POL | MSPI_DEVICE_CONFIG_FREQUENCY)) {
+		data->dev_hw_dirty = true;
+	}
+
 	if (cfg_mask & MSPI_DEVICE_CONFIG_IO_MODE) {
 		data->mspi_dev_config.io_mode = mspi_dev_config->io_mode;
 	}
@@ -763,12 +875,15 @@ static int mspi_esp32_dev_config(
 		 */
 		data->dev_config.cs_pin_id = (config->mspi_config.num_ce_gpios > 0)
 			? -1 : (int)mspi_dev_config->ce_num;
+		/* Switching target: any previously-held CE line no longer applies. */
+		data->cs_active = false;
 	}
 
 	if (cfg_mask & MSPI_DEVICE_CONFIG_CE_POL) {
 		data->mspi_dev_config.ce_polarity = mspi_dev_config->ce_polarity;
 		data->dev_config.positive_cs =
 			(mspi_dev_config->ce_polarity == MSPI_CE_ACTIVE_HIGH);
+		data->cs_active = false;
 	}
 
 	if (cfg_mask & MSPI_DEVICE_CONFIG_FREQUENCY) {
@@ -817,10 +932,13 @@ static int IRAM_ATTR mspi_esp32_transceive(
 		goto unlock;
 	}
 
-	ret = cs_gpio_set(data, config, true);
-	if (ret != 0) {
-		LOG_ERR("Failed to assert CS: %d", ret);
-		goto unlock;
+	if (!data->cs_active) {
+		ret = cs_gpio_set(data, config, true);
+		if (ret != 0) {
+			LOG_ERR("Failed to assert CS: %d", ret);
+			goto unlock;
+		}
+		data->cs_active = true;
 	}
 
 	for (size_t i = 0; i < xfer->num_packet; i++) {
@@ -833,6 +951,8 @@ static int IRAM_ATTR mspi_esp32_transceive(
 
 	if (!xfer->hold_ce || ret != 0) {
 		int cs_ret = cs_gpio_set(data, config, false);
+
+		data->cs_active = false;
 
 		if (cs_ret != 0) {
 			LOG_ERR("Failed to de-assert CS: %d", cs_ret);
@@ -874,6 +994,9 @@ static int init_dma(const struct device *dev)
 		config->dma_tx_ch, config->dma_rx_ch, config->dma_host);
 
 	data->hal.dma_enabled = false;
+	/* Force the next transfer on each channel to run a full dma_config(). */
+	data->tx_dma_configured = false;
+	data->rx_dma_configured = false;
 
 #else /* !SOC_GDMA_SUPPORTED — integrated DMA (ESP32, ESP32-S2) */
 
@@ -945,6 +1068,9 @@ static int mspi_esp32_config(const struct mspi_dt_spec *spec)
 	const struct mspi_esp32_config *config = dev->config;
 	int ret;
 
+	/* Force the next transceive() to reprogram device-level registers. */
+	data->dev_hw_dirty = true;
+
 	ret = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
 	if (ret) {
 		LOG_ERR("Failed to configure pins: %d", ret);
@@ -1015,6 +1141,7 @@ static int mspi_esp32_init(const struct device *dev)
 	const struct mspi_esp32_config *config = dev->config;
 
 	k_mutex_init(&data->lock);
+	k_sem_init(&data->xfer_sem, 0, 1);
 
 	memset(&data->dev_config, 0, sizeof(data->dev_config));
 	memset(&data->trans_config, 0, sizeof(data->trans_config));
@@ -1026,6 +1153,9 @@ static int mspi_esp32_init(const struct device *dev)
 	data->dev_config.tx_lsbfirst = false;
 	data->dev_config.rx_lsbfirst = false;
 	data->dev_config.no_compensate = false;
+
+	/* Force the first transceive() to program the device-level registers. */
+	data->dev_hw_dirty = true;
 
 	/*
 	 * Default CS pin: GPIO-driven CS disables hardware CS (cs_pin_id = -1).
@@ -1046,6 +1176,22 @@ static int mspi_esp32_init(const struct device *dev)
 		LOG_ERR("MSPI config failed: %d", ret);
 		return ret;
 	}
+
+#ifdef CONFIG_MSPI_ESP32_INTERRUPT
+	spi_ll_disable_int(config->spi);
+	spi_ll_clear_int_stat(config->spi);
+
+	ret = esp_intr_alloc(config->irq_source,
+		ESP_PRIO_TO_FLAGS(config->irq_priority) |
+			ESP_INT_FLAGS_CHECK(config->irq_flags) | ESP_INTR_FLAG_IRAM,
+		(intr_handler_t)mspi_esp32_isr,
+		(void *)dev,
+		NULL);
+	if (ret != 0) {
+		LOG_ERR("Could not allocate MSPI interrupt: %d", ret);
+		return ret;
+	}
+#endif
 
 	LOG_INF("ESP32 MSPI driver initialised (peripheral %u)",
 		config->peripheral_id);
@@ -1119,6 +1265,9 @@ static DEVICE_API(mspi, mspi_esp32_api) = {
 		.duty_cycle     = DT_INST_PROP(inst, duty_cycle),         		\
 		.transfer_timeout = DT_INST_PROP(inst, transfer_timeout),  		\
 		.input_delay_ns = 0,                                       		\
+		.irq_source     = DT_INST_IRQ_BY_IDX(inst, 0, irq),        		\
+		.irq_priority   = DT_INST_IRQ_BY_IDX(inst, 0, priority),   		\
+		.irq_flags      = DT_INST_IRQ_BY_IDX(inst, 0, flags),      		\
 	};                                                                 	\
                                                                         \
 	DEVICE_DT_INST_DEFINE(inst, mspi_esp32_init, NULL,                 	\
