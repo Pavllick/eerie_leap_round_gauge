@@ -77,6 +77,18 @@ void HorizontalChartIndicator::UpdateIndicator(float value) {
     lv_chart_set_next_value(lv_chart_, ser, static_cast<int32_t>(value));
 }
 
+void HorizontalChartIndicator::Update(float value) {
+    if(!IsReady())
+        return;
+
+    if(value < range_start_)
+        value = range_start_;
+    else if(value > range_end_)
+        value = range_end_;
+
+    UpdateIndicator(value);
+}
+
 void HorizontalChartIndicator::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
     IndicatorBase::Configure(configuration);
 

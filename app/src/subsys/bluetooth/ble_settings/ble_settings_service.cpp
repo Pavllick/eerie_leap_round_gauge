@@ -203,7 +203,8 @@ bool BleSettingsService::SendData(uint8_t settings_id, std::span<const uint8_t> 
             if(status_->GetState() == BleSettingsState::Reading) {
                 status_->SetTransferredBytes(offset + to_send);
             } else {
-                LOG_ERR("SendData: BLE connection state changed to %u during transfer", status_->GetState());
+                LOG_ERR("SendData: BLE connection state changed to %u during transfer",
+                    static_cast<unsigned int>(status_->GetState()));
                 success = false;
                 break;
             }
