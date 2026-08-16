@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <exception>
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -175,6 +176,14 @@ bool BleSettingsService::SendData(uint8_t settings_id, std::span<const uint8_t> 
     // 2. Send data chunks
     if(success) {
         uint16_t mtu = bt_gatt_get_mtu(ble_active_conn_);
+        if(mtu <= 3) {
+            LOG_ERR("SendData: invalid MTU %u", mtu);
+            status_->SetErrorCode(BleSettingsErrorCode::NotificationFailed);
+            status_->SetState(BleSettingsState::Error);
+
+            return false;
+        }
+
         uint16_t chunk_size = std::min<uint16_t>(mtu - 3, 512);
 
         int retry_count = 0;
@@ -209,7 +218,7 @@ bool BleSettingsService::SendData(uint8_t settings_id, std::span<const uint8_t> 
                 break;
             }
 
-            offset += chunk_size;
+            offset += to_send;
             retry_count = 0;
         }
     }
@@ -254,8 +263,14 @@ ssize_t ControlWriteCallback(
         return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 
     k_mutex_lock(&BleSettingsService::mutex_, K_FOREVER);
-    BleSettingsService::command_manager_.Process(
-        std::span(static_cast<const uint8_t*>(buf), len));
+    try {
+        BleSettingsService::command_manager_.Process(
+            std::span(static_cast<const uint8_t*>(buf), len));
+    } catch(const std::exception& e) {
+        LOG_ERR("Control command processing threw: %s", e.what());
+    } catch(...) {
+        LOG_ERR("Control command processing threw an unknown exception");
+    }
     k_mutex_unlock(&BleSettingsService::mutex_);
 
     return len;
@@ -273,8 +288,14 @@ ssize_t DataWriteCallback(
         return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 
     k_mutex_lock(&BleSettingsService::mutex_, K_FOREVER);
-    BleSettingsService::HandleDataChunk(
-        std::span(static_cast<const uint8_t*>(buf), len));
+    try {
+        BleSettingsService::HandleDataChunk(
+            std::span(static_cast<const uint8_t*>(buf), len));
+    } catch(const std::exception& e) {
+        LOG_ERR("Data chunk handling threw: %s", e.what());
+    } catch(...) {
+        LOG_ERR("Data chunk handling threw an unknown exception");
+    }
     k_mutex_unlock(&BleSettingsService::mutex_);
 
     return len;

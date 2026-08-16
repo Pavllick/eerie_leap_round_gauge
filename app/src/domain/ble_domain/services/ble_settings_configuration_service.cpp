@@ -1,3 +1,5 @@
+#include <exception>
+
 #include <zephyr/logging/log.h>
 
 #include "utilities/memory/memory_resource_manager.h"
@@ -70,7 +72,16 @@ bool BleSettingsConfigurationService::HandleConfigWrite(uint8_t settings_id, std
 
 std::span<const uint8_t> BleSettingsConfigurationService::HandleConfigRead(uint8_t settings_id) const {
     auto type = static_cast<ConfigurationService::Type>(settings_id);
-    json_str_buffer_ = configuration_service_->GetJsonConfiguration(type);
+
+    try {
+        json_str_buffer_ = configuration_service_->GetJsonConfiguration(type);
+    } catch (const std::exception& e) {
+        LOG_ERR("Failed to get JSON configuration for settings_id=%d: %s", settings_id, e.what());
+        json_str_buffer_.clear();
+    } catch (...) {
+        LOG_ERR("Failed to get JSON configuration for settings_id=%d", settings_id);
+        json_str_buffer_.clear();
+    }
 
     return { reinterpret_cast<const uint8_t*>(json_str_buffer_.c_str()), json_str_buffer_.size() };
 }

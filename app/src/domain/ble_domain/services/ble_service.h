@@ -14,7 +14,6 @@ class BleService {
 private:
     static std::unique_ptr<BleService> instance_;
 
-    std::shared_ptr<ConfigurationService> configuration_service_;
     std::shared_ptr<SensorsProcessingService> sensors_processing_service_;
 
     static bool is_initialized_;
@@ -26,9 +25,7 @@ private:
     void PairingStarted() const;
     void PairingFinished() const;
 
-    BleService(
-        std::shared_ptr<ConfigurationService> configuration_service,
-        std::shared_ptr<SensorsProcessingService> sensors_processing_service);
+    BleService(std::shared_ptr<SensorsProcessingService> sensors_processing_service);
 
 public:
     BleService& operator=(const BleService&) = delete;

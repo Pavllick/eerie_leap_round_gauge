@@ -276,7 +276,10 @@ int main() {
     ble_service.Initialize();
     ble_service.Start();
 
-	while (true) {
+    // SystemInfo::PrintStackInfo();
+    SystemInfo::PrintThreadIds();
+
+	while(true) {
         // SystemInfo::PrintHeapInfo();
         // SystemInfo::PrintStackInfo();
         // SystemInfo::PrintThreadIds();

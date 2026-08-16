@@ -32,6 +32,10 @@ private:
     static AdBuffer ad_;
     static AdBuffer sd_;
     static const bt_le_adv_param* advertising_params_;
+
+    // Guards active_conn_: it is written from the BT RX workqueue (conn callbacks)
+    // and read from the system workqueue (deferred handlers below).
+    static k_mutex conn_mutex_;
     static bt_conn* active_conn_;
 
     static k_work_delayable adv_restart_work_;
@@ -62,6 +66,9 @@ private:
     friend void SecurityChanged(bt_conn* conn, bt_security_t level, enum bt_security_err err);
 
     friend void PairingFailed(struct bt_conn *conn, enum bt_security_err reason);
+
+    // Returns a new reference to the active connection, or nullptr. Caller must bt_conn_unref().
+    static bt_conn* AcquireActiveConn();
 
     static void UpdateDataLength(bt_conn* conn);
     static void UpdateMtu(bt_conn* conn);
