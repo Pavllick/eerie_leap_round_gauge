@@ -15,7 +15,15 @@ private:
     static void UpdateIndicatorCallback(void* obj, int32_t value);
 
     EmaFilterInt32 value_filter_;
-    uint8_t smoothing_factor_ = 4;
+    // uint8_t smoothing_factor_ = 4;
+
+    // Sensor samples can arrive faster than the value-change animation
+    // can settle (ValueChangeAnimation() below), so without a dead-zone
+    // a near-flat/noisy signal keeps restarting the animation before it
+    // ever finishes - the widget stays "in motion" and gets invalidated/
+    // redrawn on every render tick indefinitely, even with no visually
+    // meaningful change. Skip re-triggering for tiny deltas.
+    static constexpr float min_animation_delta_ratio_ = 0.001F; // 0.1% of range
 
 protected:
     std::optional<size_t> sensor_id_hash_;

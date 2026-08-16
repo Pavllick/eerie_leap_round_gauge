@@ -31,12 +31,12 @@ UiRendererService::~UiRendererService() {
 
 int UiRendererService::Initialize() {
     if(DtDisplay::Get() == nullptr) {
-        LOG_ERR("Display not found, aborting test");
+        LOG_ERR("Display not found, aborting");
         return -1;
     }
 
     if(!device_is_ready(DtDisplay::Get())) {
-		LOG_ERR("Device not ready, aborting test");
+		LOG_ERR("Display not ready, aborting");
 		return -1;
 	}
 

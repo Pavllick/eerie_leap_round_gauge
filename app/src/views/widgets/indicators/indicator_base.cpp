@@ -1,3 +1,4 @@
+#include <cmath>
 #include <variant>
 
 #include "utilities/string/string_helpers.h"
@@ -80,6 +81,9 @@ void IndicatorBase::Update(float value) {
         value = range_end_;
 
     if(IsSmoothed()) {
+        if(std::abs(value - value_) < min_animation_delta_ratio_ * (range_end_ - range_start_))
+            return;
+
         ValueChangeAnimation(
             value_change_animation_,
             range_end_ - range_start_,

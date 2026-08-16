@@ -1,3 +1,5 @@
+#include <zephyr/sys/printk.h>
+
 #include "utilities/memory/memory_resource_manager.h"
 
 #include "event_bus.h"
@@ -111,16 +113,26 @@ void EventBus<EventTypeEnum, PayloadTypeEnum>::ProcessEvent(
     if(dispatch_guard_before)
         dispatch_guard_before();
 
-    if(auto it = subscribers->find(event.type); it != subscribers->end()) {
-        for(const auto& subscription : it->second) {
-            if(subscription->filter(event)) {
-                subscription->handler(event);
+    struct GuardRelease {
+        DispatchGuardFn fn;
+        ~GuardRelease() { if(fn) fn(); }
+    } release_guard{dispatch_guard_after};
+
+    try {
+        if(auto it = subscribers->find(event.type); it != subscribers->end()) {
+            for(const auto& subscription : it->second) {
+                if(subscription->filter(event)) {
+                    subscription->handler(event);
+                }
             }
         }
+    } catch (const std::exception& e) {
+        printk("[event_bus] subscriber handler threw for event type %u: %s\n",
+            static_cast<unsigned>(event.type), e.what());
+    } catch (...) {
+        printk("[event_bus] subscriber handler threw a non-standard exception for event type %u\n",
+            static_cast<unsigned>(event.type));
     }
-
-    if(dispatch_guard_after)
-        dispatch_guard_after();
 }
 
 template<concepts::EnumClassUint32 EventTypeEnum, concepts::EnumClassUint32 PayloadTypeEnum>

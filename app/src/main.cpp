@@ -8,6 +8,7 @@
 
 #include "utilities/memory/memory_resource_manager.h"
 #include "utilities/dev_tools/system_info.h"
+#include "utilities/dev_tools/coredump_reporter.h"
 #include "utilities/guid/guid_generator.h"
 
 #include "subsys/device_tree/dt_configurator.h"
@@ -36,6 +37,7 @@
 #include "domain/ble_domain/services/ble_service.h"
 
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
+#include "domain/ui_domain/lvgl_lock.h"
 #include "domain/ui_domain/services/ui_renderer_service.h"
 #include "domain/ui_domain/services/sensors_rendering_service.h"
 
