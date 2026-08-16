@@ -7,25 +7,39 @@ namespace eerie_leap::controllers {
 using namespace eerie_leap::domain::canbus_com_domain::commands;
 
 LoggingController::LoggingController(
-    std::shared_ptr<GpioButtons> gpio_buttons,
+    std::shared_ptr<IGpio> gpio,
     std::shared_ptr<WorkQueueThread> input_work_queue_thread,
     std::shared_ptr<CanbusComService> canbus_com_service)
-        : gpio_buttons_(std::move(gpio_buttons)),
+        : gpio_(std::move(gpio)),
         input_work_queue_thread_(std::move(input_work_queue_thread)),
         canbus_com_service_(std::move(canbus_com_service)),
         is_logging_in_progress_(false) {}
 
+LoggingController::~LoggingController() {
+    if(button_handler_id_ > 0)
+        gpio_->RemoveChannelChangedHandler(LOGGING_BUTTON_CHANNEL, button_handler_id_);
+}
+
 int LoggingController::Initialize() {
-    gpio_buttons_->RegisterCallback(0, [this]() {
-        input_work_queue_thread_->Run([this]() {
-            CanbusComLoggingCommand command(!is_logging_in_progress_);
-            canbus_com_service_->SendCommand(
-                command,
-                [this](bool success) { LoggingStateUpdatedAck(success); });
+    int handler_id = gpio_->RegisterChannelChangedHandler(
+        LOGGING_BUTTON_CHANNEL,
+        GpioEdge::ACTIVE,
+        [this](int channel, bool state) {
+            ARG_UNUSED(channel);
+            ARG_UNUSED(state);
+
+            input_work_queue_thread_->Run([this]() {
+                CanbusComLoggingCommand command(!is_logging_in_progress_);
+                canbus_com_service_->SendCommand(
+                    command,
+                    [this](bool success) { LoggingStateUpdatedAck(success); });
+            });
         });
 
-        return 0;
-    });
+    if(handler_id <= 0)
+        return handler_id;
+
+    button_handler_id_ = handler_id;
 
     return 0;
 }

@@ -19,7 +19,7 @@
 
 #include "subsys/random/rng.h"
 #include "subsys/fs/services/fs_service.h"
-#include "subsys/gpio/gpio_buttons.h"
+#include "subsys/gpio/gpio_factory.hpp"
 #include "subsys/time/time_service.h"
 #include "subsys/time/rtc_provider.h"
 #include "subsys/time/boot_elapsed_time_provider.h"
@@ -154,6 +154,12 @@ int main() {
     auto canbus_configuration_manager = std::make_shared<CanbusConfigurationManager>(
         std::move(cbor_canbus_config_service), std::move(json_canbus_config_service), nullptr);
 
+    std::shared_ptr<IGpio> gpio = GpioFactory(DtGpio::Get).Create();
+    if(gpio->Initialize() != 0) {
+        LOG_ERR("Failed to initialize GPIO.");
+        gpio = nullptr;
+    }
+
     auto cbor_sensors_config_service = std::make_unique<CborConfigurationService<CborSensorsConfig>>(
         "sensors_config", fs_service);
     auto json_sensors_config_service = std::make_unique<JsonConfigurationService<JsonSensorsConfig>>(
@@ -162,7 +168,7 @@ int main() {
         std::move(cbor_sensors_config_service),
         std::move(json_sensors_config_service),
         nullptr,
-        0, 0);
+        gpio != nullptr ? gpio->GetChannelCount() : 0, 0);
 
     auto cbor_ui_config_service = std::make_unique<CborConfigurationService<CborUiConfig>>(
         "ui_config", fs_service);
@@ -217,7 +223,8 @@ int main() {
         time_service,
         guid_generator,
         sensor_readings_frame,
-        canbus_service);
+        canbus_service,
+        gpio);
 
     auto sensors_processing_service = std::make_shared<SensorsProcessingService>(
         sensors_configuration_manager,
@@ -246,15 +253,13 @@ int main() {
             break;
         }
 
-        auto gpio_buttons = make_shared_pmr<GpioButtons>(
-            Mrm::GetExtPmr(), DtGpio::Get().value());
-        if(gpio_buttons->Initialize() != 0) {
-            LOG_ERR("Failed to initialize buttons.");
+        if(gpio == nullptr) {
+            LOG_ERR("GPIO is not available.");
             break;
         }
 
-        logging_controller = make_shared_pmr<LoggingController>(
-            Mrm::GetExtPmr(), gpio_buttons, input_work_queue_thread, canbus_com_service);
+        logging_controller = std::make_shared<LoggingController>(
+            gpio, input_work_queue_thread, canbus_com_service);
         logging_controller->Initialize();
     } while(false);
 
