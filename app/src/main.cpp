@@ -23,6 +23,7 @@
 #include "subsys/time/time_service.h"
 #include "subsys/time/rtc_provider.h"
 #include "subsys/time/boot_elapsed_time_provider.h"
+#include "subsys/assets/assets_manager.h"
 
 #include "domain/configuration_domain/services/configuration_service.h"
 
@@ -37,7 +38,6 @@
 #include "domain/ble_domain/services/ble_service.h"
 
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
-#include "domain/ui_domain/lvgl_lock.h"
 #include "domain/ui_domain/services/ui_renderer_service.h"
 #include "domain/ui_domain/services/sensors_rendering_service.h"
 
@@ -48,7 +48,6 @@
 #include "domain/ui_domain/models/widget_property.h"
 #include "domain/ui_domain/models/icon_type.h"
 #include "domain/ui_domain/models/indicator_direction.h"
-#include "domain/ui_domain/assets_manager/ui_assets_manager.h"
 #include "domain/canbus_com_domain/services/canbus_com_service.h"
 
 #include "controllers/ui_controller.h"
@@ -66,6 +65,7 @@ using namespace eerie_leap::utilities::dev_tools;
 using namespace eerie_leap::utilities::guid;
 
 using namespace eerie_leap::subsys::random;
+using namespace eerie_leap::subsys::assets;
 using namespace eerie_leap::subsys::device_tree;
 using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::gpio;
@@ -81,7 +81,6 @@ using namespace eerie_leap::domain::ui_domain;
 using namespace eerie_leap::domain::ui_domain::configuration;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::domain::ui_domain::services;
-using namespace eerie_leap::domain::ui_domain::assets_manager;
 
 using namespace eerie_leap::domain::canbus_domain::configuration;
 using namespace eerie_leap::domain::canbus_domain::services;
@@ -107,7 +106,7 @@ constexpr uint32_t SLEEP_TIME_MS = 5000;
 void SetupCanbusConfiguration(std::shared_ptr<CanbusConfigurationManager> canbus_configuration_manager);
 void SetupTestSensors(std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager);
 std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurationManager> ui_configuration_manager);
-void SetupTestUiAssets(std::shared_ptr<UiAssetsManager> ui_assets_manager);
+void SetupTestUiAssets(std::shared_ptr<AssetsManager> ui_assets_manager);
 void EmulateReadings(
     std::shared_ptr<GuidGenerator> guid_generator,
     std::shared_ptr<SensorsConfigurationManager> sensors_configuration_manager,
@@ -183,7 +182,7 @@ int main() {
     // TODO: For test purposes only
     SetupTestUiConfig(ui_configuration_manager);
 
-    auto ui_assets_manager = std::make_shared<UiAssetsManager>(fs_service);
+    auto ui_assets_manager = std::make_shared<AssetsManager>(fs_service, "ui_assets");
 
     // TODO: For test purposes only
     SetupTestUiAssets(ui_assets_manager);
@@ -619,7 +618,7 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
     return ui_configuration;
 }
 
-void SetupTestUiAssets(std::shared_ptr<UiAssetsManager> ui_assets_manager) {
+void SetupTestUiAssets(std::shared_ptr<AssetsManager> ui_assets_manager) {
     if(ui_assets_manager->Exists("ui_img_norma_al88.bin"))
         return;
 

@@ -17,7 +17,7 @@ IconBase::IconBase(std::shared_ptr<Frame> parent)
         .Build());
 }
 
-void IconBase::SetAssetsManager(std::shared_ptr<UiAssetsManager> ui_assets_manager) {
+void IconBase::SetAssetsManager(std::shared_ptr<AssetsManager> ui_assets_manager) {
     ui_assets_manager_ = std::move(ui_assets_manager);
 }
 

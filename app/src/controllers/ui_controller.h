@@ -4,20 +4,20 @@
 #include <vector>
 #include <unordered_map>
 
+#include "subsys/assets/assets_manager.h"
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
 #include "domain/ui_domain/models/ui_configuration.h"
 #include "domain/ui_domain/models/screen_configuration.h"
-#include "domain/ui_domain/assets_manager/ui_assets_manager.h"
 
 #include "views/main_view.h"
 #include "views/screens/i_screen.h"
 
 namespace eerie_leap::controllers {
 
+using eerie_leap::subsys::assets::AssetsManager;
 using eerie_leap::domain::ui_domain::models::UiConfiguration;
 using eerie_leap::domain::ui_domain::models::ScreenConfiguration;
 using eerie_leap::domain::ui_domain::configuration::UiConfigurationManager;
-using eerie_leap::domain::ui_domain::assets_manager::UiAssetsManager;
 
 using eerie_leap::views::MainView;
 using eerie_leap::views::screens::IScreen;
@@ -25,7 +25,7 @@ using eerie_leap::views::screens::IScreen;
 class UiController {
 private:
     std::shared_ptr<UiConfigurationManager> ui_configuration_manager_;
-    std::shared_ptr<UiAssetsManager> ui_assets_manager_;
+    std::shared_ptr<AssetsManager> ui_assets_manager_;
 
     std::unique_ptr<MainView> main_view_;
     std::shared_ptr<UiConfiguration> configuration_;
@@ -39,7 +39,7 @@ private:
 public:
     UiController(
         std::shared_ptr<UiConfigurationManager> ui_configuration_manager,
-        std::shared_ptr<UiAssetsManager> ui_assets_manager);
+        std::shared_ptr<AssetsManager> ui_assets_manager);
 
     int Render();
 };

@@ -14,7 +14,7 @@ using namespace eerie_leap::views::widgets;
 LOG_MODULE_REGISTER(screen_logger);
 
 Screen::Screen(
-    std::shared_ptr<UiAssetsManager> ui_assets_manager,
+    std::shared_ptr<AssetsManager> ui_assets_manager,
     uint32_t id,
     std::shared_ptr<Frame> parent)
         : ui_assets_manager_(std::move(ui_assets_manager)),

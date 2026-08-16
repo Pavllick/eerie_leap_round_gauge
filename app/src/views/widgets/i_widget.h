@@ -3,20 +3,20 @@
 #include <memory>
 #include <lvgl.h>
 
-#include "views/i_renderable.h"
+#include "subsys/assets/assets_manager.h"
 #include "domain/ui_domain/models/widget_type.h"
 #include "domain/ui_domain/models/widget_position.h"
 #include "domain/ui_domain/models/widget_size.h"
 #include "domain/ui_domain/models/widget_configuration.h"
-#include "domain/ui_domain/assets_manager/ui_assets_manager.h"
+#include "views/i_renderable.h"
 
 namespace eerie_leap::views::widgets {
 
+using eerie_leap::subsys::assets::AssetsManager;
 using eerie_leap::domain::ui_domain::models::WidgetConfiguration;
 using eerie_leap::domain::ui_domain::models::WidgetPosition;
 using eerie_leap::domain::ui_domain::models::WidgetSize;
 using eerie_leap::domain::ui_domain::models::WidgetType;
-using eerie_leap::domain::ui_domain::assets_manager::UiAssetsManager;
 
 class IWidget : public virtual IRenderable {
 public:
@@ -27,7 +27,7 @@ public:
     virtual bool IsVisible() const = 0;
 
     // Configuration
-    virtual void SetAssetsManager(std::shared_ptr<UiAssetsManager> ui_assets_manager) = 0;
+    virtual void SetAssetsManager(std::shared_ptr<AssetsManager> ui_assets_manager) = 0;
     virtual void Configure(std::shared_ptr<WidgetConfiguration> configuration) = 0;
     virtual std::shared_ptr<WidgetConfiguration> GetConfiguration() const = 0;
     virtual bool IsSmoothed() const = 0;

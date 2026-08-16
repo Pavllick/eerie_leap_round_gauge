@@ -25,7 +25,7 @@ protected:
     std::shared_ptr<Frame> parent_;
 
     std::vector<UiSubscriptionHandle> subscriptions_;
-    std::shared_ptr<UiAssetsManager> ui_assets_manager_ = nullptr;
+    std::shared_ptr<AssetsManager> ui_assets_manager_ = nullptr;
 
     int SetVisibility(bool is_visible);
 
@@ -37,7 +37,7 @@ public:
     bool IsSmoothed() const override;
     bool IsVisible() const override;
 
-    void SetAssetsManager(std::shared_ptr<UiAssetsManager> ui_assets_manager) override;
+    void SetAssetsManager(std::shared_ptr<AssetsManager> ui_assets_manager) override;
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
     std::shared_ptr<WidgetConfiguration> GetConfiguration() const override;
 

@@ -14,7 +14,7 @@ LOG_MODULE_REGISTER(ui_controller_logger);
 
 UiController::UiController(
     std::shared_ptr<UiConfigurationManager> ui_configuration_manager,
-    std::shared_ptr<UiAssetsManager> ui_assets_manager)
+    std::shared_ptr<AssetsManager> ui_assets_manager)
     : ui_configuration_manager_(std::move(ui_configuration_manager)),
       ui_assets_manager_(std::move(ui_assets_manager)) {
 
