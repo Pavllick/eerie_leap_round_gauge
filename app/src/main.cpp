@@ -297,7 +297,7 @@ void EmulateReadings(
         SensorReading reading(guid_generator->Generate(), sensor);
         reading.source = ReadingSource::PROCESSING;
         reading.status = ReadingStatus::PROCESSED;
-        reading.value = (Rng::Get32() / static_cast<float>(UINT32_MAX)) * 100.0F;
+        reading.value = (Rng::Get<uint32_t>() / static_cast<float>(UINT32_MAX)) * 100.0F;
 
         sensor_readings_frame->AddOrUpdateReading(reading);
     }
