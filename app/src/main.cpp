@@ -11,6 +11,7 @@
 #include "utilities/guid/guid_generator.h"
 
 #include "subsys/device_tree/dt_configurator.h"
+#include "subsys/device_tree/dt_feature.h"
 #include "subsys/device_tree/dt_fs.h"
 #include "subsys/device_tree/dt_gpio.h"
 #include "subsys/device_tree/dt_canbus.h"
@@ -111,7 +112,13 @@ void EmulateReadings(
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame);
 
 int main() {
-    DtConfigurator::Initialize();
+    // CoredumpReporter::PrintStoredDump();
+
+    DtConfigurator::Initialize(
+        DtFeature::INTERNAL_FS
+        | DtFeature::GPIO
+        | DtFeature::DISPLAY
+        | DtFeature::CANBUS);
 
     auto dark_theme = make_shared_pmr<DarkBWTheme>(Mrm::GetExtPmr());
     ThemeManager::GetInstance().SetTheme(dark_theme);
@@ -121,7 +128,7 @@ int main() {
         return -1;
     ui_renderer_service->Start();
 
-    auto fs_service = make_shared_pmr<FsService>(Mrm::GetExtPmr(), DtFs::GetInternalFsMp().value());
+    auto fs_service = make_shared_pmr<FsService>(Mrm::GetExtPmr(), DtFs::GetInternalFsMp());
     if(!fs_service->Initialize()) {
         LOG_ERR("Failed to initialize File System.");
         return -1;
@@ -233,13 +240,13 @@ int main() {
             break;
         }
 
-        if(!DtGpio::GetButtons().has_value()) {
+        if(!DtGpio::Get().has_value()) {
             LOG_WRN("No buttons configured.");
             break;
         }
 
         auto gpio_buttons = make_shared_pmr<GpioButtons>(
-            Mrm::GetExtPmr(), DtGpio::GetButtons().value());
+            Mrm::GetExtPmr(), DtGpio::Get().value());
         if(gpio_buttons->Initialize() != 0) {
             LOG_ERR("Failed to initialize buttons.");
             break;
@@ -608,6 +615,9 @@ std::shared_ptr<UiConfiguration> SetupTestUiConfig(std::shared_ptr<UiConfigurati
 }
 
 void SetupTestUiAssets(std::shared_ptr<UiAssetsManager> ui_assets_manager) {
+    if(ui_assets_manager->Exists("ui_img_norma_al88.bin"))
+        return;
+
     ui_assets_manager->Save(
         "ui_img_norma_al88.bin",
         ui_img_norma_al88_data);

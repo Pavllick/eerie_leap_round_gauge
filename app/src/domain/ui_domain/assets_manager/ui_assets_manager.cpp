@@ -35,7 +35,7 @@ std::pmr::vector<uint8_t> UiAssetsManager::Load(std::string_view relative_path) 
     std::filesystem::path full_path(assets_dir_);
     full_path /= relative_path;
 
-    size_t file_size = fs_service_->GetFileSize(full_path.string());
+    size_t file_size = fs_service_->GetFileSize(full_path.string()).value_or(0);
     if(file_size == 0) {
         return {};
     }

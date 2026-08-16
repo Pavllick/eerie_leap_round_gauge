@@ -85,7 +85,7 @@ std::shared_ptr<UiConfiguration> ui_configuration_manager_test_SetupTestUiConfig
 
 ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_successfully_saved) {
     DtFs::InitInternalFs();
-    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
+    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp());
 
     fs_service->Format();
 
@@ -101,7 +101,7 @@ ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_successf
 
 ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_and_Load) {
     DtFs::InitInternalFs();
-    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
+    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp());
 
     fs_service->Format();
 

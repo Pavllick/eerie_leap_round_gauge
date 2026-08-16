@@ -30,17 +30,11 @@ file(GLOB_RECURSE APP_SRC_UI_DOMAIN
   ${APP_SRC_UI_DOMAIN_DIR}/*.cpp
 )
 
-set(APP_SRC_SUBSYS_DT_DIR ${APP_SRC_DIR}/subsys/device_tree)
-file(GLOB_RECURSE APP_SRC_SUBSYS_DT
-  ${APP_SRC_SUBSYS_DT_DIR}/dt_fs.cpp
-)
-
 file(GLOB_RECURSE TEST_SOURCES src/*.c src/*.cpp)
 
 # Add all source files to the app target
 target_sources(app PRIVATE
   ${APP_SRC_CONFIGURATION}
   ${APP_SRC_UI_DOMAIN}
-  ${APP_SRC_SUBSYS_DT}
   ${TEST_SOURCES}
 )

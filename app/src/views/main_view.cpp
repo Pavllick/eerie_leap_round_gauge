@@ -47,7 +47,7 @@ std::shared_ptr<IScreen> MainView::GetActiveScreen() {
     return GetScreen(active_screen_id_);
 }
 
-void RenderCenterCrossHelperGuides(lv_obj_t* screen) {
+static void RenderCenterCrossHelperGuides(lv_obj_t* screen) {
     lv_obj_t * panel1 = lv_obj_create(screen);
     lv_obj_set_width(panel1, 2);
     lv_obj_set_height(panel1, 466);

@@ -4,7 +4,7 @@
 / {
     aliases {
         intfs0 = &intfs0;
-        gpio0buttons = &gpio0buttons;
+        gpioc = &gpioc;
         can0 = &can0;
     };
 
@@ -30,7 +30,7 @@
         };
     };
 
-    gpio0buttons: gpio0buttons {
+    gpioc: gpioc {
 		compatible = "gpio-keys";
 
 		di_0: di_0 {

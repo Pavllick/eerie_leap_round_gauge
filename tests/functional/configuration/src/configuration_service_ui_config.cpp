@@ -44,7 +44,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_i
     }
 
     DtFs::InitInternalFs();
-    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
+    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp());
 
     fs_service->Format();
     auto ui_config_service = std::make_shared<CborConfigurationService<CborUiConfig>>("ui_config", fs_service);
@@ -86,7 +86,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_d
     }
 
     DtFs::InitInternalFs();
-    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
+    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp());
 
     fs_service->Format();
     auto ui_config_service = std::make_shared<CborConfigurationService<CborUiConfig>>("ui_config", fs_service);
@@ -128,7 +128,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_s
     }
 
     DtFs::InitInternalFs();
-    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
+    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp());
 
     fs_service->Format();
     auto ui_config_service = std::make_shared<CborConfigurationService<CborUiConfig>>("ui_config", fs_service);
@@ -172,7 +172,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_b
     }
 
     DtFs::InitInternalFs();
-    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
+    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp());
 
     fs_service->Format();
     auto ui_config_service = std::make_shared<CborConfigurationService<CborUiConfig>>("ui_config", fs_service);
@@ -214,7 +214,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_i
     }
 
     DtFs::InitInternalFs();
-    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
+    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp());
 
     fs_service->Format();
     auto ui_config_service = std::make_shared<CborConfigurationService<CborUiConfig>>("ui_config", fs_service);
@@ -267,7 +267,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_s
     }
 
     DtFs::InitInternalFs();
-    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
+    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp());
 
     fs_service->Format();
     auto ui_config_service = std::make_shared<CborConfigurationService<CborUiConfig>>("ui_config", fs_service);
@@ -335,7 +335,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_s
     }
 
     DtFs::InitInternalFs();
-    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
+    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp());
 
     fs_service->Format();
     auto ui_config_service = std::make_shared<CborConfigurationService<CborUiConfig>>("ui_config", fs_service);
@@ -456,7 +456,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_s
 
 
     DtFs::InitInternalFs();
-    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
+    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp());
 
     fs_service->Format();
     auto ui_config_service = std::make_shared<CborConfigurationService<CborUiConfig>>("ui_config", fs_service);
@@ -608,7 +608,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_Save_successfully_saved
     ui_config->CborScreenConfig_m.push_back(std::move(screen));
 
     DtFs::InitInternalFs();
-    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp().value());
+    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp());
 
     fs_service->Format();
     auto ui_config_service = std::make_shared<CborConfigurationService<CborUiConfig>>("ui_config", fs_service);
