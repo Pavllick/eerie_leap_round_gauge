@@ -90,9 +90,8 @@ ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_successf
     fs_service->Format();
 
     auto cbor_ui_configuration_service = std::make_unique<CborConfigurationService<CborUiConfig>>("ui_config", fs_service);
-    auto json_ui_configuration_service = std::make_unique<JsonConfigurationService<JsonUiConfig>>("ui_config", fs_service);
     auto ui_configuration_manager = std::make_shared<UiConfigurationManager>(
-        std::move(cbor_ui_configuration_service), std::move(json_ui_configuration_service));
+        std::move(cbor_ui_configuration_service));
 
     auto ui_configuration = ui_configuration_manager_test_SetupTestUiConfiguration();
     bool result = ui_configuration_manager->Update(*ui_configuration);
@@ -106,9 +105,8 @@ ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_and_Load
     fs_service->Format();
 
     auto cbor_ui_configuration_service = std::make_unique<CborConfigurationService<CborUiConfig>>("ui_config", fs_service);
-    auto json_ui_configuration_service = std::make_unique<JsonConfigurationService<JsonUiConfig>>("ui_config", fs_service);
     auto ui_configuration_manager = std::make_shared<UiConfigurationManager>(
-        std::move(cbor_ui_configuration_service), std::move(json_ui_configuration_service));
+        std::move(cbor_ui_configuration_service));
 
     auto ui_configuration = ui_configuration_manager_test_SetupTestUiConfiguration();
     bool result = ui_configuration_manager->Update(*ui_configuration);

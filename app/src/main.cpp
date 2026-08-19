@@ -71,7 +71,6 @@ using namespace eerie_leap::subsys::fs::services;
 using namespace eerie_leap::subsys::gpio;
 using namespace eerie_leap::subsys::time;
 
-using namespace eerie_leap::configuration::json::configs;
 using namespace eerie_leap::configuration::services;
 
 using namespace eerie_leap::domain::configuration_domain::services;
@@ -149,10 +148,8 @@ int main() {
 
     auto cbor_canbus_config_service = std::make_unique<CborConfigurationService<CborCanbusConfig>>(
         "canbus_config", fs_service);
-    auto json_canbus_config_service = std::make_unique<JsonConfigurationService<JsonCanbusConfig>>(
-        "canbus_config", nullptr);
     auto canbus_configuration_manager = std::make_shared<CanbusConfigurationManager>(
-        std::move(cbor_canbus_config_service), std::move(json_canbus_config_service), nullptr);
+        std::move(cbor_canbus_config_service), nullptr);
 
     std::shared_ptr<IGpio> gpio = GpioFactory(DtGpio::Get).Create();
     if(gpio->Initialize() != 0) {
@@ -162,35 +159,22 @@ int main() {
 
     auto cbor_sensors_config_service = std::make_unique<CborConfigurationService<CborSensorsConfig>>(
         "sensors_config", fs_service);
-    auto json_sensors_config_service = std::make_unique<JsonConfigurationService<JsonSensorsConfig>>(
-        "sensors_config", nullptr);
     auto sensors_configuration_manager = std::make_shared<SensorsConfigurationManager>(
         std::move(cbor_sensors_config_service),
-        std::move(json_sensors_config_service),
         nullptr,
         gpio != nullptr ? gpio->GetChannelCount() : 0, 0);
 
     auto cbor_ui_config_service = std::make_unique<CborConfigurationService<CborUiConfig>>(
         "ui_config", fs_service);
-    auto json_ui_config_service = std::make_unique<JsonConfigurationService<JsonUiConfig>>(
-        "ui_config", nullptr);
     auto ui_configuration_manager = make_shared_pmr<UiConfigurationManager>(
-        Mrm::GetExtPmr(), std::move(cbor_ui_config_service), std::move(json_ui_config_service));
+        Mrm::GetExtPmr(), std::move(cbor_ui_config_service));
 
     auto configuration_service = std::make_shared<ConfigurationService>();
-
     configuration_service->RegisterCborConfigurationManager(
         ConfigurationService::Type::Canbus, canbus_configuration_manager);
     configuration_service->RegisterCborConfigurationManager(
         ConfigurationService::Type::Sensors, sensors_configuration_manager);
     configuration_service->RegisterCborConfigurationManager(
-        ConfigurationService::Type::Ui, ui_configuration_manager);
-
-    configuration_service->RegisterJsonConfigurationManager(
-        ConfigurationService::Type::Canbus, canbus_configuration_manager);
-    configuration_service->RegisterJsonConfigurationManager(
-        ConfigurationService::Type::Sensors, sensors_configuration_manager);
-    configuration_service->RegisterJsonConfigurationManager(
         ConfigurationService::Type::Ui, ui_configuration_manager);
 
     // TODO: For test purposes only

@@ -1,23 +1,19 @@
 #include <memory>
-#include <fstream>
 
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 #include <eerie_memory.hpp>
 
 #include "configuration/services/cbor_configuration_service.h"
-#include "configuration/services/json_configuration_service.h"
 
 #include "domain/ui_domain/models/ui_configuration.h"
 #include "domain/ui_domain/models/widget_type.h"
 #include "domain/ui_domain/models/widget_property.h"
 #include "domain/ui_domain/configuration/parsers/ui_configuration_cbor_parser.h"
-#include "domain/ui_domain/configuration/parsers/ui_configuration_json_parser.h"
 
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 
 using namespace eerie_memory;
-using namespace eerie_leap::configuration::json;
 using namespace eerie_leap::configuration::services;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::domain::ui_domain::configuration;
@@ -121,29 +117,4 @@ ZTEST(ui_configuration_parser, test_CborSerializeDeserialize) {
 
     ui_configuration_parser_CompareUiConfigurations(
         *ui_configuration, *deserialized_ui_configuration);
-}
-
-ZTEST(ui_configuration_parser, test_JsonSerializeDeserialize) {
-    UiConfigurationJsonParser ui_configuration_json_parser;
-
-    auto ui_configuration = ui_configuration_parser_GetTestUiConfiguration();
-
-    auto serialized_ui_configuration = ui_configuration_json_parser.Serialize(*ui_configuration);
-    auto deserialized_ui_configuration = ui_configuration_json_parser.Deserialize(Mrm::GetDefaultPmr(), *serialized_ui_configuration.get());
-
-    ui_configuration_parser_CompareUiConfigurations(
-        *ui_configuration, *deserialized_ui_configuration);
-}
-
-ZTEST(ui_configuration_parser, test_JsonSaveFile) {
-    UiConfigurationJsonParser ui_configuration_json_parser;
-
-    auto ui_configuration = ui_configuration_parser_GetTestUiConfiguration();
-    auto ui_config = ui_configuration_json_parser.Serialize(*ui_configuration);
-    auto json = JsonSerializer<JsonUiConfig>::Serialize(*ui_config);
-
-    // Will create file in the twister-out directory
-    std::ofstream file("../../../../../../../ui_config.json", std::ios::binary);
-    file.write(json.c_str(), json.size());
-    file.close();
 }
