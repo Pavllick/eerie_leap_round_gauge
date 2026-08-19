@@ -178,12 +178,20 @@ int main() {
         Mrm::GetExtPmr(), std::move(cbor_ui_config_service), std::move(json_ui_config_service));
 
     auto configuration_service = std::make_shared<ConfigurationService>();
+
+    configuration_service->RegisterCborConfigurationManager(
+        ConfigurationService::Type::Canbus, canbus_configuration_manager);
+    configuration_service->RegisterCborConfigurationManager(
+        ConfigurationService::Type::Sensors, sensors_configuration_manager);
+    configuration_service->RegisterCborConfigurationManager(
+        ConfigurationService::Type::Ui, ui_configuration_manager);
+
     configuration_service->RegisterJsonConfigurationManager(
-        ConfigurationService::Type::CanbusJson, canbus_configuration_manager);
+        ConfigurationService::Type::Canbus, canbus_configuration_manager);
     configuration_service->RegisterJsonConfigurationManager(
-        ConfigurationService::Type::SensorsJson, sensors_configuration_manager);
+        ConfigurationService::Type::Sensors, sensors_configuration_manager);
     configuration_service->RegisterJsonConfigurationManager(
-        ConfigurationService::Type::UiJson, ui_configuration_manager);
+        ConfigurationService::Type::Ui, ui_configuration_manager);
 
     // TODO: For test purposes only
     SetupTestUiConfig(ui_configuration_manager);

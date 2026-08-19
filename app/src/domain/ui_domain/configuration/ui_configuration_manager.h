@@ -8,6 +8,7 @@
 #include "configuration/services/cbor_configuration_service.h"
 #include "configuration/services/json_configuration_service.h"
 
+#include "domain/configuration_domain/utilities/i_cbor_configuration_manager.h"
 #include "domain/configuration_domain/utilities/i_json_configuration_manager.h"
 #include "domain/ui_domain/configuration/parsers/ui_configuration_cbor_parser.h"
 #include "domain/ui_domain/configuration/parsers/ui_configuration_json_parser.h"
@@ -18,13 +19,14 @@ namespace eerie_leap::domain::ui_domain::configuration {
 
 namespace config_services = eerie_leap::configuration::services;
 using eerie_leap::configuration::json::configs::JsonUiConfig;
+using eerie_leap::domain::configuration_domain::utilities::ICborConfigurationManager;
 using eerie_leap::domain::configuration_domain::utilities::IJsonConfigurationManager;
 
 using eerie_leap::domain::ui_domain::models::UiConfiguration;
 using eerie_leap::domain::ui_domain::configuration::parsers::UiConfigurationCborParser;
 using eerie_leap::domain::ui_domain::configuration::parsers::UiConfigurationJsonParser;
 
-class UiConfigurationManager : public IJsonConfigurationManager {
+class UiConfigurationManager : public ICborConfigurationManager, public IJsonConfigurationManager {
 private:
     std::unique_ptr<config_services::CborConfigurationService<CborUiConfig>> cbor_configuration_service_;
     std::unique_ptr<config_services::JsonConfigurationService<JsonUiConfig>> json_configuration_service_;
@@ -43,6 +45,9 @@ public:
         std::unique_ptr<config_services::JsonConfigurationService<JsonUiConfig>> json_configuration_service);
     bool Update(const UiConfiguration& configuration);
     std::shared_ptr<UiConfiguration> Get(bool force_load = false);
+
+    bool ApplyCborConfiguration(std::span<const uint8_t> cbor_data) override;
+    std::pmr::vector<uint8_t> GetCborConfiguration() override;
 
     bool ApplyJsonConfiguration(std::string_view json_str) override;
     std::pmr::string GetJsonConfiguration() override;

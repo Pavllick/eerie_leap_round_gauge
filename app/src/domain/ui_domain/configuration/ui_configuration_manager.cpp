@@ -84,6 +84,32 @@ std::pmr::string UiConfigurationManager::GetJsonConfiguration() {
     return JsonSerializer<JsonUiConfig>::Serialize(*json_config);
 }
 
+bool UiConfigurationManager::ApplyCborConfiguration(std::span<const uint8_t> cbor_data) {
+    auto cbor_config = cbor_configuration_service_->Deserialize(cbor_data);
+    if(cbor_config == nullptr)
+        return false;
+
+    try {
+        auto configuration = cbor_parser_->Deserialize(Mrm::GetExtPmr(), *cbor_config);
+
+        if(!Update(*configuration))
+            return false;
+    } catch(const std::exception& e) {
+        LOG_ERR("Failed to deserialize CBOR configuration. %s", e.what());
+        return false;
+    }
+
+    LOG_INF("CBOR configuration loaded successfully.");
+
+    return true;
+}
+
+std::pmr::vector<uint8_t> UiConfigurationManager::GetCborConfiguration() {
+    auto cbor_config = cbor_parser_->Serialize(*configuration_);
+
+    return cbor_configuration_service_->Serialize(*cbor_config);
+}
+
 bool UiConfigurationManager::Update(const UiConfiguration& configuration) {
     try {
         auto cbor_config = cbor_parser_->Serialize(configuration);
