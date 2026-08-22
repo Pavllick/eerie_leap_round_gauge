@@ -26,7 +26,7 @@ private:
     static constexpr float min_animation_delta_ratio_ = 0.001F; // 0.1% of range
 
 protected:
-    std::optional<size_t> sensor_id_hash_;
+    std::optional<uint32_t> sensor_id_hash_;
     lv_anim_t value_change_animation_;
     float range_start_ = 0;
     float range_end_ = 0;
@@ -41,7 +41,7 @@ public:
 
     void Update(float value) override;
 
-    std::optional<size_t> GetSensorIdHash() const override;
+    std::optional<uint32_t> GetSensorIdHash() const override;
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
 };
 

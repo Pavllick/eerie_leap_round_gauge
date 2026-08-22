@@ -50,8 +50,7 @@ WorkQueueTaskResult SensorsRenderingService::ProcessWorkTask(SensorsRenderingTas
 
 void SensorsRenderingService::SubmitToEventBus(const SensorReading& reading) {
     UiEventPayload payload;
-    // id_hash is size_t; the payload variant and SensorFilter both use uint32_t.
-    payload[UiPayloadType::SensorId] = static_cast<uint32_t>(reading.sensor->id_hash);
+    payload[UiPayloadType::SensorId] = reading.sensor->id_hash;
     payload[UiPayloadType::Value] = reading.value.value_or(0.0f);
 
     UiEventBus::GetInstance().PublishAsync({

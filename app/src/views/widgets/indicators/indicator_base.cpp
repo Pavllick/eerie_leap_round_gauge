@@ -94,7 +94,7 @@ void IndicatorBase::Update(float value) {
     }
 }
 
-std::optional<size_t> IndicatorBase::GetSensorIdHash() const {
+std::optional<uint32_t> IndicatorBase::GetSensorIdHash() const {
     return sensor_id_hash_;
 }
 
