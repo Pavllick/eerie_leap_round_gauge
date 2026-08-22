@@ -26,11 +26,14 @@ ZTEST_SUITE(ui_configuration_manager, NULL, NULL, NULL, NULL, NULL);
 
 std::shared_ptr<UiConfiguration> ui_configuration_manager_test_SetupTestUiConfiguration() {
     auto ui_configuration = make_shared_pmr<UiConfiguration>(Mrm::GetDefaultPmr());
-    ui_configuration->active_screen_index = 8;
+    ui_configuration->active_screen_group_id = 8;
 
     auto screen_configuration = make_shared_pmr<ScreenConfiguration>(Mrm::GetDefaultPmr());
     screen_configuration->id = 8;
+    screen_configuration->group_id = 3;
     screen_configuration->type = ScreenType::Gauge;
+    screen_configuration->z_index = -2;
+    screen_configuration->is_visible = true;
 
     screen_configuration->grid.snap_enabled = true;
     screen_configuration->grid.width = 3;
@@ -59,6 +62,7 @@ std::shared_ptr<UiConfiguration> ui_configuration_manager_test_SetupTestUiConfig
     widget2->position_grid.y = 1;
     widget2->size_grid.width = 1;
     widget2->size_grid.height = 1;
+    widget2->is_visible = false;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "2348664336";
@@ -116,11 +120,14 @@ ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_and_Load
 
     auto saved_ui_configuration = ui_configuration_manager->Get(true);
 
-    zassert_equal(saved_ui_configuration->active_screen_index, ui_configuration->active_screen_index);
+    zassert_equal(saved_ui_configuration->active_screen_group_id, ui_configuration->active_screen_group_id);
 
     for(std::size_t i = 0; i < ui_configuration->screen_configurations.size(); i++) {
         zassert_equal(saved_ui_configuration->screen_configurations[i]->id, ui_configuration->screen_configurations[i]->id);
+        zassert_equal(saved_ui_configuration->screen_configurations[i]->group_id, ui_configuration->screen_configurations[i]->group_id);
         zassert_equal(saved_ui_configuration->screen_configurations[i]->type, ui_configuration->screen_configurations[i]->type);
+        zassert_equal(saved_ui_configuration->screen_configurations[i]->z_index, ui_configuration->screen_configurations[i]->z_index);
+        zassert_equal(saved_ui_configuration->screen_configurations[i]->is_visible, ui_configuration->screen_configurations[i]->is_visible);
         zassert_equal(saved_ui_configuration->screen_configurations[i]->grid.snap_enabled, ui_configuration->screen_configurations[i]->grid.snap_enabled);
         zassert_equal(saved_ui_configuration->screen_configurations[i]->grid.width, ui_configuration->screen_configurations[i]->grid.width);
         zassert_equal(saved_ui_configuration->screen_configurations[i]->grid.height, ui_configuration->screen_configurations[i]->grid.height);
@@ -134,6 +141,7 @@ ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_and_Load
             zassert_equal(saved_ui_configuration->screen_configurations[i]->widget_configurations[j]->size_grid.width, ui_configuration->screen_configurations[i]->widget_configurations[j]->size_grid.width);
             zassert_equal(saved_ui_configuration->screen_configurations[i]->widget_configurations[j]->size_grid.height, ui_configuration->screen_configurations[i]->widget_configurations[j]->size_grid.height);
             zassert_equal(saved_ui_configuration->screen_configurations[i]->widget_configurations[j]->z_index, ui_configuration->screen_configurations[i]->widget_configurations[j]->z_index);
+            zassert_equal(saved_ui_configuration->screen_configurations[i]->widget_configurations[j]->is_visible, ui_configuration->screen_configurations[i]->widget_configurations[j]->is_visible);
             zassert_equal(saved_ui_configuration->screen_configurations[i]->widget_configurations[j]->properties.size(), ui_configuration->screen_configurations[i]->widget_configurations[j]->properties.size());
             for(auto& property : ui_configuration->screen_configurations[i]->widget_configurations[j]->properties) {
                 zassert_true(saved_ui_configuration->screen_configurations[i]->widget_configurations[j]->properties[property.first] == ui_configuration->screen_configurations[i]->widget_configurations[j]->properties[property.first]);

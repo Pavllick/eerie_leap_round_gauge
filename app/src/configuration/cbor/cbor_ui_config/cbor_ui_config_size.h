@@ -59,7 +59,7 @@ static size_t cbor_get_size_CborUiConfig(const CborUiConfig& config) {
     builder.AddIndefiniteArrayStart();
 
     builder.AddUint(config.version)
-        .AddUint(config.active_screen_index);
+        .AddUint(config.active_screen_group_id);
 
     builder.AddOptional(config.properties_present,
         config.properties,
@@ -81,7 +81,10 @@ static size_t cbor_get_size_CborUiConfig(const CborUiConfig& config) {
         builder.AddIndefiniteArrayStart();
 
         builder.AddUint(screen.id)
-            .AddUint(screen.type);
+            .AddUint(screen.group_id)
+            .AddUint(screen.type)
+            .AddInt(screen.z_index)
+            .AddBool(screen.is_visible);
 
         // CborGridSettingsConfig
         builder.AddIndefiniteArrayStart();
@@ -108,6 +111,7 @@ static size_t cbor_get_size_CborUiConfig(const CborUiConfig& config) {
                 .AddUint(widget.size.height);
 
             builder.AddInt(widget.z_index);
+            builder.AddBool(widget.is_visible);
 
             builder.AddOptional(widget.properties_present,
                 widget.properties,

@@ -27,7 +27,7 @@ ZTEST_SUITE(configuration_service_ui_config, NULL, NULL, NULL, NULL, NULL);
 
 ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_int_Save_successfully_saved_and_loaded) {
     auto ui_config = make_shared_pmr<CborUiConfig>(Mrm::GetDefaultPmr());
-    ui_config->active_screen_index = 12;
+    ui_config->active_screen_group_id = 12;
 
     ui_config->properties_present = true;
 
@@ -55,7 +55,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_i
     auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
-    zassert_equal(loaded_config.value().config->active_screen_index, 12);
+    zassert_equal(loaded_config.value().config->active_screen_group_id, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
     zassert_equal(loaded_config.value().config->properties.CborPropertyValueType_m.size(), 4);
 
@@ -69,7 +69,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_i
 ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_double_Save_successfully_saved_and_loaded) {
     auto ui_config = make_shared_pmr<CborUiConfig>(Mrm::GetDefaultPmr());
 
-    ui_config->active_screen_index = 12;
+    ui_config->active_screen_group_id = 12;
 
     ui_config->properties_present = true;
 
@@ -97,7 +97,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_d
     auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
-    zassert_equal(loaded_config.value().config->active_screen_index, 12);
+    zassert_equal(loaded_config.value().config->active_screen_group_id, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
     zassert_equal(loaded_config.value().config->properties.CborPropertyValueType_m.size(), 4);
 
@@ -111,7 +111,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_d
 ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_string_Save_successfully_saved_and_loaded) {
     auto ui_config = make_shared_pmr<CborUiConfig>(Mrm::GetDefaultPmr());
 
-    ui_config->active_screen_index = 12;
+    ui_config->active_screen_group_id = 12;
 
     ui_config->properties_present = true;
 
@@ -139,7 +139,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_s
     auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
-    zassert_equal(loaded_config.value().config->active_screen_index, 12);
+    zassert_equal(loaded_config.value().config->active_screen_group_id, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
     zassert_equal(loaded_config.value().config->properties.CborPropertyValueType_m.size(), 4);
 
@@ -155,7 +155,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_s
 ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_bool_Save_successfully_saved_and_loaded) {
     auto ui_config = make_shared_pmr<CborUiConfig>(Mrm::GetDefaultPmr());
 
-    ui_config->active_screen_index = 12;
+    ui_config->active_screen_group_id = 12;
 
     ui_config->properties_present = true;
 
@@ -183,7 +183,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_b
     auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
-    zassert_equal(loaded_config.value().config->active_screen_index, 12);
+    zassert_equal(loaded_config.value().config->active_screen_group_id, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
     zassert_equal(loaded_config.value().config->properties.CborPropertyValueType_m.size(), 4);
 
@@ -197,7 +197,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_b
 ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_int_list_Save_config_successfully_saved_and_loaded) {
     auto ui_config = make_shared_pmr<CborUiConfig>(Mrm::GetDefaultPmr());
 
-    ui_config->active_screen_index = 12;
+    ui_config->active_screen_group_id = 12;
 
     ui_config->properties_present = true;
 
@@ -225,7 +225,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_i
     auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
-    zassert_equal(loaded_config.value().config->active_screen_index, 12);
+    zassert_equal(loaded_config.value().config->active_screen_group_id, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
     zassert_equal(loaded_config.value().config->properties.CborPropertyValueType_m.size(), 4);
 
@@ -239,7 +239,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_i
 ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_string_list_Save_config_successfully_saved_and_loaded) {
     auto ui_config = make_shared_pmr<CborUiConfig>(Mrm::GetDefaultPmr());
 
-    ui_config->active_screen_index = 12;
+    ui_config->active_screen_group_id = 12;
 
     ui_config->properties_present = true;
 
@@ -278,7 +278,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_s
     auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
-    zassert_equal(loaded_config.value().config->active_screen_index, 12);
+    zassert_equal(loaded_config.value().config->active_screen_group_id, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
     zassert_equal(loaded_config.value().config->properties.CborPropertyValueType_m.size(), 4);
 
@@ -297,7 +297,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_s
 ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_string_map_Save_config_successfully_saved_and_loaded) {
     auto ui_config = make_shared_pmr<CborUiConfig>(Mrm::GetDefaultPmr());
 
-    ui_config->active_screen_index = 12;
+    ui_config->active_screen_group_id = 12;
 
     ui_config->properties_present = true;
 
@@ -346,7 +346,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_s
     auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
-    zassert_equal(loaded_config.value().config->active_screen_index, 12);
+    zassert_equal(loaded_config.value().config->active_screen_group_id, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
 
     for(int i = 0; i < 4; i++) {
@@ -371,7 +371,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_s
 ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_string_all_mixed_Save_config_successfully_saved_and_loaded) {
     auto ui_config = make_shared_pmr<CborUiConfig>(Mrm::GetDefaultPmr());
 
-    ui_config->active_screen_index = 12;
+    ui_config->active_screen_group_id = 12;
 
     ui_config->properties_present = true;
 
@@ -467,7 +467,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_s
     auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
-    zassert_equal(loaded_config.value().config->active_screen_index, 12);
+    zassert_equal(loaded_config.value().config->active_screen_group_id, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
     zassert_equal(loaded_config.value().config->properties.CborPropertyValueType_m.size(), 7);
 
@@ -525,7 +525,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_CborPropertyValueType_s
 ZTEST(configuration_service_ui_config, test_CborUiConfig_Save_successfully_saved_and_loaded) {
     auto ui_config = make_shared_pmr<CborUiConfig>(Mrm::GetDefaultPmr());
 
-    ui_config->active_screen_index = 12;
+    ui_config->active_screen_group_id = 12;
 
     ui_config->properties_present = true;
 
@@ -544,7 +544,10 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_Save_successfully_saved
     // Create screen config
     CborScreenConfig screen(std::allocator_arg, Mrm::GetDefaultPmr());
     screen.id = 1;
+    screen.group_id = 3;
     screen.type = 2;
+    screen.z_index = -2;
+    screen.is_visible = true;
     screen.grid.snap_enabled = true;
     screen.grid.width = 100;
     screen.grid.height = 100;
@@ -558,6 +561,8 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_Save_successfully_saved
     widget1.position.y = 0;
     widget1.size.width = 100;
     widget1.size.height = 100;
+    widget1.z_index = 1;
+    widget1.is_visible = true;
     widget1.properties_present = true;
 
     CborPropertiesConfig_CborPropertyValueType_m prop1(std::allocator_arg, Mrm::GetDefaultPmr());
@@ -576,6 +581,8 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_Save_successfully_saved
     widget2.position.y = 0;
     widget2.size.width = 100;
     widget2.size.height = 100;
+    widget2.z_index = -4;
+    widget2.is_visible = false;
     widget2.properties_present = true;
 
     CborPropertiesConfig_CborPropertyValueType_m prop2_1(std::allocator_arg, Mrm::GetDefaultPmr());
@@ -619,7 +626,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_Save_successfully_saved
     auto loaded_config = ui_config_service->Load();
 
     zassert_true(loaded_config.has_value());
-    zassert_equal(loaded_config.value().config->active_screen_index, 12);
+    zassert_equal(loaded_config.value().config->active_screen_group_id, 12);
     zassert_equal(loaded_config.value().config->properties_present, true);
     zassert_equal(loaded_config.value().config->properties.CborPropertyValueType_m.size(), 4);
 
@@ -631,7 +638,10 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_Save_successfully_saved
 
     zassert_equal(loaded_config.value().config->CborScreenConfig_m.size(), 1);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].id, 1);
+    zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].group_id, 3);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].type, 2);
+    zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].z_index, -2);
+    zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].is_visible, true);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].grid.snap_enabled, true);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].grid.width, 100);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].grid.height, 100);
@@ -644,6 +654,8 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_Save_successfully_saved
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].position.y, 0);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].size.width, 100);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].size.height, 100);
+    zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].z_index, 1);
+    zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].is_visible, true);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].properties_present, true);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].properties.CborPropertyValueType_m.size(), 1);
     zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].properties.CborPropertyValueType_m[0].CborPropertyValueType_m_key), keys[0]);
@@ -656,6 +668,8 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_Save_successfully_saved
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].position.y, 0);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].size.width, 100);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].size.height, 100);
+    zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].z_index, -4);
+    zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].is_visible, false);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].properties_present, true);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].properties.CborPropertyValueType_m.size(), 4);
     zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].properties.CborPropertyValueType_m[0].CborPropertyValueType_m_key), keys[0]);

@@ -22,6 +22,7 @@ struct WidgetConfiguration {
     WidgetPosition position_grid;
     WidgetSize size_grid;
     int32_t z_index = 0;
+    bool is_visible = true;
     std::pmr::unordered_map<std::pmr::string, ConfigValue> properties;
 
     WidgetConfiguration(std::allocator_arg_t, allocator_type alloc)
@@ -39,6 +40,7 @@ struct WidgetConfiguration {
           position_grid(other.position_grid),
           size_grid(other.size_grid),
           z_index(other.z_index),
+          is_visible(other.is_visible),
           properties(std::move(other.properties), alloc) {}
 };
 

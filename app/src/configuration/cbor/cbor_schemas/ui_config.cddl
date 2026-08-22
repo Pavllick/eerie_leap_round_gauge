@@ -1,13 +1,16 @@
 CborUiConfig = [
     version: uint,
-    active_screen_index: uint,
+    active_screen_group_id: uint,
     ? properties: CborPropertiesConfig,
     screen_configurations: [0*10 CborScreenConfig]
 ]
 
 CborScreenConfig = [
     id: uint,
+    group_id: uint,
     type: uint,
+    z_index: int,
+    is_visible: bool,
     grid: CborGridSettingsConfig,
     widget_configurations: [* CborWidgetConfig]
 ]
@@ -25,6 +28,7 @@ CborWidgetConfig = [
     position: CborWidgetPositionConfig,
     size: CborWidgetSizeConfig,
     z_index: int,
+    is_visible: bool,
     ? properties: CborPropertiesConfig
 ]
 

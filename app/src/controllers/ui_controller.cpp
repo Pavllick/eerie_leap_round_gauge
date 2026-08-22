@@ -109,8 +109,6 @@ int UiController::Configure(std::shared_ptr<UiConfiguration> config) {
         }
     }
 
-    main_view_->SetActiveScreen(configuration_->active_screen_index);
-
     return 0;
 }
 
@@ -128,10 +126,13 @@ std::shared_ptr<IScreen> UiController::CreateScreen(std::shared_ptr<ScreenConfig
 
 void UiController::SetupTestConfiguration() {
     auto ui_configuration = make_shared_pmr<UiConfiguration>(Mrm::GetExtPmr());
-    ui_configuration->active_screen_index = 0;
+    ui_configuration->active_screen_group_id = 0;
 
     auto screen_configuration = make_shared_pmr<ScreenConfiguration>(Mrm::GetExtPmr());
     screen_configuration->id = 0;
+    screen_configuration->group_id = 0;
+    screen_configuration->z_index = 0;
+    screen_configuration->is_visible = true;
     screen_configuration->type = ScreenType::Gauge;
 
     // NOTE: Grid enables relative sizing, spliting screen in equal regions.
@@ -157,7 +158,6 @@ void UiController::SetupTestConfiguration() {
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::FILE_PATH)] = "ui_img_norma_al88.bin";
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IMG_WIDTH)] = 466;
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IMG_HEIGHT)] = 466;
-    widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X)] = 0;
     widget0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y)] = 0;
     screen_configuration->AddWidget(std::move(widget0));
@@ -171,13 +171,12 @@ void UiController::SetupTestConfiguration() {
     widget1->size_grid.width = 200;
     widget1->size_grid.height = 100;
     widget1->z_index = 0;
-    widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
     // widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_PRECISION)] = 2;
-    screen_configuration->AddWidget(std::move(widget1));
+    // screen_configuration->AddWidget(std::move(widget1));
 
     // Widget 2: IndicatorHorizontalChart (Bar)
     auto widget2 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
@@ -188,7 +187,6 @@ void UiController::SetupTestConfiguration() {
     widget2->size_grid.width = 466;
     widget2->size_grid.height = 160;
     widget2->z_index = 0;
-    widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = false;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
@@ -206,7 +204,6 @@ void UiController::SetupTestConfiguration() {
     widget3->size_grid.width = 466;
     widget3->size_grid.height = 200;
     widget3->z_index = 0;
-    widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
@@ -222,7 +219,6 @@ void UiController::SetupTestConfiguration() {
     widget4->size_grid.width = 466;
     widget4->size_grid.height = 160;
     widget4->z_index = 0;
-    widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
@@ -238,7 +234,6 @@ void UiController::SetupTestConfiguration() {
     widget5->size_grid.width = 466;
     widget5->size_grid.height = 466;
     widget5->z_index = 0;
-    widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
@@ -255,7 +250,6 @@ void UiController::SetupTestConfiguration() {
     // widget6->size_grid.width = 466;
     // widget6->size_grid.height = 466;
     // widget6->z_index = 0;
-    // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
@@ -274,7 +268,6 @@ void UiController::SetupTestConfiguration() {
     widget7->size_grid.height = 466;
     widget7->z_index = 0;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE)] = static_cast<int>(IconType::Dot);
-    widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE)] = false;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X)] = 0;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y)] = 0;
@@ -292,7 +285,6 @@ void UiController::SetupTestConfiguration() {
     // widget8->size_grid.height = 3;
     // widget8->z_index = 0;
     // widget8->properties[WidgetProperty::GetTypeName(WidgetPropertyType::ICON_TYPE)] = static_cast<int>(IconType::Label);
-    // widget8->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     // widget8->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE)] = false;
     // widget8->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X)] = 0;
     // widget8->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y)] = 0;
@@ -314,7 +306,6 @@ void UiController::SetupTestConfiguration() {
     widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::FILE_PATH)] = "ui_img_arrow_al88.bin";
     widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IMG_WIDTH)] = 15;
     widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IMG_HEIGHT)] = 220;
-    widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_X)] = 0;
     widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y)] = -104;
@@ -336,7 +327,6 @@ void UiController::SetupTestConfiguration() {
     widget10->size_grid.width = 466;
     widget10->size_grid.height = 8;
     widget10->z_index = 0;
-    widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
@@ -353,7 +343,6 @@ void UiController::SetupTestConfiguration() {
     widget11->size_grid.height = 466;
     widget11->z_index = 0;
     widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::DIRECTION)] = static_cast<int>(InidicatorDirection::TopToBottom);
-    widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = true;
     widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
@@ -361,6 +350,35 @@ void UiController::SetupTestConfiguration() {
     // screen_configuration->AddWidget(std::move(widget11));
 
     ui_configuration->screen_configurations.push_back(std::move(screen_configuration));
+
+    auto screen_configuration_1 = make_shared_pmr<ScreenConfiguration>(Mrm::GetExtPmr());
+    screen_configuration_1->id = 1;
+    screen_configuration_1->group_id = 1;
+    screen_configuration_1->z_index = 0;
+    screen_configuration_1->is_visible = true;
+    screen_configuration_1->type = ScreenType::Gauge;
+    screen_configuration_1->grid.snap_enabled = true;
+    screen_configuration_1->grid.width = 466;
+    screen_configuration_1->grid.height = 466;
+    screen_configuration_1->grid.spacing_px = 0;
+
+    // Widget 1_0: IndicatorDigital
+    auto widget1_0 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
+    widget1_0->type = WidgetType::IndicatorDigital;
+    widget1_0->id = 1;
+    widget1_0->position_grid.x = 0;
+    widget1_0->position_grid.y = 230;
+    widget1_0->size_grid.width = 200;
+    widget1_0->size_grid.height = 100;
+    widget1_0->z_index = 0;
+    widget1_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
+    widget1_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
+    widget1_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
+    widget1_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    // widget1_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_PRECISION)] = 2;
+    screen_configuration_1->AddWidget(std::move(widget1_0));
+
+    ui_configuration->screen_configurations.push_back(std::move(screen_configuration_1));
 
     ui_configuration_manager_->Update(*ui_configuration);
 }

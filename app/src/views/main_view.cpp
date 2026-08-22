@@ -25,7 +25,7 @@ std::shared_ptr<Frame> MainView::GetContainer() const {
 }
 
 void MainView::AddScreen(uint32_t id, std::shared_ptr<IScreen> screen) {
-    screens_[id] = std::move(screen);
+    screens_.try_emplace(id, std::move(screen));
 }
 
 int MainView::SetActiveScreen(uint32_t id) {

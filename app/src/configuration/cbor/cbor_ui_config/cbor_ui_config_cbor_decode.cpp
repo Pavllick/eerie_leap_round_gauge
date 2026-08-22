@@ -285,6 +285,11 @@ static bool decode_CborWidgetConfig(
 		return false;
 	}
 
+	if (!zcbor_bool_decode(state, &result->is_visible)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
 	result->properties_present = decode_CborPropertiesConfig(state, &result->properties);
 
 	if (!zcbor_list_end_decode(state)) {
@@ -309,7 +314,22 @@ static bool decode_CborScreenConfig(
 		return false;
 	}
 
+	if (!zcbor_uint32_decode(state, &result->group_id)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
 	if (!zcbor_uint32_decode(state, &result->type)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	if (!zcbor_int32_decode(state, &result->z_index)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
+	if (!zcbor_bool_decode(state, &result->is_visible)) {
 		zcbor_list_end_decode(state);
 		return false;
 	}
@@ -364,7 +384,7 @@ static bool decode_CborUiConfig(
 		return false;
 	}
 
-	if (!zcbor_uint32_decode(state, &result->active_screen_index)) {
+	if (!zcbor_uint32_decode(state, &result->active_screen_group_id)) {
 		zcbor_list_end_decode(state);
 		return false;
 	}

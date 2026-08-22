@@ -124,12 +124,13 @@ static bool encode_CborWidgetConfig(
 {
 	zcbor_log("%s\r\n", __func__);
 
-	bool res = (((zcbor_list_start_encode(state, 6) && ((((zcbor_uint32_encode(state, (&(*input).type))))
+	bool res = (((zcbor_list_start_encode(state, 7) && ((((zcbor_uint32_encode(state, (&(*input).type))))
 	&& ((zcbor_uint32_encode(state, (&(*input).id))))
 	&& ((encode_CborWidgetPositionConfig(state, (&(*input).position))))
 	&& ((encode_CborWidgetSizeConfig(state, (&(*input).size))))
 	&& ((zcbor_int32_encode(state, (&(*input).z_index))))
-	&& (!(*input).properties_present || encode_CborPropertiesConfig(state, (&(*input).properties)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 6))));
+	&& ((zcbor_bool_encode(state, (&(*input).is_visible))))
+	&& (!(*input).properties_present || encode_CborPropertiesConfig(state, (&(*input).properties)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 7))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -142,12 +143,15 @@ static bool encode_CborScreenConfig(
 
     size_t CborWidgetConfig_m_count = input->CborWidgetConfig_m.size();
 
-	bool res = (((zcbor_list_start_encode(state, 4) && ((
+	bool res = (((zcbor_list_start_encode(state, 7) && ((
        ((zcbor_uint32_encode(state, (&(*input).id))))
+    && ((zcbor_uint32_encode(state, (&(*input).group_id))))
     && ((zcbor_uint32_encode(state, (&(*input).type))))
+	&& ((zcbor_int32_encode(state, (&(*input).z_index))))
+	&& ((zcbor_bool_encode(state, (&(*input).is_visible))))
 	&& ((encode_CborGridSettingsConfig(state, (&(*input).grid))))
 	&& ((zcbor_list_start_encode(state, CborWidgetConfig_m_count) && ((zcbor_multi_encode(CborWidgetConfig_m_count, (zcbor_encoder_t *)encode_CborWidgetConfig, state, input->CborWidgetConfig_m.data(), sizeof(struct CborWidgetConfig))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, CborWidgetConfig_m_count)))
-	) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 4))));
+	) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 7))));
 
 	log_result(state, res, __func__);
 	return res;
@@ -161,7 +165,7 @@ static bool encode_CborUiConfig(
     size_t CborScreenConfig_m_count = input->CborScreenConfig_m.size();
 
 	bool res = (((zcbor_list_start_encode(state, 4) && ((((zcbor_uint32_encode(state, (&(*input).version))))
-	&& ((zcbor_uint32_encode(state, (&(*input).active_screen_index))))
+	&& ((zcbor_uint32_encode(state, (&(*input).active_screen_group_id))))
 	&& (!(*input).properties_present || encode_CborPropertiesConfig(state, (&(*input).properties)))
 	&& ((zcbor_list_start_encode(state, CborScreenConfig_m_count) && ((zcbor_multi_encode(CborScreenConfig_m_count, (zcbor_encoder_t *)encode_CborScreenConfig, state, input->CborScreenConfig_m.data(), sizeof(struct CborScreenConfig))
 	) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, CborScreenConfig_m_count)))

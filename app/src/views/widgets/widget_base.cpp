@@ -51,10 +51,7 @@ int WidgetBase::SetVisibility(bool is_visible) {
 }
 
 bool WidgetBase::IsVisible() const {
-    return GetConfigValue<bool>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE),
-        false);
+    return configuration_->is_visible;
 }
 
 bool WidgetBase::IsSmoothed() const {

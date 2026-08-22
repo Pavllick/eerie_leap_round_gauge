@@ -123,6 +123,7 @@ struct CborWidgetConfig {
 	CborWidgetPositionConfig position{};
 	CborWidgetSizeConfig size{};
 	int32_t z_index{};
+	bool is_visible{};
 	CborPropertiesConfig properties;
 	bool properties_present{};
 
@@ -141,6 +142,7 @@ struct CborWidgetConfig {
 		position(other.position),
 		size(other.size),
 		z_index(other.z_index),
+		is_visible(other.is_visible),
 		properties(std::move(other.properties), alloc),
 		properties_present(other.properties_present) {}
 };
@@ -149,7 +151,10 @@ struct CborScreenConfig {
 	using allocator_type = std::pmr::polymorphic_allocator<>;
 
 	uint32_t id{};
+	uint32_t group_id{};
     uint32_t type{};
+	int32_t z_index{};
+	bool is_visible{};
 	CborGridSettingsConfig grid{};
 	std::pmr::vector<CborWidgetConfig> CborWidgetConfig_m;
 	allocator_type allocator;
@@ -165,7 +170,10 @@ struct CborScreenConfig {
 
 	CborScreenConfig(CborScreenConfig&& other, allocator_type alloc)
         : id(other.id),
+		group_id(other.group_id),
 		type(other.type),
+		z_index(other.z_index),
+		is_visible(other.is_visible),
 		grid(other.grid),
 		CborWidgetConfig_m(std::move(other.CborWidgetConfig_m), alloc),
 		allocator(alloc) {}
@@ -175,7 +183,7 @@ struct CborUiConfig {
 	using allocator_type = std::pmr::polymorphic_allocator<>;
 
 	uint32_t version{};
-	uint32_t active_screen_index{};
+	uint32_t active_screen_group_id{};
 	CborPropertiesConfig properties;
 	bool properties_present{};
 	std::pmr::vector<CborScreenConfig> CborScreenConfig_m;
@@ -194,7 +202,7 @@ struct CborUiConfig {
 
 	CborUiConfig(CborUiConfig&& other, allocator_type alloc)
         : version(other.version),
-		active_screen_index(other.active_screen_index),
+		active_screen_group_id(other.active_screen_group_id),
 		properties(std::move(other.properties), alloc),
 		properties_present(other.properties_present),
 		CborScreenConfig_m(std::move(other.CborScreenConfig_m), alloc),
