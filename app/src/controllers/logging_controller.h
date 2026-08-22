@@ -27,10 +27,14 @@ using eerie_leap::domain::ui_domain::event_bus::UiPayloadType;
 class LoggingController {
 private:
     static constexpr int LOGGING_BUTTON_CHANNEL = 0;
+    static constexpr const char* INPUT_WORK_QUEUE_NAME = "input_work_queue";
+    static constexpr int INPUT_WORK_QUEUE_STACK_SIZE = 4096;
+    static constexpr int INPUT_WORK_QUEUE_PRIORITY = 5;
 
     std::shared_ptr<IGpio> gpio_;
-    std::shared_ptr<WorkQueueThread> input_work_queue_thread_;
     std::shared_ptr<CanbusComService> canbus_com_service_;
+
+    std::shared_ptr<WorkQueueThread> input_work_queue_thread_;
 
     int button_handler_id_ = 0;
     bool is_logging_in_progress_ = false;
@@ -41,7 +45,6 @@ private:
 public:
     LoggingController(
         std::shared_ptr<IGpio> gpio,
-        std::shared_ptr<WorkQueueThread> input_work_queue_thread,
         std::shared_ptr<CanbusComService> canbus_com_service);
     ~LoggingController();
 

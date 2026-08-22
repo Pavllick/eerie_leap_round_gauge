@@ -5,9 +5,17 @@
 #include <unordered_map>
 
 #include "subsys/assets/assets_manager.h"
+#include "subsys/fs/services/i_fs_service.h"
+#include "subsys/threading/work_queue_thread.h"
+
+#include "domain/configuration_domain/services/configuration_service.h"
+#include "domain/sensor_domain/utilities/sensor_readings_frame.hpp"
+
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
 #include "domain/ui_domain/models/ui_configuration.h"
 #include "domain/ui_domain/models/screen_configuration.h"
+#include "domain/ui_domain/services/ui_renderer_service.h"
+#include "domain/ui_domain/services/sensors_rendering_service.h"
 
 #include "views/main_view.h"
 #include "views/screens/i_screen.h"
@@ -15,17 +23,35 @@
 namespace eerie_leap::controllers {
 
 using eerie_leap::subsys::assets::AssetsManager;
+using eerie_leap::subsys::fs::services::IFsService;
+using eerie_leap::subsys::threading::WorkQueueThread;
+
+using eerie_leap::domain::configuration_domain::services::ConfigurationService;
+using eerie_leap::domain::sensor_domain::utilities::SensorReadingsFrame;
+
 using eerie_leap::domain::ui_domain::models::UiConfiguration;
 using eerie_leap::domain::ui_domain::models::ScreenConfiguration;
 using eerie_leap::domain::ui_domain::configuration::UiConfigurationManager;
+using eerie_leap::domain::ui_domain::services::UiRendererService;
+using eerie_leap::domain::ui_domain::services::SensorsRenderingService;
 
 using eerie_leap::views::MainView;
 using eerie_leap::views::screens::IScreen;
 
 class UiController {
 private:
+    static constexpr const char* UI_CONFIGURATION_NAME = "ui_config";
+    static constexpr const char* UI_ASSETS_DIR = "ui_assets";
+
+    std::shared_ptr<IFsService> fs_service_;
+    std::shared_ptr<WorkQueueThread> config_work_queue_thread_;
+    std::shared_ptr<ConfigurationService> configuration_service_;
+    std::shared_ptr<SensorReadingsFrame> sensor_readings_frame_;
+
     std::shared_ptr<UiConfigurationManager> ui_configuration_manager_;
     std::shared_ptr<AssetsManager> ui_assets_manager_;
+    std::shared_ptr<UiRendererService> ui_renderer_service_;
+    std::shared_ptr<SensorsRenderingService> sensors_rendering_service_;
 
     std::unique_ptr<MainView> main_view_;
     std::shared_ptr<UiConfiguration> configuration_;
@@ -36,12 +62,19 @@ private:
 
     std::shared_ptr<IScreen> CreateScreen(std::shared_ptr<ScreenConfiguration> configuration);
 
+    // TODO: For test purposes only
+    void SetupTestConfiguration();
+    void SetupTestAssets();
+
 public:
     UiController(
-        std::shared_ptr<UiConfigurationManager> ui_configuration_manager,
-        std::shared_ptr<AssetsManager> ui_assets_manager);
+        std::shared_ptr<IFsService> fs_service,
+        std::shared_ptr<WorkQueueThread> config_work_queue_thread,
+        std::shared_ptr<ConfigurationService> configuration_service,
+        std::shared_ptr<SensorReadingsFrame> sensor_readings_frame);
 
-    int Render();
+    int Initialize();
+    int Start();
 };
 
 } // namespace eerie_leap::controllers
