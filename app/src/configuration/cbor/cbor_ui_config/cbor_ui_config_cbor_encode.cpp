@@ -124,11 +124,12 @@ static bool encode_CborWidgetConfig(
 {
 	zcbor_log("%s\r\n", __func__);
 
-	bool res = (((zcbor_list_start_encode(state, 5) && ((((zcbor_uint32_encode(state, (&(*input).type))))
+	bool res = (((zcbor_list_start_encode(state, 6) && ((((zcbor_uint32_encode(state, (&(*input).type))))
 	&& ((zcbor_uint32_encode(state, (&(*input).id))))
 	&& ((encode_CborWidgetPositionConfig(state, (&(*input).position))))
 	&& ((encode_CborWidgetSizeConfig(state, (&(*input).size))))
-	&& (!(*input).properties_present || encode_CborPropertiesConfig(state, (&(*input).properties)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 5))));
+	&& ((zcbor_int32_encode(state, (&(*input).z_index))))
+	&& (!(*input).properties_present || encode_CborPropertiesConfig(state, (&(*input).properties)))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 6))));
 
 	log_result(state, res, __func__);
 	return res;

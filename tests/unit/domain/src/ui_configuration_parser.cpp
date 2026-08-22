@@ -43,10 +43,11 @@ pmr_unique_ptr<UiConfiguration> ui_configuration_parser_GetTestUiConfiguration()
     widget1->position_grid.y = 0;
     widget1->size_grid.width = 3;
     widget1->size_grid.height = 3;
+    widget1->z_index = -1;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
-    screen_configuration->widget_configurations.push_back(std::move(widget1));
+    screen_configuration->AddWidget(std::move(widget1));
 
     // Second widget
     auto widget2 = make_shared_pmr<WidgetConfiguration>(Mrm::GetDefaultPmr());
@@ -59,7 +60,7 @@ pmr_unique_ptr<UiConfiguration> ui_configuration_parser_GetTestUiConfiguration()
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
-    screen_configuration->widget_configurations.push_back(std::move(widget2));
+    screen_configuration->AddWidget(std::move(widget2));
 
     // Third widget
     auto widget3 = make_shared_pmr<WidgetConfiguration>(Mrm::GetDefaultPmr());
@@ -69,12 +70,13 @@ pmr_unique_ptr<UiConfiguration> ui_configuration_parser_GetTestUiConfiguration()
     widget3->position_grid.y = 0;
     widget3->size_grid.width = 3;
     widget3->size_grid.height = 1;
+    widget3->z_index = 2;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::CHART_POINT_COUNT)] = 35;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE)] = static_cast<std::uint16_t>(HorizontalChartIndicatorType::Line);
-    screen_configuration->widget_configurations.push_back(std::move(widget3));
+    screen_configuration->AddWidget(std::move(widget3));
 
     ui_configuration->screen_configurations.push_back(std::move(screen_configuration));
 
@@ -99,6 +101,7 @@ void ui_configuration_parser_CompareUiConfigurations(UiConfiguration& ui_configu
             zassert_equal(deserialized_ui_configuration.screen_configurations[i]->widget_configurations[j]->position_grid.y, ui_configuration.screen_configurations[i]->widget_configurations[j]->position_grid.y);
             zassert_equal(deserialized_ui_configuration.screen_configurations[i]->widget_configurations[j]->size_grid.width, ui_configuration.screen_configurations[i]->widget_configurations[j]->size_grid.width);
             zassert_equal(deserialized_ui_configuration.screen_configurations[i]->widget_configurations[j]->size_grid.height, ui_configuration.screen_configurations[i]->widget_configurations[j]->size_grid.height);
+            zassert_equal(deserialized_ui_configuration.screen_configurations[i]->widget_configurations[j]->z_index, ui_configuration.screen_configurations[i]->widget_configurations[j]->z_index);
             zassert_equal(deserialized_ui_configuration.screen_configurations[i]->widget_configurations[j]->properties.size(), ui_configuration.screen_configurations[i]->widget_configurations[j]->properties.size());
             for(auto& property : ui_configuration.screen_configurations[i]->widget_configurations[j]->properties) {
                 zassert_true(deserialized_ui_configuration.screen_configurations[i]->widget_configurations[j]->properties[property.first] == ui_configuration.screen_configurations[i]->widget_configurations[j]->properties[property.first]);
@@ -117,4 +120,25 @@ ZTEST(ui_configuration_parser, test_CborSerializeDeserialize) {
 
     ui_configuration_parser_CompareUiConfigurations(
         *ui_configuration, *deserialized_ui_configuration);
+}
+
+ZTEST(ui_configuration_parser, test_CborDeserializeOrdersWidgetsByZIndex) {
+    UiConfigurationCborParser ui_configuration_cbor_parser;
+
+    auto ui_configuration = ui_configuration_parser_GetTestUiConfiguration();
+    auto& widget_configurations = ui_configuration->screen_configurations[0]->widget_configurations;
+    widget_configurations[0]->z_index = 5;
+    widget_configurations[1]->z_index = 1;
+    widget_configurations[2]->z_index = 1;
+
+    auto serialized_ui_configuration = ui_configuration_cbor_parser.Serialize(*ui_configuration);
+    auto deserialized_ui_configuration = ui_configuration_cbor_parser.Deserialize(Mrm::GetDefaultPmr(), *serialized_ui_configuration.get());
+
+    auto& deserialized_widget_configurations = deserialized_ui_configuration->screen_configurations[0]->widget_configurations;
+    zassert_equal(deserialized_widget_configurations.size(), widget_configurations.size());
+
+    // Equal z-index keeps configuration order.
+    zassert_equal(deserialized_widget_configurations[0]->id, widget_configurations[1]->id);
+    zassert_equal(deserialized_widget_configurations[1]->id, widget_configurations[2]->id);
+    zassert_equal(deserialized_widget_configurations[2]->id, widget_configurations[0]->id);
 }

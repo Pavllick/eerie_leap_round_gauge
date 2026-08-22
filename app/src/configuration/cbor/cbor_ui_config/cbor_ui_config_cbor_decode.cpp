@@ -280,6 +280,11 @@ static bool decode_CborWidgetConfig(
 		return false;
 	}
 
+	if (!zcbor_int32_decode(state, &result->z_index)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
 	result->properties_present = decode_CborPropertiesConfig(state, &result->properties);
 
 	if (!zcbor_list_end_decode(state)) {

@@ -45,6 +45,7 @@ pmr_unique_ptr<CborUiConfig> UiConfigurationCborParser::Serialize(const UiConfig
             widget_config.position.y = configuration.screen_configurations[i]->widget_configurations[j]->position_grid.y;
             widget_config.size.width = configuration.screen_configurations[i]->widget_configurations[j]->size_grid.width;
             widget_config.size.height = configuration.screen_configurations[i]->widget_configurations[j]->size_grid.height;
+            widget_config.z_index = configuration.screen_configurations[i]->widget_configurations[j]->z_index;
 
             widget_config.properties_present = configuration.screen_configurations[i]->widget_configurations[j]->properties.size() > 0;
             if(configuration.screen_configurations[i]->widget_configurations[j]->properties.size() > 0)
@@ -87,10 +88,12 @@ pmr_unique_ptr<UiConfiguration> UiConfigurationCborParser::Deserialize(
             widget_configuration->position_grid.y = config.CborScreenConfig_m[i].CborWidgetConfig_m[j].position.y;
             widget_configuration->size_grid.width = config.CborScreenConfig_m[i].CborWidgetConfig_m[j].size.width;
             widget_configuration->size_grid.height = config.CborScreenConfig_m[i].CborWidgetConfig_m[j].size.height;
+            widget_configuration->z_index = config.CborScreenConfig_m[i].CborWidgetConfig_m[j].z_index;
 
             if(config.CborScreenConfig_m[i].CborWidgetConfig_m[j].properties_present)
                 CborPropertyValueTypeToValueType(mr, widget_configuration->properties, config.CborScreenConfig_m[i].CborWidgetConfig_m[j].properties);
-            screen_configuration->widget_configurations.push_back(std::move(widget_configuration));
+
+            screen_configuration->AddWidget(std::move(widget_configuration));
         }
 
         configuration->screen_configurations.push_back(std::move(screen_configuration));

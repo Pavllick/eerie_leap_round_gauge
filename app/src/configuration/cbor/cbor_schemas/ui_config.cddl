@@ -24,6 +24,7 @@ CborWidgetConfig = [
     id: uint,
     position: CborWidgetPositionConfig,
     size: CborWidgetSizeConfig,
+    z_index: int,
     ? properties: CborPropertiesConfig
 ]
 

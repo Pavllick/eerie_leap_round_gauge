@@ -107,6 +107,8 @@ static size_t cbor_get_size_CborUiConfig(const CborUiConfig& config) {
             builder.AddUint(widget.size.width)
                 .AddUint(widget.size.height);
 
+            builder.AddInt(widget.z_index);
+
             builder.AddOptional(widget.properties_present,
                 widget.properties,
                 [](const CborPropertiesConfig& properties) {

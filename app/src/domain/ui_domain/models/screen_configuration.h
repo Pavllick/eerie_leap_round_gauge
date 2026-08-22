@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <memory>
 #include <memory_resource>
 #include <vector>
@@ -32,6 +33,16 @@ struct ScreenConfiguration {
           type(other.type),
           grid(other.grid),
           widget_configurations(std::move(other.widget_configurations), alloc) {}
+
+    void AddWidget(std::shared_ptr<WidgetConfiguration> widget_configuration) {
+        auto insert_position = std::upper_bound(
+            widget_configurations.begin(),
+            widget_configurations.end(),
+            widget_configuration->z_index,
+            [](int32_t z_index, const std::shared_ptr<WidgetConfiguration>& current) { return z_index < current->z_index; });
+
+        widget_configurations.insert(insert_position, std::move(widget_configuration));
+    }
 };
 
 } // namespace eerie_leap::domain::ui_domain::models

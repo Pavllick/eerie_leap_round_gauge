@@ -122,6 +122,7 @@ struct CborWidgetConfig {
 	uint32_t id{};
 	CborWidgetPositionConfig position{};
 	CborWidgetSizeConfig size{};
+	int32_t z_index{};
 	CborPropertiesConfig properties;
 	bool properties_present{};
 
@@ -139,6 +140,7 @@ struct CborWidgetConfig {
 		id(other.id),
 		position(other.position),
 		size(other.size),
+		z_index(other.z_index),
 		properties(std::move(other.properties), alloc),
 		properties_present(other.properties_present) {}
 };
