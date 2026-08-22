@@ -1,0 +1,51 @@
+name: Tests
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  twister:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          path: rt_gauge
+          submodules: recursive
+
+      # native_sim builds 32-bit binaries.
+      - name: Install multilib toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-multilib g++-multilib
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Set up Zephyr
+        uses: zephyrproject-rtos/action-zephyr-setup@v1
+        with:
+          app-path: rt_gauge
+          toolchains: arm-zephyr-eabi:aarch64-zephyr-elf:riscv64-zephyr-elf:mips-zephyr-elf
+
+      - name: Run tests
+        working-directory: rt_gauge
+        run: west twister -c --disable-warnings-as-errors -O ./twister-out -T ./tests
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: twister-results
+          path: |
+            rt_gauge/twister-out/twister.xml
+            rt_gauge/twister-out/twister.json
+          if-no-files-found: ignore

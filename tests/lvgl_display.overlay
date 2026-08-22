@@ -1,0 +1,17 @@
+/*
+ * LVGL refuses to build without a chosen display. The QEMU targets have no
+ * display controller, so the node is declared for LVGL's benefit only - no
+ * display driver is enabled (see lvgl_headless.conf).
+ */
+
+/ {
+	chosen {
+		zephyr,display = &dummy_dc;
+	};
+
+	dummy_dc: dummy_dc {
+		compatible = "zephyr,dummy-dc";
+		height = <240>;
+		width = <320>;
+	};
+};

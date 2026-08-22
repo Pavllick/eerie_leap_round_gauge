@@ -1,0 +1,56 @@
+/*
+ * Internal littlefs storage for QEMU targets, which have no flash of their own.
+ *
+ * The controller deliberately has no unit address or reg: the root node's
+ * #address-cells differs between the 32- and 64-bit boards, while the child
+ * flash node addresses against the cell counts declared here.
+ */
+
+#include <mem.h>
+
+/ {
+	aliases {
+		intfs0 = &intfs0;
+	};
+
+	sim_flash_controller: sim-flash-controller {
+		compatible = "zephyr,sim-flash";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		erase-value = <0xff>;
+
+		sim_flash: flash@0 {
+			compatible = "soc-nv-flash";
+			erase-block-size = <4096>;
+			write-block-size = <4>;
+			reg = <0x00000000 DT_SIZE_M(4)>;
+
+			partitions {
+				compatible = "fixed-partitions";
+				#address-cells = <1>;
+				#size-cells = <1>;
+
+				intfs0_partition: partition@1000 {
+					label = "intfs0_storage";
+					reg = <0x00001000 DT_SIZE_M(1)>;
+				};
+			};
+		};
+	};
+
+	fstab {
+		compatible = "zephyr,fstab";
+
+		intfs0: intfs0 {
+			compatible = "zephyr,fstab,littlefs";
+			read-size = <16>;
+			prog-size = <16>;
+			cache-size = <64>;
+			lookahead-size = <32>;
+			block-cycles = <512>;
+			partition = <&intfs0_partition>;
+			mount-point = "/intfs0";
+			automount;
+		};
+	};
+};

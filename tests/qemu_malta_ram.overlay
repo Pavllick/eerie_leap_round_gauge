@@ -1,0 +1,12 @@
+/*
+ * qemu_malta's board devicetree only claims 1 MB of SRAM, which the C++ runtime
+ * and the PMR allocators exhaust. The emulated Malta board maps its RAM through
+ * KSEG0 (0x80000000 -> physical 0x00000000), so sram0 can be grown well past the
+ * board default without leaving the unmapped cached window.
+ */
+
+#include <mem.h>
+
+&sram0 {
+	reg = <0x80200000 DT_SIZE_M(64)>;
+};

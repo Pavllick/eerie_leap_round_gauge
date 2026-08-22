@@ -80,7 +80,7 @@
         {
             "label": "Run Tests",
             "type": "shell",
-            "command": "west twister -c --disable-warnings-as-errors -O ./twister-out -T ./tests",
+            "command": "west twister -c --disable-warnings-as-errors -j 8 -O ./twister-out -T ./tests",
             "group": "none",
             "detail": "Run tests using twister"
         },
