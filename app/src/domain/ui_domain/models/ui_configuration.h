@@ -13,7 +13,7 @@ namespace eerie_leap::domain::ui_domain::models {
 struct UiConfiguration {
     using allocator_type = std::pmr::polymorphic_allocator<>;
 
-    uint32_t active_screen_group_id;
+    uint32_t active_screen_group_id = 0;
     std::pmr::unordered_map<std::pmr::string, ConfigValue> properties;
     std::pmr::vector<std::shared_ptr<ScreenConfiguration>> screen_configurations;
 

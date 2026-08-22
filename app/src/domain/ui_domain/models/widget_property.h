@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <array>
 #include <stdexcept>
+#include <string_view>
 
 namespace eerie_leap::domain::ui_domain::models {
 
@@ -73,7 +74,7 @@ public:
         return WidgetPropertyTypeNames[index].data();
     }
 
-    static WidgetPropertyType GetType(const std::string& name) {
+    static WidgetPropertyType GetType(std::string_view name) {
         for(size_t i = 0; i < size(WidgetPropertyTypeNames); ++i)
             if(WidgetPropertyTypeNames[i] == name)
                 return static_cast<WidgetPropertyType>(i);

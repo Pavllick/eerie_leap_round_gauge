@@ -3,7 +3,7 @@
 #include "utilities/cbor/cbor_helpers.hpp"
 #include "utilities/memory/memory_resource_manager.h"
 
-// #include "ui_configuration_validator.h"
+#include "ui_configuration_validator.h"
 #include "ui_configuration_cbor_parser.h"
 
 namespace eerie_leap::domain::ui_domain::configuration::parsers {
@@ -14,7 +14,7 @@ using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::domain::ui_domain::models;
 
 pmr_unique_ptr<CborUiConfig> UiConfigurationCborParser::Serialize(const UiConfiguration& configuration) {
-    // UiConfigurationValidator::Validate(configuration);
+    UiConfigurationValidator::Validate(configuration);
 
     auto config = make_unique_pmr<CborUiConfig>(Mrm::GetExtPmr());
 
@@ -107,7 +107,7 @@ pmr_unique_ptr<UiConfiguration> UiConfigurationCborParser::Deserialize(
         configuration->screen_configurations.push_back(std::move(screen_configuration));
     }
 
-    // UiConfigurationValidator::Validate(*configuration);
+    UiConfigurationValidator::Validate(*configuration);
 
     return configuration;
 }

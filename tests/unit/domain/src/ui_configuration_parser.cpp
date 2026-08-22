@@ -24,7 +24,7 @@ ZTEST_SUITE(ui_configuration_parser, NULL, NULL, NULL, NULL, NULL);
 
 pmr_unique_ptr<UiConfiguration> ui_configuration_parser_GetTestUiConfiguration() {
     auto ui_configuration = make_unique_pmr<UiConfiguration>(Mrm::GetDefaultPmr());
-    ui_configuration->active_screen_group_id = 8;
+    ui_configuration->active_screen_group_id = 3;
 
     auto screen_configuration = make_shared_pmr<ScreenConfiguration>(Mrm::GetDefaultPmr());
     screen_configuration->id = 8;

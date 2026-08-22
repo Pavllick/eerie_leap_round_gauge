@@ -1,0 +1,268 @@
+#include <stdexcept>
+#include <string>
+#include <unordered_set>
+#include <variant>
+
+#include "domain/ui_domain/models/widget_property.h"
+
+#include "ui_configuration_validator.h"
+
+namespace eerie_leap::domain::ui_domain::configuration::parsers {
+
+using namespace eerie_leap::domain::ui_domain::models;
+
+// Matches the screen count the persisted CBOR schema allows.
+static constexpr std::size_t max_screen_count = 10;
+
+enum class PropertyValueKind {
+    Numeric,
+    Boolean,
+    Text
+};
+
+static PropertyValueKind GetPropertyValueKind(WidgetPropertyType type) {
+    switch(type) {
+        case WidgetPropertyType::IS_ACTIVE:
+        case WidgetPropertyType::IS_SMOOTHED:
+            return PropertyValueKind::Boolean;
+
+        case WidgetPropertyType::SENSOR_ID:
+        case WidgetPropertyType::LABEL:
+        case WidgetPropertyType::FILE_PATH:
+            return PropertyValueKind::Text;
+
+        default:
+            return PropertyValueKind::Numeric;
+    }
+}
+
+static bool HoldsPropertyValueKind(const ConfigValue& value, PropertyValueKind kind) {
+    switch(kind) {
+        case PropertyValueKind::Boolean:
+            return std::holds_alternative<bool>(value);
+
+        case PropertyValueKind::Text:
+            return std::holds_alternative<std::pmr::string>(value);
+
+        // GetConfigValue converts between int and double.
+        case PropertyValueKind::Numeric:
+            return std::holds_alternative<int>(value) || std::holds_alternative<double>(value);
+    }
+
+    return false;
+}
+
+static void InvalidUiConfiguration(std::string_view message) {
+    throw std::invalid_argument(
+        "Invalid UI configuration. "
+        + std::string(message));
+}
+
+static void InvalidScreenConfiguration(uint32_t screen_id, std::string_view message) {
+    throw std::invalid_argument(
+        "Invalid UI Screen configuration. Screen ID: "
+        + std::to_string(screen_id)
+        + ". "
+        + std::string(message));
+}
+
+static void InvalidWidgetConfiguration(uint32_t screen_id, uint32_t widget_id, std::string_view message) {
+    throw std::invalid_argument(
+        "Invalid UI Widget configuration. Screen ID: "
+        + std::to_string(screen_id)
+        + ", Widget ID: "
+        + std::to_string(widget_id)
+        + ". "
+        + std::string(message));
+}
+
+void UiConfigurationValidator::Validate(const UiConfiguration& configuration) {
+    ValidateScreenCount(configuration);
+    ValidateScreenId(configuration);
+    ValidateScreenType(configuration);
+    ValidateScreenGrid(configuration);
+    ValidateActiveScreenGroupId(configuration);
+
+    ValidateScreens(configuration);
+}
+
+void UiConfigurationValidator::ValidateScreenCount(const UiConfiguration& configuration) {
+    if(configuration.screen_configurations.size() > max_screen_count)
+        InvalidUiConfiguration("Configuration cannot contain more than " + std::to_string(max_screen_count) + " screens.");
+}
+
+void UiConfigurationValidator::ValidateScreenId(const UiConfiguration& configuration) {
+    std::unordered_set<uint32_t> screen_ids;
+
+    for(const auto& screen_configuration : configuration.screen_configurations) {
+        if(screen_ids.contains(screen_configuration->id))
+            InvalidScreenConfiguration(screen_configuration->id, "Configuration cannot contain duplicate screen IDs.");
+
+        screen_ids.insert(screen_configuration->id);
+    }
+}
+
+void UiConfigurationValidator::ValidateScreenType(const UiConfiguration& configuration) {
+    for(const auto& screen_configuration : configuration.screen_configurations) {
+        if(screen_configuration->type != ScreenType::System && screen_configuration->type != ScreenType::Gauge)
+            InvalidScreenConfiguration(screen_configuration->id, "Invalid screen type.");
+    }
+}
+
+void UiConfigurationValidator::ValidateScreenGrid(const UiConfiguration& configuration) {
+    for(const auto& screen_configuration : configuration.screen_configurations) {
+        if(screen_configuration->grid.width == 0)
+            InvalidScreenConfiguration(screen_configuration->id, "Grid width must be greater than 0.");
+
+        if(screen_configuration->grid.height == 0)
+            InvalidScreenConfiguration(screen_configuration->id, "Grid height must be greater than 0.");
+    }
+}
+
+void UiConfigurationValidator::ValidateActiveScreenGroupId(const UiConfiguration& configuration) {
+    // A configuration without screens is the default one created on first boot.
+    if(configuration.screen_configurations.empty())
+        return;
+
+    for(const auto& screen_configuration : configuration.screen_configurations) {
+        if(screen_configuration->group_id == configuration.active_screen_group_id)
+            return;
+    }
+
+    InvalidUiConfiguration("Active screen group ID does not match any screen.");
+}
+
+void UiConfigurationValidator::ValidateScreens(const UiConfiguration& configuration) {
+    for(const auto& screen_configuration : configuration.screen_configurations)
+        ValidateWidgets(*screen_configuration);
+}
+
+void UiConfigurationValidator::ValidateWidgets(const ScreenConfiguration& screen_configuration) {
+    ValidateWidgetId(screen_configuration);
+    ValidateWidgetType(screen_configuration);
+    ValidateWidgetSize(screen_configuration);
+    ValidateWidgetPosition(screen_configuration);
+    ValidateWidgetProperties(screen_configuration);
+}
+
+void UiConfigurationValidator::ValidateWidgetId(const ScreenConfiguration& screen_configuration) {
+    std::unordered_set<uint32_t> widget_ids;
+
+    for(const auto& widget_configuration : screen_configuration.widget_configurations) {
+        if(widget_ids.contains(widget_configuration->id))
+            InvalidWidgetConfiguration(
+                screen_configuration.id,
+                widget_configuration->id,
+                "Screen cannot contain duplicate widget IDs."
+            );
+
+        widget_ids.insert(widget_configuration->id);
+    }
+}
+
+void UiConfigurationValidator::ValidateWidgetType(const ScreenConfiguration& screen_configuration) {
+    for(const auto& widget_configuration : screen_configuration.widget_configurations) {
+        switch(widget_configuration->type) {
+            case WidgetType::BasicIcon:
+            case WidgetType::BasicArcIcon:
+            case WidgetType::IndicatorArcFill:
+            case WidgetType::IndicatorDigital:
+            case WidgetType::IndicatorHorizontalChart:
+            case WidgetType::IndicatorSegmentArc:
+            case WidgetType::IndicatorDial:
+            case WidgetType::IndicatorBar:
+                break;
+
+            default:
+                InvalidWidgetConfiguration(
+                    screen_configuration.id,
+                    widget_configuration->id,
+                    "Invalid widget type."
+                );
+        }
+    }
+}
+
+void UiConfigurationValidator::ValidateWidgetSize(const ScreenConfiguration& screen_configuration) {
+    for(const auto& widget_configuration : screen_configuration.widget_configurations) {
+        if(widget_configuration->size_grid.width == 0 || widget_configuration->size_grid.height == 0)
+            InvalidWidgetConfiguration(
+                screen_configuration.id,
+                widget_configuration->id,
+                "Widget size must be greater than 0."
+            );
+
+        if(widget_configuration->size_grid.width > screen_configuration.grid.width)
+            InvalidWidgetConfiguration(
+                screen_configuration.id,
+                widget_configuration->id,
+                "Widget width cannot exceed the screen grid width."
+            );
+
+        if(widget_configuration->size_grid.height > screen_configuration.grid.height)
+            InvalidWidgetConfiguration(
+                screen_configuration.id,
+                widget_configuration->id,
+                "Widget height cannot exceed the screen grid height."
+            );
+    }
+}
+
+void UiConfigurationValidator::ValidateWidgetPosition(const ScreenConfiguration& screen_configuration) {
+    for(const auto& widget_configuration : screen_configuration.widget_configurations) {
+        if(widget_configuration->position_grid.x < 0 || widget_configuration->position_grid.y < 0)
+            InvalidWidgetConfiguration(
+                screen_configuration.id,
+                widget_configuration->id,
+                "Widget position cannot be negative."
+            );
+
+        if(static_cast<uint32_t>(widget_configuration->position_grid.x) >= screen_configuration.grid.width)
+            InvalidWidgetConfiguration(
+                screen_configuration.id,
+                widget_configuration->id,
+                "Widget position X must be within the screen grid."
+            );
+
+        if(static_cast<uint32_t>(widget_configuration->position_grid.y) >= screen_configuration.grid.height)
+            InvalidWidgetConfiguration(
+                screen_configuration.id,
+                widget_configuration->id,
+                "Widget position Y must be within the screen grid."
+            );
+    }
+}
+
+void UiConfigurationValidator::ValidateWidgetProperties(const ScreenConfiguration& screen_configuration) {
+    for(const auto& widget_configuration : screen_configuration.widget_configurations) {
+        for(const auto& [key, value] : widget_configuration->properties) {
+            auto property_type = WidgetPropertyType::NONE;
+
+            try {
+                property_type = WidgetProperty::GetType(key);
+            } catch(const std::runtime_error&) {
+                InvalidWidgetConfiguration(
+                    screen_configuration.id,
+                    widget_configuration->id,
+                    "Unknown widget property '" + std::string(key.data(), key.size()) + "'."
+                );
+            }
+
+            if(property_type == WidgetPropertyType::NONE)
+                InvalidWidgetConfiguration(
+                    screen_configuration.id,
+                    widget_configuration->id,
+                    "Widget property name cannot be empty."
+                );
+
+            if(!HoldsPropertyValueKind(value, GetPropertyValueKind(property_type)))
+                InvalidWidgetConfiguration(
+                    screen_configuration.id,
+                    widget_configuration->id,
+                    "Invalid value type for widget property '" + std::string(key.data(), key.size()) + "'."
+                );
+        }
+    }
+}
+
+} // namespace eerie_leap::domain::ui_domain::configuration::parsers

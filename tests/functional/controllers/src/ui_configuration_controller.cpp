@@ -26,7 +26,7 @@ ZTEST_SUITE(ui_configuration_manager, NULL, NULL, NULL, NULL, NULL);
 
 std::shared_ptr<UiConfiguration> ui_configuration_manager_test_SetupTestUiConfiguration() {
     auto ui_configuration = make_shared_pmr<UiConfiguration>(Mrm::GetDefaultPmr());
-    ui_configuration->active_screen_group_id = 8;
+    ui_configuration->active_screen_group_id = 3;
 
     auto screen_configuration = make_shared_pmr<ScreenConfiguration>(Mrm::GetDefaultPmr());
     screen_configuration->id = 8;
