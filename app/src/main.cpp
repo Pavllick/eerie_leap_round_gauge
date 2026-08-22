@@ -141,13 +141,24 @@ int main() {
 
     auto guid_generator = make_shared_pmr<GuidGenerator>(Mrm::GetExtPmr());
 
+    int config_work_queue_stack_size = 6144;
+    int config_work_queue_priority = 5;
+    auto config_work_queue_thread = std::make_shared<WorkQueueThread>(
+        "config_work_queue",
+        config_work_queue_stack_size,
+        config_work_queue_priority);
+    if(!config_work_queue_thread->Initialize()) {
+        LOG_ERR("Failed to initialize the configuration work queue.");
+        return -1;
+    }
+
     auto system_config_service = std::make_unique<CborConfigurationService<CborSystemConfig>>(
-        "system_config", fs_service);
+        "system_config", fs_service, config_work_queue_thread);
     auto system_configuration_manager = make_shared_pmr<SystemConfigurationManager>(
         Mrm::GetExtPmr(), std::move(system_config_service));
 
     auto cbor_canbus_config_service = std::make_unique<CborConfigurationService<CborCanbusConfig>>(
-        "canbus_config", fs_service);
+        "canbus_config", fs_service, config_work_queue_thread);
     auto canbus_configuration_manager = std::make_shared<CanbusConfigurationManager>(
         std::move(cbor_canbus_config_service), nullptr);
 
@@ -158,14 +169,14 @@ int main() {
     }
 
     auto cbor_sensors_config_service = std::make_unique<CborConfigurationService<CborSensorsConfig>>(
-        "sensors_config", fs_service);
+        "sensors_config", fs_service, config_work_queue_thread);
     auto sensors_configuration_manager = std::make_shared<SensorsConfigurationManager>(
         std::move(cbor_sensors_config_service),
         nullptr,
         gpio != nullptr ? gpio->GetChannelCount() : 0, 0);
 
     auto cbor_ui_config_service = std::make_unique<CborConfigurationService<CborUiConfig>>(
-        "ui_config", fs_service);
+        "ui_config", fs_service, config_work_queue_thread);
     auto ui_configuration_manager = make_shared_pmr<UiConfigurationManager>(
         Mrm::GetExtPmr(), std::move(cbor_ui_config_service));
 
@@ -197,7 +208,10 @@ int main() {
         input_work_queue_priority,
         false,
         Mrm::GetExtPmr());
-    input_work_queue_thread->Initialize();
+    if(!input_work_queue_thread->Initialize()) {
+        LOG_ERR("Failed to initialize the input work queue.");
+        return -1;
+    }
 
     // TODO: For test purposes only
     SetupCanbusConfiguration(canbus_configuration_manager);
