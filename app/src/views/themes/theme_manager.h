@@ -3,6 +3,8 @@
 #include <memory>
 #include <vector>
 
+#include <zephyr/kernel.h>
+
 #include "views/themes/i_theme.h"
 #include "views/themes/i_theme_observer.h"
 
@@ -12,6 +14,10 @@ class ThemeManager {
 private:
     std::shared_ptr<ITheme> current_theme_;
     std::vector<IThemeObserver*> observers_;
+
+    // Renderables register/unregister from their ctor/dtor on any thread while
+    // the renderer or event bus thread can be iterating observers_.
+    k_mutex observers_lock_;
 
     ThemeManager();
     ~ThemeManager() = default;

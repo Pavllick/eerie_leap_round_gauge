@@ -154,11 +154,21 @@ int main() {
         // SystemInfo::PrintHeapInfo();
         // SystemInfo::PrintStackInfo();
         // SystemInfo::PrintThreadIds();
-        k_msleep(SLEEP_TIME_MS);
+        // k_msleep(SLEEP_TIME_MS);
+
+        // TODO: TEMPORARY navigation smoke test
+        static uint32_t nav_tick = 0;
+        if(++nav_tick % 250 == 0) {
+            auto nav = ui_controller->GetNavigationService();
+            LOG_INF("Navigation: active group %u -> requesting next.", nav->GetActiveGroupId().value_or(0));
+            nav->Next();
+            k_msleep(200);
+            LOG_INF("Navigation: active group is now %u.", nav->GetActiveGroupId().value_or(0));
+        }
 
         // TODO: For test purposes only
-        // sensors_controller->EmulateReadings();
-        // k_msleep(20);
+        sensors_controller->EmulateReadings();
+        k_msleep(20);
 	}
 
 	return 0;

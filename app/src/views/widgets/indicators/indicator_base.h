@@ -38,8 +38,11 @@ protected:
 
 public:
     IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent);
+    ~IndicatorBase() override;
 
     void Update(float value) override;
+
+    void OnDeactivated() override;
 
     std::optional<uint32_t> GetSensorIdHash() const override;
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;

@@ -1,7 +1,9 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <unordered_set>
+#include <utility>
 
 #include <lvgl.h>
 
@@ -12,6 +14,10 @@
 
 namespace eerie_leap::views::widgets {
 
+using eerie_leap::domain::ui_domain::event_bus::UiEvent;
+using eerie_leap::domain::ui_domain::event_bus::UiEventBus;
+using eerie_leap::domain::ui_domain::event_bus::UiEventType;
+using eerie_leap::domain::ui_domain::event_bus::UiPayloadType;
 using eerie_leap::domain::ui_domain::event_bus::UiSubscriptionHandle;
 
 class WidgetBase : public IWidget, public RenderableBase {
@@ -27,7 +33,32 @@ protected:
     std::vector<UiSubscriptionHandle> subscriptions_;
     std::shared_ptr<AssetsManager> ui_assets_manager_ = nullptr;
 
+    bool is_active_ = false;
+
     int SetVisibility(bool is_visible);
+
+    // Subscribes and drops events while the widget is unrendered or its group is hidden,
+    // so a widget nobody can see never repaints or animates.
+    template<typename FilterType>
+    void SubscribeWhileActive(UiEventType type, FilterType filter, std::function<void(const UiEvent&)> handler) {
+        auto subscription = UiEventBus::GetInstance().Subscribe(
+            type,
+            std::move(filter),
+            [this, handler = std::move(handler)](const UiEvent& event) {
+                if(IsReady() && IsActive())
+                    handler(event);
+            });
+
+        if(subscription)
+            subscriptions_.push_back(std::move(*subscription));
+    }
+
+    void SubscribeWhileActive(UiEventType type, std::function<void(const UiEvent&)> handler) {
+        SubscribeWhileActive(
+            type,
+            eerie_leap::subsys::event_bus::AcceptAllFilter<UiEventType, UiPayloadType>{ },
+            std::move(handler));
+    }
 
 public:
     WidgetBase(uint32_t id, std::shared_ptr<Frame> parent);
@@ -36,6 +67,10 @@ public:
     uint32_t GetId() const override;
     bool IsSmoothed() const override;
     bool IsVisible() const override;
+    bool IsActive() const;
+
+    void OnActivated() override;
+    void OnDeactivated() override;
 
     void SetAssetsManager(std::shared_ptr<AssetsManager> ui_assets_manager) override;
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;

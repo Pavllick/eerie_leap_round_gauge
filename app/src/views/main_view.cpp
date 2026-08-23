@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cerrno>
 #include <string>
 
 #include <zephyr/logging/log.h>
@@ -24,27 +26,106 @@ std::shared_ptr<Frame> MainView::GetContainer() const {
     return container_;
 }
 
-void MainView::AddScreen(uint32_t id, std::shared_ptr<IScreen> screen) {
-    screens_.try_emplace(id, std::move(screen));
+std::shared_ptr<ScreenGroup> MainView::GetOrCreateGroup(uint32_t group_id) {
+    auto it = groups_.find(group_id);
+    if(it != groups_.end())
+        return it->second;
+
+    auto group = std::make_shared<ScreenGroup>(group_id, container_);
+    groups_.emplace(group_id, group);
+
+    return group;
 }
 
-int MainView::SetActiveScreen(uint32_t id) {
-    if(!screens_.contains(id))
-        return -1;
+void MainView::AddScreen(std::shared_ptr<IScreen> screen) {
+    if(screen == nullptr)
+        return;
 
-    active_screen_id_ = id;
+    GetOrCreateGroup(screen->GetGroupId())->AddScreen(std::move(screen));
+}
+
+std::shared_ptr<Frame> MainView::GetGroupContainer(uint32_t group_id) {
+    return GetOrCreateGroup(group_id)->GetContainer();
+}
+
+void MainView::PruneEmptyGroups() {
+    // GetGroupContainer() creates a group up front, so a screen that failed to
+    // configure can leave behind a blank but navigable group.
+    for(auto it = groups_.begin(); it != groups_.end();) {
+        if(it->second->IsEmpty()) {
+            LOG_WRN("Dropping screen group %u, it has no screens.", it->first);
+            it = groups_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+int MainView::SetActiveGroup(uint32_t group_id) {
+    auto it = groups_.find(group_id);
+    if(it == groups_.end()) {
+        LOG_WRN("Screen group %u is not configured.", group_id);
+        return -ENOENT;
+    }
+
+    // Before the view itself is rendered only record the selection; DoRender activates it.
+    if(!IsReady()) {
+        active_group_id_ = group_id;
+        return 0;
+    }
+
+    if(active_group_id_ == group_id)
+        return 0;
+
+    std::shared_ptr<ScreenGroup> previous_group = nullptr;
+    if(active_group_id_.has_value()) {
+        auto previous = groups_.find(*active_group_id_);
+        if(previous != groups_.end())
+            previous_group = previous->second;
+    }
+
+    if(previous_group != nullptr)
+        previous_group->Deactivate();
+
+    int res = it->second->EnsureRendered();
+    if(res != 0) {
+        if(previous_group != nullptr)
+            previous_group->Activate();
+
+        return res;
+    }
+
+    it->second->Activate();
+
+    active_group_id_ = group_id;
+
     return 0;
 }
 
-std::shared_ptr<IScreen> MainView::GetScreen(uint32_t id) {
-    if(!screens_.contains(id))
-        return nullptr;
-
-    return screens_.at(id);
+std::optional<uint32_t> MainView::GetActiveGroupId() const {
+    return active_group_id_;
 }
 
-std::shared_ptr<IScreen> MainView::GetActiveScreen() {
-    return GetScreen(active_screen_id_);
+std::vector<uint32_t> MainView::GetGroupIds() const {
+    std::vector<uint32_t> group_ids;
+    group_ids.reserve(groups_.size());
+
+    for(const auto& [group_id, group] : groups_)
+        group_ids.push_back(group_id);
+
+    std::sort(group_ids.begin(), group_ids.end());
+
+    return group_ids;
+}
+
+std::shared_ptr<IScreen> MainView::GetScreen(uint32_t screen_id) const {
+    for(const auto& [group_id, group] : groups_) {
+        auto screen = group->GetScreen(screen_id);
+        if(screen != nullptr)
+            return screen;
+    }
+
+    return nullptr;
 }
 
 static void RenderCenterCrossHelperGuides(lv_obj_t* screen) {
@@ -72,8 +153,22 @@ static void RenderCenterCrossHelperGuides(lv_obj_t* screen) {
 }
 
 int MainView::DoRender() {
-    for(auto& screen : screens_)
-        screen.second->Render();
+    if(!active_group_id_.has_value()) {
+        LOG_ERR("No active screen group, nothing to render.");
+        return -ENOENT;
+    }
+
+    auto it = groups_.find(*active_group_id_);
+    if(it == groups_.end()) {
+        LOG_ERR("Active screen group %u is gone.", *active_group_id_);
+        return -ENOENT;
+    }
+
+    int res = it->second->EnsureRendered();
+    if(res != 0)
+        return res;
+
+    it->second->Activate();
 
     // RenderCenterCrossHelperGuides(container_->GetObject());
 

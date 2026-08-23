@@ -1,5 +1,8 @@
+#include <cerrno>
 #include <stdexcept>
 #include <string>
+#include <utility>
+#include <variant>
 
 #include <zephyr/logging/log.h>
 #include <eerie_memory.hpp>
@@ -10,6 +13,7 @@
 #include "configuration/services/cbor_configuration_service.h"
 
 #include "domain/ui_domain/event_bus/ui_event_type.h"
+#include "domain/ui_domain/models/navigation_intent.h"
 #include "domain/ui_domain/models/widget_configuration.h"
 #include "domain/ui_domain/models/widget_type.h"
 #include "domain/ui_domain/models/widget_property.h"
@@ -36,7 +40,9 @@ using namespace eerie_leap::views::assets::images;
 
 namespace config_services = eerie_leap::configuration::services;
 
+using eerie_leap::domain::ui_domain::event_bus::UiEventBus;
 using eerie_leap::domain::ui_domain::event_bus::UiEventType;
+using eerie_leap::domain::ui_domain::event_bus::UiPayloadType;
 
 LOG_MODULE_REGISTER(ui_controller_logger);
 
@@ -49,6 +55,11 @@ UiController::UiController(
       config_work_queue_thread_(std::move(config_work_queue_thread)),
       configuration_service_(std::move(configuration_service)),
       sensor_readings_frame_(std::move(sensor_readings_frame)) {}
+
+UiController::~UiController() {
+    if(navigation_subscription_.has_value())
+        UiEventBus::GetInstance().Unsubscribe(navigation_subscription_.value());
+}
 
 int UiController::Initialize() {
     ThemeManager::GetInstance().SetTheme(make_shared_pmr<DarkBWTheme>(Mrm::GetExtPmr()));
@@ -76,12 +87,21 @@ int UiController::Initialize() {
     SetupTestAssets();
 
     main_view_ = std::make_unique<MainView>();
-    Configure(ui_configuration_manager_->Get());
+    navigation_service_ = std::make_shared<NavigationService>();
+
+    if(Configure(ui_configuration_manager_->Get()) != 0)
+        LOG_ERR("Failed to configure the UI from the stored configuration.");
 
     if(sensor_readings_frame_ != nullptr) {
         sensors_rendering_service_ = std::make_shared<SensorsRenderingService>(sensor_readings_frame_);
         sensors_rendering_service_->Initialize();
     }
+
+    SubscribeToNavigation();
+
+    ui_input_service_ = std::make_shared<UiInputService>(navigation_service_);
+    if(ui_input_service_->Initialize(main_view_->GetContainer()->GetObject()) != 0)
+        LOG_ERR("Failed to initialize the UI input service.");
 
     return 0;
 }
@@ -103,18 +123,87 @@ int UiController::Configure(std::shared_ptr<UiConfiguration> config) {
     for(auto& screen_config : configuration_->screen_configurations) {
         auto screen = CreateScreen(screen_config);
 
-        if(screen != nullptr) {
-            screens_.emplace(screen_config->id, screen);
-            main_view_->AddScreen(screen_config->id, screen);
-        }
+        if(screen != nullptr)
+            main_view_->AddScreen(std::move(screen));
     }
 
-    return 0;
+    main_view_->PruneEmptyGroups();
+
+    auto group_ids = main_view_->GetGroupIds();
+    if(group_ids.empty()) {
+        LOG_ERR("No usable screen groups were configured.");
+        return -ENOENT;
+    }
+
+    int res = main_view_->SetActiveGroup(configuration_->active_screen_group_id);
+    if(res != 0) {
+        LOG_WRN("Falling back to screen group %u.", group_ids.front());
+        res = main_view_->SetActiveGroup(group_ids.front());
+    }
+
+    navigation_service_->SetGroupIds(std::move(group_ids));
+    if(auto active_group_id = main_view_->GetActiveGroupId())
+        navigation_service_->SetActiveGroupId(*active_group_id);
+
+    return res;
+}
+
+void UiController::SubscribeToNavigation() {
+    auto subscription = UiEventBus::GetInstance().Subscribe(
+        UiEventType::NavigationChanged,
+        [this](const UiEvent& event) { OnNavigationChanged(event); });
+
+    if(subscription)
+        navigation_subscription_.emplace(std::move(*subscription));
+    else
+        LOG_ERR("Failed to subscribe to navigation events.");
+}
+
+// Runs on the UI event bus thread, which already holds the LVGL lock.
+void UiController::OnNavigationChanged(const UiEvent& event) {
+    try {
+        auto action_it = event.payload.find(UiPayloadType::NavigationAction);
+        if(action_it == event.payload.end())
+            return;
+
+        const auto* action_raw = std::get_if<uint32_t>(&action_it->second);
+        if(action_raw == nullptr)
+            return;
+
+        if(static_cast<NavigationAction>(*action_raw) != NavigationAction::ShowGroup)
+            return;
+
+        auto group_it = event.payload.find(UiPayloadType::TargetGroupId);
+        if(group_it == event.payload.end())
+            return;
+
+        const auto* group_id = std::get_if<uint32_t>(&group_it->second);
+        if(group_id == nullptr)
+            return;
+
+        if(main_view_->SetActiveGroup(*group_id) != 0)
+            LOG_ERR("Failed to show screen group %u.", *group_id);
+
+        // The view is the source of truth; reconcile the service's optimistic state.
+        if(auto active_group_id = main_view_->GetActiveGroupId())
+            navigation_service_->SetActiveGroupId(*active_group_id);
+    } catch(const std::exception& e) {
+        LOG_ERR("Failed to apply navigation change. %s", e.what());
+    } catch(...) {
+        LOG_ERR("Failed to apply navigation change.");
+    }
+}
+
+std::shared_ptr<NavigationService> UiController::GetNavigationService() const {
+    return navigation_service_;
 }
 
 std::shared_ptr<IScreen> UiController::CreateScreen(std::shared_ptr<ScreenConfiguration> configuration) {
     try {
-        auto screen = std::make_shared<Screen>(ui_assets_manager_, configuration->id, main_view_->GetContainer());
+        auto screen = std::make_shared<Screen>(
+            ui_assets_manager_,
+            configuration->id,
+            main_view_->GetGroupContainer(configuration->group_id));
         screen->Configure(configuration);
 
         return screen;

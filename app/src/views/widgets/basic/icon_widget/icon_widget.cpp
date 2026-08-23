@@ -85,7 +85,7 @@ void IconWidget::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
     auto event_type = static_cast<UiEventType>(event_type_raw);
 
     if(event_type != UiEventType::None) {
-        auto event_subscription = UiEventBus::GetInstance().Subscribe(
+        SubscribeWhileActive(
             event_type,
             [this](const UiEvent& event) {
                 if (auto it = event.payload.find(UiPayloadType::Value); it != event.payload.end()) {
@@ -93,11 +93,7 @@ void IconWidget::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
                         icon_->SetIsActive(*value);
                     }
                 }
-            }
-        );
-
-        if(event_subscription)
-            subscriptions_.push_back(std::move(*event_subscription));
+            });
     }
 }
 

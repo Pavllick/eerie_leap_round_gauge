@@ -1,0 +1,45 @@
+#pragma once
+
+#include <array>
+#include <atomic>
+#include <cstddef>
+#include <memory>
+#include <optional>
+
+#include <lvgl.h>
+
+#include "domain/ui_domain/models/navigation_intent.h"
+#include "domain/ui_domain/services/navigation_service.h"
+
+namespace eerie_leap::domain::ui_domain::services {
+
+using eerie_leap::domain::ui_domain::models::NavigationIntent;
+
+// Translates LVGL pointer gestures into navigation intents.
+class UiInputService {
+private:
+    static constexpr size_t k_direction_count = 4;
+
+    std::shared_ptr<NavigationService> navigation_service_;
+
+    // Read on the LVGL renderer thread, written by whoever configures the mapping.
+    std::array<std::atomic<NavigationIntent>, k_direction_count> gesture_map_{};
+
+    lv_obj_t* root_ = nullptr;
+
+    static std::optional<size_t> ToIndex(lv_dir_t direction);
+    static void GestureCb(lv_event_t* e);
+    void HandleGesture();
+
+public:
+    explicit UiInputService(std::shared_ptr<NavigationService> navigation_service);
+    ~UiInputService();
+
+    UiInputService(const UiInputService&) = delete;
+    UiInputService& operator=(const UiInputService&) = delete;
+
+    int Initialize(lv_obj_t* root);
+    void SetGestureMapping(lv_dir_t direction, NavigationIntent intent);
+};
+
+} // namespace eerie_leap::domain::ui_domain::services

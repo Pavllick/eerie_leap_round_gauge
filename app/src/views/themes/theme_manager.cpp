@@ -1,4 +1,10 @@
 #include <algorithm>
+#include <exception>
+#include <utility>
+
+#include <zephyr/logging/log.h>
+
+#include "domain/ui_domain/lvgl_lock.h"
 
 #include "views/themes/default_theme.h"
 
@@ -6,8 +12,13 @@
 
 namespace eerie_leap::views::themes {
 
+using eerie_leap::domain::ui_domain::LvglLock;
+
+LOG_MODULE_REGISTER(theme_manager_logger);
+
 ThemeManager::ThemeManager()
     : current_theme_(std::make_shared<DefaultTheme>()) {
+    k_mutex_init(&observers_lock_);
 }
 
 ThemeManager& ThemeManager::GetInstance() {
@@ -16,10 +27,16 @@ ThemeManager& ThemeManager::GetInstance() {
 }
 
 void ThemeManager::SetTheme(std::shared_ptr<ITheme> theme) {
-    if(theme != nullptr && theme != current_theme_) {
-        current_theme_ = theme;
-        NotifyObservers();
-    }
+    if(theme == nullptr || theme == current_theme_)
+        return;
+
+    // Observers repaint LVGL objects, so the switch must be serialized with the renderer.
+    LvglLock::GetInstance().Lock();
+
+    current_theme_ = std::move(theme);
+    NotifyObservers();
+
+    LvglLock::GetInstance().Unlock();
 }
 
 const ITheme& ThemeManager::GetCurrentTheme() const {
@@ -27,20 +44,41 @@ const ITheme& ThemeManager::GetCurrentTheme() const {
 }
 
 void ThemeManager::RegisterObserver(IThemeObserver* observer) {
-    if(observer != nullptr)
-        observers_.push_back(observer);
+    if(observer == nullptr)
+        return;
+
+    k_mutex_lock(&observers_lock_, K_FOREVER);
+    observers_.push_back(observer);
+    k_mutex_unlock(&observers_lock_);
 }
 
 void ThemeManager::UnregisterObserver(IThemeObserver* observer) {
+    k_mutex_lock(&observers_lock_, K_FOREVER);
+
     observers_.erase(
         std::remove(observers_.begin(), observers_.end(), observer),
         observers_.end()
     );
+
+    k_mutex_unlock(&observers_lock_);
 }
 
 void ThemeManager::NotifyObservers() {
-    for(auto* observer : observers_)
-        observer->OnThemeChanged();
+    // Snapshot: an observer may create or destroy renderables while handling the
+    // change, and an erase would otherwise shift the vector and skip an observer.
+    k_mutex_lock(&observers_lock_, K_FOREVER);
+    auto observers = observers_;
+    k_mutex_unlock(&observers_lock_);
+
+    for(auto* observer : observers) {
+        try {
+            observer->OnThemeChanged();
+        } catch(const std::exception& e) {
+            LOG_ERR("Theme observer failed: %s", e.what());
+        } catch(...) {
+            LOG_ERR("Theme observer failed.");
+        }
+    }
 }
 
 } // namespace eerie_leap::views::themes

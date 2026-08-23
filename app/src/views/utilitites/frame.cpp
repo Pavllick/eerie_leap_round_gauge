@@ -17,6 +17,9 @@ Frame Frame::CreateWrapped(lv_obj_t* object) {
     lv_obj_t* frame = lv_obj_create(object == nullptr ? lv_screen_active() : object);
     lv_obj_remove_style_all(frame);
 
+    // A scrollable layout container makes LVGL treat drags as scrolling and never emits a gesture.
+    lv_obj_remove_flag(frame, LV_OBJ_FLAG_SCROLLABLE);
+
     return Frame::Create(frame);
 }
 

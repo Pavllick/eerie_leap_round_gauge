@@ -26,6 +26,10 @@ public:
     virtual uint32_t GetId() const = 0;
     virtual bool IsVisible() const = 0;
 
+    // Lifecycle - a widget on a hidden screen group must not animate or repaint.
+    virtual void OnActivated() = 0;
+    virtual void OnDeactivated() = 0;
+
     // Configuration
     virtual void SetAssetsManager(std::shared_ptr<AssetsManager> ui_assets_manager) = 0;
     virtual void Configure(std::shared_ptr<WidgetConfiguration> configuration) = 0;

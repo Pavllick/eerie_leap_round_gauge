@@ -28,5 +28,6 @@ file(GLOB_RECURSE TEST_SOURCES src/*.c src/*.cpp)
 target_sources(app PRIVATE
   ${APP_SRC_CONFIGURATION}
   ${APP_SRC_UI_DOMAIN}
+  ${APP_SRC_DIR}/views/utilitites/grid_layout.cpp
   ${TEST_SOURCES}
 )

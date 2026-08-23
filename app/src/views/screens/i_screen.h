@@ -17,6 +17,15 @@ public:
     virtual void Configure(std::shared_ptr<ScreenConfiguration> configuration) = 0;
     virtual std::shared_ptr<ScreenConfiguration> GetConfiguration() const = 0;
     virtual std::shared_ptr<std::vector<std::unique_ptr<IWidget>>> GetWidgets() const = 0;
+
+    virtual uint32_t GetId() const = 0;
+    virtual uint32_t GetGroupId() const = 0;
+    virtual int32_t GetZIndex() const = 0;
+    virtual bool IsVisible() const = 0;
+
+    virtual void OnActivated() = 0;
+    virtual void OnDeactivated() = 0;
+
     virtual ~IScreen() = default;
 };
 

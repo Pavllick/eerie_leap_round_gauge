@@ -22,6 +22,11 @@ IndicatorBase::IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent)
     value_change_animation_ = CreateValueChangeAnimation();
 }
 
+IndicatorBase::~IndicatorBase() {
+    // The animation targets `this`, so it must not outlive the indicator.
+    lv_anim_delete(this, UpdateIndicatorCallback);
+}
+
 void IndicatorBase::UpdateIndicatorCallback(void* obj, int32_t value) {
     float value_float = static_cast<float>(value) / (10 * CONFIG_EERIE_LEAP_FLOAT_SIGNIFICANT_DIGITS);
 
@@ -94,6 +99,13 @@ void IndicatorBase::Update(float value) {
     }
 }
 
+void IndicatorBase::OnDeactivated() {
+    WidgetBase::OnDeactivated();
+
+    // A running animation keeps invalidating the widget after its group is hidden.
+    lv_anim_delete(this, UpdateIndicatorCallback);
+}
+
 std::optional<uint32_t> IndicatorBase::GetSensorIdHash() const {
     return sensor_id_hash_;
 }
@@ -108,7 +120,7 @@ void IndicatorBase::Configure(std::shared_ptr<WidgetConfiguration> configuration
     if(!sensor_id.empty()) {
         sensor_id_hash_ = StringHelpers::GetHash(sensor_id);
 
-        auto result = UiEventBus::GetInstance().Subscribe(
+        SubscribeWhileActive(
             UiEventType::SensorDataUpdated,
             SensorFilter { sensor_id_hash_.value() },
             [this](const UiEvent& event) {
@@ -117,13 +129,8 @@ void IndicatorBase::Configure(std::shared_ptr<WidgetConfiguration> configuration
                         this->Update(*value);
                     }
                 }
-            }
-        );
-
-        if(result)
-            subscriptions_.push_back(std::move(*result));
+            });
     }
-
     range_start_ = GetConfigValue<int>(
         configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE),

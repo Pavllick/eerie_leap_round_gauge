@@ -43,15 +43,9 @@ int Screen::ApplyTheme(const ITheme& theme) {
 void Screen::Configure(std::shared_ptr<ScreenConfiguration> configuration) {
     configuration_ = std::move(configuration);
 
-    lv_obj_t *active_screen = lv_screen_active();
-    int32_t screen_width = lv_obj_get_width(active_screen);
-    int32_t screen_height = lv_obj_get_height(active_screen);
+    auto layout = GridLayout::FromActiveScreen(configuration_->grid);
 
-    if(configuration_->grid.width <= 0 || configuration_->grid.width > screen_width)
-        throw std::invalid_argument("Invalid screen width.");
-
-    if(configuration_->grid.height <= 0 || configuration_->grid.height > screen_height)
-        throw std::invalid_argument("Invalid screen height.");
+    SetVisibility(IsVisible());
 
     widgets_->clear();
 
@@ -59,8 +53,7 @@ void Screen::Configure(std::shared_ptr<ScreenConfiguration> configuration) {
         try {
             auto widget = WidgetFactory::GetInstance().CreateWidget(widget_config, container_);
             widget->SetAssetsManager(ui_assets_manager_);
-            UpdateWidgetSize(*widget, configuration_->grid, screen_width, screen_height);
-            UpdateWidgetPosition(*widget, configuration_->grid);
+            UpdateWidgetGeometry(*widget, layout);
 
             widgets_->push_back(std::move(widget));
         } catch(const std::exception& e) {
@@ -73,53 +66,49 @@ std::shared_ptr<ScreenConfiguration> Screen::GetConfiguration() const {
     return configuration_;
 }
 
+uint32_t Screen::GetId() const {
+    return id_;
+}
+
+uint32_t Screen::GetGroupId() const {
+    return configuration_ != nullptr ? configuration_->group_id : 0;
+}
+
+int32_t Screen::GetZIndex() const {
+    return configuration_ != nullptr ? configuration_->z_index : 0;
+}
+
+bool Screen::IsVisible() const {
+    return configuration_ == nullptr || configuration_->is_visible;
+}
+
+void Screen::SetVisibility(bool is_visible) {
+    if(is_visible)
+        lv_obj_remove_flag(container_->GetObject(), LV_OBJ_FLAG_HIDDEN);
+    else
+        lv_obj_add_flag(container_->GetObject(), LV_OBJ_FLAG_HIDDEN);
+}
+
+void Screen::OnActivated() {
+    for(auto& widget : *widgets_)
+        widget->OnActivated();
+}
+
+void Screen::OnDeactivated() {
+    for(auto& widget : *widgets_)
+        widget->OnDeactivated();
+}
+
 std::shared_ptr<std::vector<std::unique_ptr<IWidget>>> Screen::GetWidgets() const {
     return widgets_;
 }
 
-void Screen::UpdateWidgetSize(IWidget& widget, GridSettings& grid_settings, int32_t screen_width, int32_t screen_height) {
+void Screen::UpdateWidgetGeometry(IWidget& widget, const GridLayout& layout) {
     const auto& widget_config = widget.GetConfiguration();
 
-    if(widget_config->size_grid.width <= 0)
-        throw std::invalid_argument("Invalid widget width.");
-
-    if(widget_config->size_grid.height <= 0)
-        throw std::invalid_argument("Invalid widget height.");
-
-    uint32_t width = 0;
-    if(grid_settings.width == widget_config->size_grid.width)
-        width = screen_width;
-    else
-        width = (screen_width / grid_settings.width) * widget_config->size_grid.width - grid_settings.spacing_px * 2;
-
-    uint32_t height = 0;
-    if(grid_settings.height == widget_config->size_grid.height)
-        height = screen_height;
-    else
-        height = (screen_height / grid_settings.height) * widget_config->size_grid.height - grid_settings.spacing_px * 2;
-
-    widget.SetSizePx({.width = width, .height = height});
-}
-
-void Screen::UpdateWidgetPosition(IWidget& widget, GridSettings& grid_settings) {
-    lv_obj_t *active_screen = lv_screen_active();
-    int32_t screen_width = lv_obj_get_width(active_screen);
-    int32_t screen_height = lv_obj_get_height(active_screen);
-
-    const auto& widget_config = widget.GetConfiguration();
-
-    auto size_px = widget.GetSizePx();
-    if(size_px.width == 0 || size_px.height == 0)
-        throw std::runtime_error("Widget size is not set.");
-
-    uint32_t cell_width = (screen_width / grid_settings.width) + (grid_settings.spacing_px * 2);
-    uint32_t cell_height = (screen_height / grid_settings.height) + (grid_settings.spacing_px * 2);
-
-    int x = cell_width * widget_config->position_grid.x;
-    int y = screen_height - cell_height * widget_config->position_grid.y - size_px.height;
-    y = std::abs(y);
-
-    widget.SetPositionPx({.x = x, .y = y});
+    auto size_px = layout.ToPx(widget_config->size_grid);
+    widget.SetSizePx(size_px);
+    widget.SetPositionPx(layout.ToPx(widget_config->position_grid, size_px));
 }
 
 } // namespace eerie_leap::views::screens

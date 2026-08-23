@@ -7,7 +7,11 @@ enum class UiPayloadType : uint32_t {
     Value,
     SensorId,
     IsStatusOk,
-    ComUserStatus
+    ComUserStatus,
+    NavigationAction,
+    TargetGroupId,
+    TargetScreenId,
+    SettingId
 };
 
 } // namespace eerie_leap::domain::ui_domain::event_bus

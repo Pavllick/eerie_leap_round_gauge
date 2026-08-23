@@ -31,6 +31,18 @@ uint32_t WidgetBase::GetId() const {
     return id_;
 }
 
+bool WidgetBase::IsActive() const {
+    return is_active_;
+}
+
+void WidgetBase::OnActivated() {
+    is_active_ = true;
+}
+
+void WidgetBase::OnDeactivated() {
+    is_active_ = false;
+}
+
 void WidgetBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
     configuration_ = std::move(configuration);
 

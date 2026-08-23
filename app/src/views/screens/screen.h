@@ -10,11 +10,13 @@
 #include "views/widgets/i_widget.h"
 #include "views/screens/i_screen.h"
 #include "views/utilitites/frame.h"
+#include "views/utilitites/grid_layout.h"
 
 namespace eerie_leap::views::screens {
 
 using eerie_leap::subsys::assets::AssetsManager;
 using eerie_leap::domain::ui_domain::models::GridSettings;
+using eerie_leap::views::utilitites::GridLayout;
 
 class Screen : public RenderableBase, public IScreen {
 protected:
@@ -25,8 +27,8 @@ protected:
     std::shared_ptr<std::vector<std::unique_ptr<IWidget>>> widgets_;
     std::shared_ptr<ScreenConfiguration> configuration_;
 
-    void UpdateWidgetSize(IWidget& widget, GridSettings& grid_settings, int32_t screen_width, int32_t screen_height);
-    void UpdateWidgetPosition(IWidget& widget, GridSettings& grid_settings);
+    void UpdateWidgetGeometry(IWidget& widget, const GridLayout& layout);
+    void SetVisibility(bool is_visible);
 
     int DoRender() override;
     int ApplyTheme(const ITheme& theme) override;
@@ -39,6 +41,14 @@ public:
 
     void Configure(std::shared_ptr<ScreenConfiguration> configuration) override;
     std::shared_ptr<ScreenConfiguration> GetConfiguration() const override;
+
+    uint32_t GetId() const override;
+    uint32_t GetGroupId() const override;
+    int32_t GetZIndex() const override;
+    bool IsVisible() const override;
+
+    void OnActivated() override;
+    void OnDeactivated() override;
 
     std::shared_ptr<std::vector<std::unique_ptr<IWidget>>> GetWidgets() const override;
 };
