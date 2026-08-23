@@ -25,7 +25,7 @@ protected:
     static void UpdateDirection(lv_obj_t* lv_bar, InidicatorDirection direction, int32_t range_start, int32_t range_end);
 
 public:
-    explicit BarIndicator(uint32_t id, std::shared_ptr<Frame> parent);
+    explicit BarIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context);
     WidgetType GetType() const override { return WidgetType::IndicatorBar; }
 };
 

@@ -20,7 +20,7 @@ private:
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
 
 public:
-    explicit DigitalIndicator(uint32_t id, std::shared_ptr<Frame> parent);
+    explicit DigitalIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context);
     WidgetType GetType() const override { return WidgetType::IndicatorDigital; }
 };
 

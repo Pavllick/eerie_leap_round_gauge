@@ -9,6 +9,8 @@ namespace eerie_leap::domain::ui_domain::models {
 
 using namespace std::string_view_literals;
 
+// Persisted as the widget property key - append only, and keep
+// WidgetPropertyTypeNames below in the exact same order.
 enum class WidgetPropertyType : std::uint16_t {
     NONE = 0,
     IS_ACTIVE,              // bool
@@ -34,6 +36,10 @@ enum class WidgetPropertyType : std::uint16_t {
     PIVOT_X,                // int
     PIVOT_Y,                // int
     DIRECTION,              // int (enum)
+    SETTING_ID,             // string
+    STEP,                   // double
+    UNIT,                   // string
+    TARGET_GROUP,           // int
 };
 
 class WidgetProperty {
@@ -63,6 +69,10 @@ private:
         "PIVOT_X"sv,
         "PIVOT_Y"sv,
         "DIRECTION"sv,
+        "SETTING_ID"sv,
+        "STEP"sv,
+        "UNIT"sv,
+        "TARGET_GROUP"sv,
     };
 
 public:

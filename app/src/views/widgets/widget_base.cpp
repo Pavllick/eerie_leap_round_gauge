@@ -9,8 +9,10 @@ using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::domain::ui_domain::event_bus;
 
-WidgetBase::WidgetBase(uint32_t id, std::shared_ptr<Frame> parent)
-    : id_(id), parent_(std::move(parent)) {
+WidgetBase::WidgetBase(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
+    : id_(id), parent_(std::move(parent)),
+    dispatch_guard_(std::make_shared<WidgetDispatchGuard>(this)),
+    context_(std::move(context)) {
 
     container_ = std::make_shared<Frame>(Frame::CreateWrapped(parent_->GetObject())
         .SetWidth(100, false)
@@ -19,12 +21,14 @@ WidgetBase::WidgetBase(uint32_t id, std::shared_ptr<Frame> parent)
 }
 
 WidgetBase::~WidgetBase() {
+    DetachDispatch();
+
     for(auto& subscription : subscriptions_)
         UiEventBus::GetInstance().Unsubscribe(subscription);
 }
 
-void WidgetBase::SetAssetsManager(std::shared_ptr<AssetsManager> ui_assets_manager) {
-    ui_assets_manager_ = std::move(ui_assets_manager);
+void WidgetBase::DetachDispatch() {
+    dispatch_guard_->Detach();
 }
 
 uint32_t WidgetBase::GetId() const {

@@ -20,7 +20,7 @@
 #include "domain/ui_domain/models/icon_type.h"
 #include "domain/ui_domain/models/indicator_direction.h"
 
-#include "views/screens/screen.h"
+#include "views/screens/screen_factory.h"
 #include "views/themes/theme_manager.h"
 #include "views/themes/dark_bw_theme.h"
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
@@ -88,6 +88,13 @@ int UiController::Initialize() {
 
     main_view_ = std::make_unique<MainView>();
     navigation_service_ = std::make_shared<NavigationService>();
+    settings_registry_ = std::make_shared<SettingsRegistry>();
+
+    widget_context_ = WidgetContext {
+        .assets_manager = ui_assets_manager_,
+        .settings_provider = settings_registry_,
+        .navigation_service = navigation_service_
+    };
 
     if(Configure(ui_configuration_manager_->Get()) != 0)
         LOG_ERR("Failed to configure the UI from the stored configuration.");
@@ -198,15 +205,16 @@ std::shared_ptr<NavigationService> UiController::GetNavigationService() const {
     return navigation_service_;
 }
 
+std::shared_ptr<SettingsRegistry> UiController::GetSettingsRegistry() const {
+    return settings_registry_;
+}
+
 std::shared_ptr<IScreen> UiController::CreateScreen(std::shared_ptr<ScreenConfiguration> configuration) {
     try {
-        auto screen = std::make_shared<Screen>(
-            ui_assets_manager_,
-            configuration->id,
-            main_view_->GetGroupContainer(configuration->group_id));
-        screen->Configure(configuration);
-
-        return screen;
+        return ScreenFactory::GetInstance().CreateScreen(
+            configuration,
+            main_view_->GetGroupContainer(configuration->group_id),
+            widget_context_);
     } catch(const std::exception& e) {
         LOG_ERR("Failed to create screen with ID: %d. %s", configuration->id, e.what());
         return nullptr;

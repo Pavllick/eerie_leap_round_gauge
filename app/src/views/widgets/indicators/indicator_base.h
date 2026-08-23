@@ -37,7 +37,7 @@ protected:
     void ValueChangeAnimation(lv_anim_t& anim, float range, float start_value, float end_value);
 
 public:
-    IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent);
+    IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context);
     ~IndicatorBase() override;
 
     void Update(float value) override;

@@ -13,8 +13,8 @@ using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 
-DialIndicator::DialIndicator(uint32_t id, std::shared_ptr<Frame> parent)
-    : IndicatorBase(id, parent) {}
+DialIndicator::DialIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
+    : IndicatorBase(id, std::move(parent), std::move(context)) {}
 
 int DialIndicator::DoRender() {
     auto lv_obj = Create(static_cast<int32_t>(range_start_), static_cast<int32_t>(range_end_));
@@ -35,9 +35,8 @@ int DialIndicator::ApplyTheme(const ITheme& theme) {
 }
 
 lv_obj_t* DialIndicator::Create(int32_t range_start, int32_t range_end) {
-    needle_icon_ = std::make_unique<IconWidget>(id_, container_, IconType::Image);
+    needle_icon_ = std::make_unique<IconWidget>(id_, container_, context_, IconType::Image);
     needle_icon_->Configure(configuration_);
-    needle_icon_->SetAssetsManager(ui_assets_manager_);
     if(needle_icon_->Render() != 0)
         return nullptr;
 

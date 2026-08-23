@@ -16,13 +16,15 @@ using namespace eerie_leap::domain::ui_domain::event_bus;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::widgets::event_bus_filters;
 
-IndicatorBase::IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent)
-    : WidgetBase(id, parent) , value_filter_(0) {
+IndicatorBase::IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
+    : WidgetBase(id, std::move(parent), std::move(context)) , value_filter_(0) {
 
     value_change_animation_ = CreateValueChangeAnimation();
 }
 
 IndicatorBase::~IndicatorBase() {
+    DetachDispatch();
+
     // The animation targets `this`, so it must not outlive the indicator.
     lv_anim_delete(this, UpdateIndicatorCallback);
 }

@@ -16,8 +16,8 @@ using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::themes;
 using namespace eerie_leap::views::widgets::basic::icons;
 
-IconWidget::IconWidget(uint32_t id, std::shared_ptr<Frame> parent, IconType icon_type)
-    : WidgetBase(id, parent), icon_type_(icon_type) {}
+IconWidget::IconWidget(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context, IconType icon_type)
+    : WidgetBase(id, std::move(parent), std::move(context)), icon_type_(icon_type) {}
 
 int IconWidget::DoRender() {
     auto lv_obj = Create();
@@ -42,7 +42,7 @@ lv_obj_t* IconWidget::Create() {
         throw std::runtime_error("Invalid icon type.");
 
     icon_ = IconFactory::GetInstance().Create(icon_type_, configuration_, container_);
-    icon_->SetAssetsManager(ui_assets_manager_);
+    icon_->SetAssetsManager(context_.assets_manager);
     if(icon_->Render() != 0)
         return nullptr;
 

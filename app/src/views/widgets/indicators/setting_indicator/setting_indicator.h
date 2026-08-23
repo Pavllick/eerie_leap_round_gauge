@@ -1,0 +1,42 @@
+#pragma once
+
+#include <cstdint>
+#include <memory>
+#include <memory_resource>
+
+#include <lvgl.h>
+
+#include "views/widgets/setting_widget_base.h"
+
+namespace eerie_leap::views::widgets::indicators {
+
+using eerie_leap::views::widgets::SettingWidgetBase;
+
+// Renders a setting read-only. Not an IndicatorBase: that one is built around a
+// sensor id, an EMA filter and a value-change animation, none of which a setting has.
+class SettingIndicator : public SettingWidgetBase {
+private:
+    static constexpr int max_value_precision_ = 9;
+
+    lv_obj_t* lv_label_ = nullptr;
+
+    std::pmr::string label_;
+    std::pmr::string unit_;
+    int value_precision_ = 0;
+
+    void UpdateText();
+
+    int DoRender() override;
+    int ApplyTheme(const ITheme& theme) override;
+
+protected:
+    void OnSettingChanged() override;
+
+public:
+    explicit SettingIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context);
+
+    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
+    WidgetType GetType() const override { return WidgetType::IndicatorSetting; }
+};
+
+} // namespace eerie_leap::views::widgets::indicators

@@ -13,10 +13,12 @@ using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 
-SegmentArcIndicator::SegmentArcIndicator(uint32_t id, std::shared_ptr<Frame> parent)
-    : IndicatorBase(id, parent) { }
+SegmentArcIndicator::SegmentArcIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
+    : IndicatorBase(id, std::move(parent), std::move(context)) { }
 
 SegmentArcIndicator::~SegmentArcIndicator() {
+    DetachDispatch();
+
     segments_.clear();
 }
 

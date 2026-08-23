@@ -32,7 +32,7 @@ private:
     uint32_t GetAngleForValue(float value);
 
 public:
-    explicit DialIndicator(uint32_t id, std::shared_ptr<Frame> parent);
+    explicit DialIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context);
     [[nodiscard]] WidgetType GetType() const override { return WidgetType::IndicatorDial; }
 };
 

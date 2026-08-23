@@ -36,7 +36,7 @@ private:
 public:
     ~SegmentArcIndicator() override;
 
-    explicit SegmentArcIndicator(uint32_t id, std::shared_ptr<Frame> parent);
+    explicit SegmentArcIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context);
     WidgetType GetType() const override { return WidgetType::IndicatorSegmentArc; }
 };
 

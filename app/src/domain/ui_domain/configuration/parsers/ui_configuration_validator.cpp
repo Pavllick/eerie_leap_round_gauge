@@ -29,6 +29,8 @@ static PropertyValueKind GetPropertyValueKind(WidgetPropertyType type) {
         case WidgetPropertyType::SENSOR_ID:
         case WidgetPropertyType::LABEL:
         case WidgetPropertyType::FILE_PATH:
+        case WidgetPropertyType::SETTING_ID:
+        case WidgetPropertyType::UNIT:
             return PropertyValueKind::Text;
 
         default:
@@ -104,8 +106,16 @@ void UiConfigurationValidator::ValidateScreenId(const UiConfiguration& configura
 
 void UiConfigurationValidator::ValidateScreenType(const UiConfiguration& configuration) {
     for(const auto& screen_configuration : configuration.screen_configurations) {
-        if(screen_configuration->type != ScreenType::System && screen_configuration->type != ScreenType::Gauge)
-            InvalidScreenConfiguration(screen_configuration->id, "Invalid screen type.");
+        switch(screen_configuration->type) {
+            case ScreenType::System:
+            case ScreenType::Gauge:
+            case ScreenType::Settings:
+            case ScreenType::Popup:
+                break;
+
+            default:
+                InvalidScreenConfiguration(screen_configuration->id, "Invalid screen type.");
+        }
     }
 }
 
@@ -171,6 +181,10 @@ void UiConfigurationValidator::ValidateWidgetType(const ScreenConfiguration& scr
             case WidgetType::IndicatorSegmentArc:
             case WidgetType::IndicatorDial:
             case WidgetType::IndicatorBar:
+            case WidgetType::IndicatorSetting:
+            case WidgetType::ControlSlider:
+            case WidgetType::ControlToggle:
+            case WidgetType::ControlButton:
                 break;
 
             default:

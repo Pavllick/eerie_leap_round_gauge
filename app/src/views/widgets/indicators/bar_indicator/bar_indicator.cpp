@@ -15,8 +15,8 @@ using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 
-BarIndicator::BarIndicator(uint32_t id, std::shared_ptr<Frame> parent)
-    : IndicatorBase(id, parent) {}
+BarIndicator::BarIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
+    : IndicatorBase(id, std::move(parent), std::move(context)) {}
 
 int BarIndicator::DoRender() {
     auto lv_obj = Create(container_->GetObject(), static_cast<int32_t>(range_start_), static_cast<int32_t>(range_end_));

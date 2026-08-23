@@ -11,6 +11,7 @@ enum class WidgetCategory : uint32_t {
     Control = 3 << 16
 };
 
+// Persisted in the widget configuration - append only.
 enum class WidgetType : uint32_t {
     None = 0,
 
@@ -23,12 +24,26 @@ enum class WidgetType : uint32_t {
     IndicatorSegmentArc = static_cast<uint32_t>(WidgetCategory::Indicator) | 104,
     IndicatorDial = static_cast<uint32_t>(WidgetCategory::Indicator) | 105,
     IndicatorBar = static_cast<uint32_t>(WidgetCategory::Indicator) | 106,
+    IndicatorSetting = static_cast<uint32_t>(WidgetCategory::Indicator) | 107,
+
+    ControlSlider = static_cast<uint32_t>(WidgetCategory::Control) | 201,
+    ControlToggle = static_cast<uint32_t>(WidgetCategory::Control) | 202,
+    ControlButton = static_cast<uint32_t>(WidgetCategory::Control) | 203,
 };
 
 class WidgetTypeHelpers {
+private:
+    static constexpr uint32_t category_mask_ = 0xFFFF0000U;
+
 public:
-    static bool IsCategory(WidgetType widget_type, WidgetCategory category) {
-        return (static_cast<uint32_t>(widget_type) & static_cast<uint32_t>(category)) != 0;
+    static constexpr WidgetCategory GetCategory(WidgetType widget_type) {
+        return static_cast<WidgetCategory>(static_cast<uint32_t>(widget_type) & category_mask_);
+    }
+
+    // Control (3 << 16) contains the bits of Basic and Indicator, so the masked
+    // halves have to be compared for equality rather than ANDed together.
+    static constexpr bool IsCategory(WidgetType widget_type, WidgetCategory category) {
+        return GetCategory(widget_type) == category;
     }
 };
 

@@ -1,18 +1,24 @@
 #include "views/widgets/basic/icon_widget/icon_widget.h"
 #include "views/widgets/basic/arc_icon_widget/arc_icon_widget.h"
 
+#include "views/widgets/controls/button_control/button_control.h"
+#include "views/widgets/controls/slider_control/slider_control.h"
+#include "views/widgets/controls/toggle_control/toggle_control.h"
+
 #include "views/widgets/indicators/arc_fill_indicator/arc_fill_indicator.h"
 #include "views/widgets/indicators/segment_arc_indicator/segment_arc_indicator.h"
 #include "views/widgets/indicators/digital_indicator/digital_indicator.h"
 #include "views/widgets/indicators/horizontal_chart_indicator/horizontal_chart_indicator.h"
 #include "views/widgets/indicators/dial_indicator/dial_indicator.h"
 #include "views/widgets/indicators/bar_indicator/bar_indicator.h"
+#include "views/widgets/indicators/setting_indicator/setting_indicator.h"
 
 #include "widget_factory.h"
 
 namespace eerie_leap::views::widgets {
 
 using namespace eerie_leap::views::widgets::basic;
+using namespace eerie_leap::views::widgets::controls;
 using namespace eerie_leap::views::widgets::indicators;
 
 WidgetFactory::WidgetFactory() {
@@ -26,8 +32,8 @@ WidgetFactory& WidgetFactory::GetInstance() {
 
 template<typename T>
 void WidgetFactory::RegisterWidget(const WidgetType type) {
-    creators_[type] = [](const uint32_t id, std::shared_ptr<Frame> parent) -> std::unique_ptr<IWidget> {
-        return std::make_unique<T>(id, parent);
+    creators_[type] = [](const uint32_t id, std::shared_ptr<Frame> parent, const WidgetContext& context) -> std::unique_ptr<IWidget> {
+        return std::make_unique<T>(id, std::move(parent), context);
     };
 }
 
@@ -35,16 +41,16 @@ void WidgetFactory::RegisterWidget(const WidgetType type, WidgetCreator creator)
     creators_[type] = std::move(creator);
 }
 
-std::unique_ptr<IWidget> WidgetFactory::CreateWidget(const WidgetType type, const uint32_t id, std::shared_ptr<Frame> parent) {
+std::unique_ptr<IWidget> WidgetFactory::CreateWidget(const WidgetType type, const uint32_t id, std::shared_ptr<Frame> parent, const WidgetContext& context) {
     auto it = creators_.find(type);
     if (it == creators_.end())
         throw std::runtime_error("Unknown widget type");
 
-    return it->second(id, parent);
+    return it->second(id, std::move(parent), context);
 }
 
-std::unique_ptr<IWidget> WidgetFactory::CreateWidget(std::shared_ptr<WidgetConfiguration> configuration, std::shared_ptr<Frame> parent) {
-    auto widget = CreateWidget(configuration->type, configuration->id, parent);
+std::unique_ptr<IWidget> WidgetFactory::CreateWidget(std::shared_ptr<WidgetConfiguration> configuration, std::shared_ptr<Frame> parent, const WidgetContext& context) {
+    auto widget = CreateWidget(configuration->type, configuration->id, std::move(parent), context);
     widget->Configure(configuration);
 
     return widget;
@@ -70,6 +76,11 @@ void WidgetFactory::RegisterTypes() {
     RegisterWidget<HorizontalChartIndicator>(WidgetType::IndicatorHorizontalChart);
     RegisterWidget<DialIndicator>(WidgetType::IndicatorDial);
     RegisterWidget<BarIndicator>(WidgetType::IndicatorBar);
+    RegisterWidget<SettingIndicator>(WidgetType::IndicatorSetting);
+
+    RegisterWidget<SliderControl>(WidgetType::ControlSlider);
+    RegisterWidget<ToggleControl>(WidgetType::ControlToggle);
+    RegisterWidget<ButtonControl>(WidgetType::ControlButton);
 }
 
 } // namespace eerie_leap::views::widgets

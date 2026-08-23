@@ -11,6 +11,8 @@
 
 #include "views/renderable_base.h"
 #include "views/widgets/i_widget.h"
+#include "views/widgets/widget_context.h"
+#include "views/widgets/widget_dispatch_guard.h"
 
 namespace eerie_leap::views::widgets {
 
@@ -31,7 +33,8 @@ protected:
     std::shared_ptr<Frame> parent_;
 
     std::vector<UiSubscriptionHandle> subscriptions_;
-    std::shared_ptr<AssetsManager> ui_assets_manager_ = nullptr;
+    std::shared_ptr<WidgetDispatchGuard> dispatch_guard_;
+    WidgetContext context_;
 
     bool is_active_ = false;
 
@@ -44,9 +47,11 @@ protected:
         auto subscription = UiEventBus::GetInstance().Subscribe(
             type,
             std::move(filter),
-            [this, handler = std::move(handler)](const UiEvent& event) {
-                if(IsReady() && IsActive())
-                    handler(event);
+            [guard = dispatch_guard_, this, handler = std::move(handler)](const UiEvent& event) {
+                guard->Dispatch([&] {
+                    if(IsReady() && IsActive())
+                        handler(event);
+                });
             });
 
         if(subscription)
@@ -60,8 +65,12 @@ protected:
             std::move(handler));
     }
 
+    // Every destructor that runs before ~WidgetBase must call this first, or a
+    // dispatch already in flight can reach members that have just been destroyed.
+    void DetachDispatch();
+
 public:
-    WidgetBase(uint32_t id, std::shared_ptr<Frame> parent);
+    WidgetBase(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context);
     ~WidgetBase() override;
 
     uint32_t GetId() const override;
@@ -72,7 +81,6 @@ public:
     void OnActivated() override;
     void OnDeactivated() override;
 
-    void SetAssetsManager(std::shared_ptr<AssetsManager> ui_assets_manager) override;
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
     std::shared_ptr<WidgetConfiguration> GetConfiguration() const override;
 

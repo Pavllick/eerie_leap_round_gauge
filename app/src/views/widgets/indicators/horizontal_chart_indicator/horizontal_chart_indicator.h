@@ -25,7 +25,7 @@ private:
     int ApplyTheme(const ITheme& theme) override;
 
 public:
-    explicit HorizontalChartIndicator(uint32_t id, std::shared_ptr<Frame> parent);
+    explicit HorizontalChartIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context);
     WidgetType GetType() const override { return WidgetType::IndicatorHorizontalChart; }
 
     // Charts advance their series by one discrete sample per call (SHIFT

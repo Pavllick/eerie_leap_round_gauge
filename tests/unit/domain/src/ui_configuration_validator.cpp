@@ -1,3 +1,4 @@
+#include <array>
 #include <memory>
 #include <stdexcept>
 #include <utility>
@@ -191,6 +192,59 @@ ZTEST(ui_configuration_validator, test_widget_property_without_value_is_invalid)
     auto& properties = configuration->screen_configurations[0]->widget_configurations[0]->properties;
 
     properties[WidgetProperty::GetTypeName(WidgetPropertyType::LABEL)] = ConfigValue{};
+
+    zassert_false(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_settings_screen_type_is_valid) {
+    auto configuration = MakeConfiguration();
+    configuration->screen_configurations[0]->type = ScreenType::Settings;
+
+    zassert_true(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_popup_screen_type_is_valid) {
+    auto configuration = MakeConfiguration();
+    configuration->screen_configurations[0]->type = ScreenType::Popup;
+
+    zassert_true(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_control_widget_types_are_valid) {
+    constexpr std::array control_types = {
+        WidgetType::ControlSlider,
+        WidgetType::ControlToggle,
+        WidgetType::ControlButton,
+        WidgetType::IndicatorSetting
+    };
+
+    for(auto control_type : control_types) {
+        auto configuration = MakeConfiguration();
+        configuration->screen_configurations[0]->widget_configurations[0]->type = control_type;
+
+        zassert_true(Validates(*configuration), "Expected widget type %u to be accepted.", static_cast<uint32_t>(control_type));
+    }
+}
+
+ZTEST(ui_configuration_validator, test_control_widget_properties_are_valid) {
+    auto configuration = MakeConfiguration();
+    auto& widget_configuration = configuration->screen_configurations[0]->widget_configurations[0];
+    widget_configuration->type = WidgetType::ControlSlider;
+
+    auto& properties = widget_configuration->properties;
+    properties[WidgetProperty::GetTypeName(WidgetPropertyType::SETTING_ID)] = "display.brightness";
+    properties[WidgetProperty::GetTypeName(WidgetPropertyType::UNIT)] = "%";
+    properties[WidgetProperty::GetTypeName(WidgetPropertyType::STEP)] = 5.0;
+    properties[WidgetProperty::GetTypeName(WidgetPropertyType::TARGET_GROUP)] = 2;
+
+    zassert_true(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_numeric_setting_id_is_invalid) {
+    auto configuration = MakeConfiguration();
+    auto& properties = configuration->screen_configurations[0]->widget_configurations[0]->properties;
+
+    properties[WidgetProperty::GetTypeName(WidgetPropertyType::SETTING_ID)] = 1;
 
     zassert_false(Validates(*configuration));
 }

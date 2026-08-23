@@ -18,10 +18,12 @@
 #include "domain/ui_domain/services/ui_renderer_service.h"
 #include "domain/ui_domain/services/sensors_rendering_service.h"
 #include "domain/ui_domain/services/navigation_service.h"
+#include "domain/ui_domain/services/settings_registry.h"
 #include "domain/ui_domain/services/ui_input_service.h"
 
 #include "views/main_view.h"
 #include "views/screens/i_screen.h"
+#include "views/widgets/widget_context.h"
 
 namespace eerie_leap::controllers {
 
@@ -40,10 +42,12 @@ using eerie_leap::domain::ui_domain::event_bus::UiSubscriptionHandle;
 using eerie_leap::domain::ui_domain::services::UiRendererService;
 using eerie_leap::domain::ui_domain::services::SensorsRenderingService;
 using eerie_leap::domain::ui_domain::services::NavigationService;
+using eerie_leap::domain::ui_domain::services::SettingsRegistry;
 using eerie_leap::domain::ui_domain::services::UiInputService;
 
 using eerie_leap::views::MainView;
 using eerie_leap::views::screens::IScreen;
+using eerie_leap::views::widgets::WidgetContext;
 
 class UiController {
 private:
@@ -60,11 +64,13 @@ private:
     std::shared_ptr<UiRendererService> ui_renderer_service_;
     std::shared_ptr<SensorsRenderingService> sensors_rendering_service_;
     std::shared_ptr<NavigationService> navigation_service_;
+    std::shared_ptr<SettingsRegistry> settings_registry_;
 
     // Declared before ui_input_service_, which detaches from the view's LVGL object on teardown.
     std::unique_ptr<MainView> main_view_;
     std::shared_ptr<UiInputService> ui_input_service_;
 
+    WidgetContext widget_context_;
     std::shared_ptr<UiConfiguration> configuration_;
 
     std::optional<UiSubscriptionHandle> navigation_subscription_;
@@ -92,6 +98,7 @@ public:
     int Start();
 
     std::shared_ptr<NavigationService> GetNavigationService() const;
+    std::shared_ptr<SettingsRegistry> GetSettingsRegistry() const;
 };
 
 } // namespace eerie_leap::controllers

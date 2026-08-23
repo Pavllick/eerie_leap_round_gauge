@@ -24,7 +24,7 @@ protected:
     int DoRender() override;
 
 public:
-    IconWidget(uint32_t id, std::shared_ptr<Frame> parent, IconType icon_type = IconType::None);
+    IconWidget(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context, IconType icon_type = IconType::None);
 
     void SetIsActive(bool is_active);
 

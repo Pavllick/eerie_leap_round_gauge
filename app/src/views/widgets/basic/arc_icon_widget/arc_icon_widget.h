@@ -16,7 +16,7 @@ private:
     int ApplyTheme(const ITheme& theme) override;
 
 public:
-    ArcIconWidget(uint32_t id, std::shared_ptr<Frame> parent, IconType icon_type = IconType::None);
+    ArcIconWidget(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context, IconType icon_type = IconType::None);
     [[nodiscard]] WidgetType GetType() const override { return WidgetType::BasicArcIcon; }
 
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
