@@ -108,7 +108,6 @@ static int cst92xx_read_data(const struct i2c_dt_spec *i2c, uint16_t command, ui
 
 static struct cst92xx_touch_point cst92xx_parse_touch_point(const struct device *dev, uint8_t *points_data, int point_index)
 {
-	const struct cst92xx_config *config = dev->config;
 	const struct cst92xx_data *data = dev->data;
 
 	uint8_t *point_data = &points_data[point_index * 5 + (point_index ? 2 : 0)];
@@ -131,7 +130,7 @@ static struct cst92xx_touch_point cst92xx_parse_touch_point(const struct device 
 	}
 
 	struct cst92xx_touch_point touch_point = {
-		.index = point_index,
+		.id = point_data[0] >> 4,
 		.status = point_data[0] & 0x0F,
 		.x = x,
 		.y = y,
@@ -143,7 +142,7 @@ static struct cst92xx_touch_point cst92xx_parse_touch_point(const struct device 
 static int cst92xx_process(const struct device *dev)
 {
 	const struct cst92xx_config *config = dev->config;
-	const struct cst92xx_data *data = dev->data;
+	struct cst92xx_data *data = dev->data;
 	int ret = 0;
 
 	uint8_t read_buffer[CST92XX_TOUCH_COORD_BUF_SIZE] = {0};
@@ -165,26 +164,51 @@ static int cst92xx_process(const struct device *dev)
 	}
 
 	uint8_t touch_count = (read_buffer[5] & CST92XX_TOUCH_IND_MASK);
-    if (touch_count > CST92XX_MAX_TOUCH_POINTS || touch_count == 0) {
+	if (touch_count > CST92XX_MAX_TOUCH_POINTS) {
 		LOG_ERR("Invalid number of touch points %d", touch_count);
-        return -EINVAL;
-    }
+		return -EINVAL;
+	}
+
+	struct cst92xx_touch_point primary = {0};
+	uint8_t active_count = 0;
 
 	for (int i = 0; i < touch_count; i++) {
-        struct cst92xx_touch_point touch_point = cst92xx_parse_touch_point(dev, read_buffer, i);
+		struct cst92xx_touch_point touch_point = cst92xx_parse_touch_point(dev, read_buffer, i);
 
-		if (touch_count > 1) {
-			input_report_abs(dev, INPUT_ABS_MT_SLOT, i, true, K_FOREVER);
+		if (touch_point.status != CST92XX_STATUS_PRESSED) {
+			continue;
 		}
 
-        if (touch_point.status == CST92XX_STATUS_PRESSED) {
-			input_report_abs(dev, INPUT_ABS_X, touch_point.x, false, K_FOREVER);
-			input_report_abs(dev, INPUT_ABS_Y, touch_point.y, false, K_FOREVER);
-			input_report_key(dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
-		} else {
+		if (active_count == 0) {
+			primary = touch_point;
+		}
+
+		active_count++;
+	}
+
+	/* The consumer is a single pointer, so a second finger carries no meaning and
+	 * the panel compacts the contact array when one lifts. Following whichever
+	 * contact comes first would move the pointer onto the other finger, and that
+	 * jump reads as a swipe - so only a lone contact keeping its id stays pressed.
+	 */
+	bool pressed = active_count == 1;
+	if (pressed && data->pressed && primary.id != data->tracked_id) {
+		pressed = false;
+	}
+
+	/* A frame without a usable contact is the finger-up edge, not an error. */
+	if (!pressed) {
+		if (data->pressed) {
+			data->pressed = false;
 			input_report_key(dev, INPUT_BTN_TOUCH, 0, true, K_FOREVER);
 		}
-    }
+	} else {
+		data->pressed = true;
+		data->tracked_id = primary.id;
+		input_report_abs(dev, INPUT_ABS_X, primary.x, false, K_FOREVER);
+		input_report_abs(dev, INPUT_ABS_Y, primary.y, false, K_FOREVER);
+		input_report_key(dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
+	}
 
 #ifdef CONFIG_INPUT_CST92XX_EV_DEVICE
 	uint8_t gesture = CST92XX_GESTURE_CODE_NONE;
@@ -207,18 +231,13 @@ static void cst92xx_work_handler(struct k_work *work)
 	struct cst92xx_data *data = CONTAINER_OF(work, struct cst92xx_data, work);
 
 	cst92xx_process(data->dev);
-
-	atomic_set(&data->work_pending, 0);
 }
 
 #ifdef CONFIG_INPUT_CST92XX_INTERRUPT
 static void cst92xx_isr_handler(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
 	struct cst92xx_data *data = CONTAINER_OF(cb, struct cst92xx_data, int_gpio_cb);
-
-	if (atomic_cas(&data->work_pending, 0, 1)) {
-        k_work_submit(&data->work);
-    }
+	k_work_submit(&data->work);
 }
 #else
 static void cst92xx_timer_handler(struct k_timer *timer)

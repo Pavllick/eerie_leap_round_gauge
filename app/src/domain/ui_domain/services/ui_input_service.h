@@ -3,6 +3,7 @@
 #include <array>
 #include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 
@@ -19,6 +20,7 @@ using eerie_leap::domain::ui_domain::models::NavigationIntent;
 class UiInputService {
 private:
     static constexpr size_t k_direction_count = 4;
+    static constexpr uint32_t k_gesture_cooldown_ms = 250;
 
     std::shared_ptr<NavigationService> navigation_service_;
 
@@ -26,6 +28,7 @@ private:
     std::array<std::atomic<NavigationIntent>, k_direction_count> gesture_map_{};
 
     lv_obj_t* root_ = nullptr;
+    uint32_t last_gesture_tick_ = 0;
 
     static std::optional<size_t> ToIndex(lv_dir_t direction);
     static void GestureCb(lv_event_t* e);

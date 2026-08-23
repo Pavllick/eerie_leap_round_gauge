@@ -86,6 +86,11 @@ void UiInputService::HandleGesture() {
     // One swipe must produce one action, not one per event tick.
     lv_indev_wait_release(indev);
 
+    if(last_gesture_tick_ != 0 && lv_tick_elaps(last_gesture_tick_) < k_gesture_cooldown_ms)
+        return;
+
+    last_gesture_tick_ = lv_tick_get();
+
     navigation_service_->Handle(intent);
 }
 

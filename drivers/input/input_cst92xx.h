@@ -43,7 +43,10 @@ struct cst92xx_data {
 	const struct device *dev;
 	/** Work queue (for deferred read). */
 	struct k_work work;
-	atomic_t work_pending;
+	/** Last contact state reported to the input subsystem. */
+	bool pressed;
+	/** Hardware contact id the current press is following. */
+	uint8_t tracked_id;
 	struct input_touchscreen_common_config touchscreen;
 #ifdef CONFIG_INPUT_CST92XX_INTERRUPT
 	/** Interrupt GPIO callback. */
@@ -57,6 +60,6 @@ struct cst92xx_data {
 struct cst92xx_touch_point {
 	uint16_t x;
 	uint16_t y;
-	uint8_t index;
+	uint8_t id;
 	uint8_t status;
 };
