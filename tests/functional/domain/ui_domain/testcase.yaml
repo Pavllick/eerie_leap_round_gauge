@@ -1,7 +1,7 @@
 common:
   tags:
     - functional
-    - navigation
+    - domain.ui
   platform_allow:
     - native_sim
     - qemu_cortex_a9
@@ -10,4 +10,4 @@ common:
     - qemu_malta
 
 tests:
-  functional.navigation: {}
+  functional.ui_domain: {}

@@ -22,9 +22,7 @@ using eerie_leap::domain::ui_domain::configuration::parsers::UiConfigurationCbor
 class UiConfigurationManager : public ICborConfigurationManager {
 private:
     std::unique_ptr<config_services::CborConfigurationService<CborUiConfig>> cbor_configuration_service_;
-
     std::unique_ptr<UiConfigurationCborParser> cbor_parser_;
-
     std::shared_ptr<UiConfiguration> configuration_;
 
     bool CreateDefaultConfiguration();

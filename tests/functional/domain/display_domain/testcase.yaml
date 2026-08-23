@@ -1,7 +1,7 @@
 common:
   tags:
     - functional
-    - controllers
+    - domain.display
   platform_allow:
     - native_sim
     - qemu_cortex_a9
@@ -10,4 +10,4 @@ common:
     - qemu_malta
 
 tests:
-  functional.controllers: {}
+  functional.display_domain: {}

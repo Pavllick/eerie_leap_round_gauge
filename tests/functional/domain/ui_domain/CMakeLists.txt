@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.20.0)
 
 set(RT_GAUGE_TEST_SIM_FLASH ON)
 set(RT_GAUGE_TEST_LVGL ON)
-include(${CMAKE_CURRENT_SOURCE_DIR}/../../rt_gauge_test.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../rt_gauge_test.cmake)
 
 # Use Zephyr's build system
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(functional_controllers)
+project(functional_ui_domain)
 
 include_directories(${APP_SRC_DIR})
 
