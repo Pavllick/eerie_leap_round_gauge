@@ -28,6 +28,7 @@ file(GLOB_RECURSE TEST_SOURCES src/*.c src/*.cpp)
 target_sources(app PRIVATE
   ${APP_SRC_CONFIGURATION}
   ${APP_SRC_UI_DOMAIN}
+  ${APP_SRC_DIR}/domain/display_domain/configuration/parsers/display_configuration_cbor_parser.cpp
   ${APP_SRC_DIR}/views/utilitites/grid_layout.cpp
   ${TEST_SOURCES}
 )

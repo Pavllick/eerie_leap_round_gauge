@@ -1,0 +1,7 @@
+CborDisplayConfig = [
+    version: uint,
+    brightness: uint,
+    blanking_enabled: bool,
+    screen_timeout_s: uint,
+    theme_id: uint
+]
