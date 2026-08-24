@@ -31,12 +31,10 @@ void ThemeManager::SetTheme(std::shared_ptr<ITheme> theme) {
         return;
 
     // Observers repaint LVGL objects, so the switch must be serialized with the renderer.
-    LvglLock::GetInstance().Lock();
+    ScopedLvglLock lvgl_guard;
 
     current_theme_ = std::move(theme);
     NotifyObservers();
-
-    LvglLock::GetInstance().Unlock();
 }
 
 const ITheme& ThemeManager::GetCurrentTheme() const {
