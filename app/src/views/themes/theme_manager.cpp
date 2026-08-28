@@ -12,7 +12,7 @@
 
 namespace eerie_leap::views::themes {
 
-using eerie_leap::domain::ui_domain::LvglLock;
+using eerie_leap::domain::ui_domain::ScopedLvglLock;
 
 LOG_MODULE_REGISTER(theme_manager_logger);
 

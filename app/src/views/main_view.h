@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <unordered_map>
@@ -17,11 +18,20 @@ namespace eerie_leap::views {
 using eerie_leap::views::screens::IScreen;
 
 class MainView : public RenderableBase {
+public:
+    // Runs the given work somewhere other than the caller's thread.
+    using RenderDispatcher = std::function<void(std::function<void()>)>;
+
 private:
     std::unordered_map<uint32_t, std::shared_ptr<ScreenGroup>> groups_;
     std::optional<uint32_t> active_group_id_;
+    RenderDispatcher render_dispatcher_;
 
     std::shared_ptr<ScreenGroup> GetOrCreateGroup(uint32_t group_id);
+
+    int RenderGroupOrRollBack(
+        const std::shared_ptr<ScreenGroup>& group,
+        const std::shared_ptr<ScreenGroup>& previous_group);
 
     int DoRender() override;
     int ApplyTheme(const ITheme& theme) override;
@@ -30,6 +40,11 @@ public:
     MainView();
 
     std::shared_ptr<Frame> GetContainer() const;
+
+    // Building a group's LVGL tree costs tens of milliseconds and runs on a
+    // large stack; without a dispatcher SetActiveGroup() renders inline on the
+    // calling thread.
+    void SetRenderDispatcher(RenderDispatcher dispatcher);
 
     // Screens must be parented to their group's container, so it is created up front.
     std::shared_ptr<Frame> GetGroupContainer(uint32_t group_id);

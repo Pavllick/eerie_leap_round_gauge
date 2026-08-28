@@ -27,4 +27,13 @@ public:
     void Unlock();
 };
 
+class ScopedLvglLock {
+public:
+    ScopedLvglLock() { LvglLock::GetInstance().Lock(); }
+    ~ScopedLvglLock() { LvglLock::GetInstance().Unlock(); }
+
+    ScopedLvglLock(const ScopedLvglLock&) = delete;
+    ScopedLvglLock& operator=(const ScopedLvglLock&) = delete;
+};
+
 } // namespace eerie_leap::domain::ui_domain

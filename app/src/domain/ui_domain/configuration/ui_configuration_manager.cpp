@@ -15,9 +15,9 @@ using namespace eerie_leap::configuration::services;
 LOG_MODULE_REGISTER(ui_config_ctrl_logger);
 
 UiConfigurationManager::UiConfigurationManager(
-    std::unique_ptr<CborConfigurationService<CborUiConfig>> cbor_configuration_service) :
-    cbor_configuration_service_(std::move(cbor_configuration_service)),
-    configuration_(nullptr) {
+    std::unique_ptr<CborConfigurationService<CborUiConfig>> cbor_configuration_service)
+        : cbor_configuration_service_(std::move(cbor_configuration_service)),
+        configuration_(nullptr) {
 
     cbor_parser_ = std::make_unique<UiConfigurationCborParser>();
     std::shared_ptr<UiConfiguration> configuration = nullptr;

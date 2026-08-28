@@ -49,9 +49,6 @@ int UiRendererService::Initialize() {
     lv_obj_set_style_bg_color(screen, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    display_blanking_off(DtDisplay::Get());
-    display_set_brightness(DtDisplay::Get(), 160);
-
     return 0;
 }
 

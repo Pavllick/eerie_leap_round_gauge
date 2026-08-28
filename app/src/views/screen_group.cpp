@@ -60,11 +60,25 @@ int ScreenGroup::EnsureRendered() {
     }
 
     is_rendered_ = true;
+    ApplyActivation();
+
     return 0;
 }
 
+bool ScreenGroup::IsRendered() const {
+    return is_rendered_;
+}
+
+// Recorded here and applied by EnsureRendered() when the group is rendered
+// later, so a caller can select a group without waiting for it to be built.
 void ScreenGroup::Activate() {
-    if(is_activated_)
+    is_activation_requested_ = true;
+
+    ApplyActivation();
+}
+
+void ScreenGroup::ApplyActivation() {
+    if(is_activated_ || !is_activation_requested_ || !is_rendered_)
         return;
 
     lv_obj_remove_flag(container_->GetObject(), LV_OBJ_FLAG_HIDDEN);
@@ -78,6 +92,8 @@ void ScreenGroup::Activate() {
 }
 
 void ScreenGroup::Deactivate() {
+    is_activation_requested_ = false;
+
     if(!is_activated_)
         return;
 

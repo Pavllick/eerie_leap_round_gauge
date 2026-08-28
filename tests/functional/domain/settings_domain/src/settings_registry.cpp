@@ -13,17 +13,17 @@
 #include "utilities/string/string_helpers.h"
 
 #include "domain/ui_domain/event_bus/ui_event_bus.h"
-#include "domain/ui_domain/services/settings_registry.h"
+#include "domain/settings_domain/utilities/settings_registry.h"
 
 using eerie_leap::domain::ui_domain::event_bus::UiEvent;
 using eerie_leap::domain::ui_domain::event_bus::UiEventBus;
 using eerie_leap::domain::ui_domain::event_bus::UiEventType;
 using eerie_leap::domain::ui_domain::event_bus::UiPayloadType;
 using eerie_leap::domain::ui_domain::event_bus::UiSubscriptionHandle;
-using eerie_leap::domain::ui_domain::services::SettingRange;
-using eerie_leap::domain::ui_domain::services::SettingsRegistry;
-using eerie_leap::domain::ui_domain::services::ToSettingBoolean;
-using eerie_leap::domain::ui_domain::services::ToSettingNumber;
+using eerie_leap::domain::settings_domain::utilities::SettingRange;
+using eerie_leap::domain::settings_domain::utilities::SettingsRegistry;
+using eerie_leap::domain::settings_domain::utilities::ToSettingBoolean;
+using eerie_leap::domain::settings_domain::utilities::ToSettingNumber;
 using eerie_leap::utilities::string::StringHelpers;
 using eerie_leap::utilities::type::ConfigValue;
 

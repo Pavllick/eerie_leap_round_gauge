@@ -22,7 +22,7 @@ private:
 
     void UpdateIndicator(float value) override;
 
-    lv_obj_t* Create(int32_t range_start, int32_t range_end);
+    lv_obj_t* Create();
 
     int DoRender() override;
     int ApplyTheme(const ITheme& theme) override;

@@ -8,7 +8,7 @@ using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::themes;
 
-using eerie_leap::domain::ui_domain::services::ToSettingBoolean;
+using eerie_leap::domain::settings_domain::utilities::ToSettingBoolean;
 
 ToggleControl::ToggleControl(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : ControlBase(id, std::move(parent), std::move(context), true) {}

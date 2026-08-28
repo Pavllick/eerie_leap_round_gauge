@@ -6,7 +6,7 @@
 
 #include "utilities/type/config_value.h"
 
-namespace eerie_leap::domain::ui_domain::services {
+namespace eerie_leap::domain::settings_domain::utilities {
 
 using eerie_leap::utilities::type::ConfigValue;
 
@@ -53,4 +53,4 @@ inline std::optional<bool> ToSettingBoolean(const ConfigValue& value) {
     return std::nullopt;
 }
 
-} // namespace eerie_leap::domain::ui_domain::services
+} // namespace eerie_leap::domain::settings_domain::utilities

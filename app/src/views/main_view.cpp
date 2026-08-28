@@ -1,9 +1,12 @@
 #include <algorithm>
 #include <cerrno>
 #include <string>
+#include <utility>
 
 #include <zephyr/logging/log.h>
 #include <lvgl.h>
+
+#include "domain/ui_domain/lvgl_lock.h"
 
 #include "views/themes/theme_manager.h"
 
@@ -12,6 +15,8 @@
 namespace eerie_leap::views {
 
 using namespace eerie_leap::views::themes;
+
+using eerie_leap::domain::ui_domain::ScopedLvglLock;
 
 LOG_MODULE_REGISTER(main_view_logger);
 
@@ -24,6 +29,10 @@ MainView::MainView() {
 
 std::shared_ptr<Frame> MainView::GetContainer() const {
     return container_;
+}
+
+void MainView::SetRenderDispatcher(RenderDispatcher dispatcher) {
+    render_dispatcher_ = std::move(dispatcher);
 }
 
 std::shared_ptr<ScreenGroup> MainView::GetOrCreateGroup(uint32_t group_id) {
@@ -87,19 +96,55 @@ int MainView::SetActiveGroup(uint32_t group_id) {
     if(previous_group != nullptr)
         previous_group->Deactivate();
 
-    int res = it->second->EnsureRendered();
-    if(res != 0) {
-        if(previous_group != nullptr)
-            previous_group->Activate();
+    auto& group = it->second;
 
-        return res;
-    }
-
-    it->second->Activate();
-
+    // Recorded now, applied by the group as soon as it is rendered.
+    group->Activate();
     active_group_id_ = group_id;
 
-    return 0;
+    if(group->IsRendered())
+        return 0;
+
+    if(render_dispatcher_ != nullptr) {
+        // Capturing `this` is safe because the dispatcher's work queue is drained
+        // and stopped before this view is destroyed.
+        auto deferred_group = group;
+        render_dispatcher_([this, deferred_group, previous_group] {
+            ScopedLvglLock lvgl_guard;
+
+            RenderGroupOrRollBack(deferred_group, previous_group);
+        });
+
+        return 0;
+    }
+
+    return RenderGroupOrRollBack(group, previous_group);
+}
+
+int MainView::RenderGroupOrRollBack(
+    const std::shared_ptr<ScreenGroup>& group,
+    const std::shared_ptr<ScreenGroup>& previous_group) {
+
+    int res = group->EnsureRendered();
+    if(res == 0)
+        return 0;
+
+    LOG_ERR("Failed to render screen group %u. Error: %d.", group->GetGroupId(), res);
+
+    // A later switch already moved on; that one owns the active state now.
+    if(active_group_id_ != group->GetGroupId())
+        return res;
+
+    group->Deactivate();
+
+    active_group_id_ = previous_group != nullptr
+        ? std::optional<uint32_t>(previous_group->GetGroupId())
+        : std::nullopt;
+
+    if(previous_group != nullptr)
+        previous_group->Activate();
+
+    return res;
 }
 
 std::optional<uint32_t> MainView::GetActiveGroupId() const {

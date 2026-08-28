@@ -23,13 +23,15 @@
 
 #include "domain/configuration_domain/services/configuration_service.h"
 #include "domain/sensor_domain/utilities/sensor_readings_frame.hpp"
+#include "domain/settings_domain/utilities/settings_registry.h"
 
 #include "controllers/system_controller.h"
-#include "controllers/ui_controller.h"
 #include "controllers/canbus_controller.h"
 #include "controllers/sensors_controller.h"
 #include "controllers/ble_controller.h"
 #include "controllers/logging_controller.h"
+#include "controllers/display_controller.h"
+#include "controllers/ui_controller.h"
 
 using namespace eerie_memory;
 using namespace eerie_leap::utilities::memory;
@@ -44,6 +46,8 @@ using namespace eerie_leap::subsys::time;
 
 using namespace eerie_leap::domain::configuration_domain::services;
 using namespace eerie_leap::domain::sensor_domain::utilities;
+using namespace eerie_leap::domain::ui_domain::services;
+using namespace eerie_leap::domain::settings_domain::utilities;
 
 using namespace eerie_leap::controllers;
 
@@ -60,7 +64,7 @@ int main() {
         | DtFeature::DISPLAY
         | DtFeature::CANBUS);
 
-    auto fs_service = make_shared_pmr<FsService>(Mrm::GetExtPmr(), DtFs::GetInternalFsMp());
+    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp());
     if(!fs_service->Initialize()) {
         LOG_ERR("Failed to initialize File System.");
         return -1;
@@ -71,7 +75,7 @@ int main() {
     auto time_service = std::make_shared<TimeService>(rtc_provider, boot_elapsed_time_provider);
     time_service->Initialize();
 
-    auto guid_generator = make_shared_pmr<GuidGenerator>(Mrm::GetExtPmr());
+    auto guid_generator = std::make_shared<GuidGenerator>();
 
     int config_work_queue_stack_size = 6144;
     int config_work_queue_priority = 5;
@@ -97,13 +101,25 @@ int main() {
         gpio = nullptr;
     }
 
-    auto sensor_readings_frame = std::make_shared<SensorReadingsFrame>();
+    auto settings_registry = std::make_shared<SettingsRegistry>();
 
-    auto ui_controller = make_shared_pmr<UiController>(
-        Mrm::GetExtPmr(),
+    auto display_controller = std::make_shared<DisplayController>(
         fs_service,
         config_work_queue_thread,
         configuration_service,
+        settings_registry);
+    if(display_controller->Initialize() != 0) {
+        LOG_ERR("Failed to initialize the display controller.");
+        return -1;
+    }
+
+    auto sensor_readings_frame = std::make_shared<SensorReadingsFrame>();
+
+    auto ui_controller = std::make_shared<UiController>(
+        fs_service,
+        config_work_queue_thread,
+        configuration_service,
+        settings_registry,
         sensor_readings_frame);
     if(ui_controller->Initialize() != 0) {
         LOG_ERR("Failed to initialize the UI controller.");

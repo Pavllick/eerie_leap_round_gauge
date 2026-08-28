@@ -13,12 +13,14 @@
 #include "configuration/services/cbor_configuration_service.h"
 
 #include "domain/ui_domain/event_bus/ui_event_type.h"
+#include "domain/ui_domain/lvgl_lock.h"
 #include "domain/ui_domain/models/navigation_intent.h"
 #include "domain/ui_domain/models/widget_configuration.h"
 #include "domain/ui_domain/models/widget_type.h"
 #include "domain/ui_domain/models/widget_property.h"
 #include "domain/ui_domain/models/icon_type.h"
 #include "domain/ui_domain/models/indicator_direction.h"
+#include "domain/settings_domain/models/setting_id.h"
 
 #include "views/screens/screen_factory.h"
 #include "views/themes/theme_manager.h"
@@ -40,9 +42,11 @@ using namespace eerie_leap::views::assets::images;
 
 namespace config_services = eerie_leap::configuration::services;
 
+using eerie_leap::domain::ui_domain::ScopedLvglLock;
 using eerie_leap::domain::ui_domain::event_bus::UiEventBus;
 using eerie_leap::domain::ui_domain::event_bus::UiEventType;
 using eerie_leap::domain::ui_domain::event_bus::UiPayloadType;
+using eerie_leap::domain::settings_domain::models::SettingId;
 
 LOG_MODULE_REGISTER(ui_controller_logger);
 
@@ -50,31 +54,38 @@ UiController::UiController(
     std::shared_ptr<IFsService> fs_service,
     std::shared_ptr<WorkQueueThread> config_work_queue_thread,
     std::shared_ptr<ConfigurationService> configuration_service,
+    std::shared_ptr<SettingsRegistry> settings_registry,
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame)
-    : fs_service_(std::move(fs_service)),
-      config_work_queue_thread_(std::move(config_work_queue_thread)),
-      configuration_service_(std::move(configuration_service)),
-      sensor_readings_frame_(std::move(sensor_readings_frame)) {}
+        : fs_service_(std::move(fs_service)),
+        config_work_queue_thread_(std::move(config_work_queue_thread)),
+        configuration_service_(std::move(configuration_service)),
+        settings_registry_(std::move(settings_registry)),
+        sensor_readings_frame_(std::move(sensor_readings_frame)) {}
 
 UiController::~UiController() {
     if(navigation_subscription_.has_value())
         UiEventBus::GetInstance().Unsubscribe(navigation_subscription_.value());
+
+    // The dispatcher holds a raw pointer to a work queue destroyed before main_view_.
+    if(main_view_ != nullptr)
+        main_view_->SetRenderDispatcher(nullptr);
 }
 
 int UiController::Initialize() {
-    ThemeManager::GetInstance().SetTheme(make_shared_pmr<DarkBWTheme>(Mrm::GetExtPmr()));
+    ThemeManager::GetInstance().SetTheme(std::make_shared<DarkBWTheme>());
 
-    ui_renderer_service_ = make_shared_pmr<UiRendererService>(Mrm::GetExtPmr());
+    ui_renderer_service_ = std::make_shared<UiRendererService>();
     if(ui_renderer_service_->Initialize() != 0) {
         LOG_ERR("Failed to initialize the UI renderer service.");
         return -1;
     }
+
     ui_renderer_service_->Start();
 
     auto cbor_ui_config_service = std::make_unique<config_services::CborConfigurationService<CborUiConfig>>(
         UI_CONFIGURATION_NAME, fs_service_, config_work_queue_thread_);
-    ui_configuration_manager_ = make_shared_pmr<UiConfigurationManager>(
-        Mrm::GetExtPmr(), std::move(cbor_ui_config_service));
+    ui_configuration_manager_ = std::make_shared<UiConfigurationManager>(
+        std::move(cbor_ui_config_service));
 
     if(configuration_service_ != nullptr)
         configuration_service_->RegisterCborConfigurationManager(
@@ -86,9 +97,31 @@ int UiController::Initialize() {
     SetupTestConfiguration();
     SetupTestAssets();
 
+    ScopedLvglLock lvgl_guard;
+
     main_view_ = std::make_unique<MainView>();
     navigation_service_ = std::make_shared<NavigationService>();
-    settings_registry_ = std::make_shared<SettingsRegistry>();
+
+    ui_render_work_queue_thread_ = std::make_unique<WorkQueueThread>(
+        "ui_render_work_q",
+        ui_render_work_queue_stack_size_,
+        ui_render_work_queue_priority_);
+
+    if(ui_render_work_queue_thread_->Initialize()) {
+        // Keeps the event bus worker - and the LVGL lock it holds while
+        // dispatching - out of the multi-frame first render of a screen group.
+        main_view_->SetRenderDispatcher(
+            [work_queue = ui_render_work_queue_thread_.get()](std::function<void()> work) {
+                try {
+                    work_queue->Run(std::move(work));
+                } catch(const std::exception& e) {
+                    LOG_ERR("Failed to queue a screen group render. %s", e.what());
+                }
+            });
+    } else {
+        LOG_ERR("Failed to start the UI render work queue, rendering inline.");
+        ui_render_work_queue_thread_.reset();
+    }
 
     widget_context_ = WidgetContext {
         .assets_manager = ui_assets_manager_,
@@ -114,7 +147,13 @@ int UiController::Initialize() {
 }
 
 int UiController::Start() {
-    int res = main_view_->Render();
+    int res = 0;
+
+    {
+        ScopedLvglLock lvgl_guard;
+        res = main_view_->Render();
+    }
+
     if(res != 0)
         return res;
 
@@ -126,6 +165,10 @@ int UiController::Start() {
 
 int UiController::Configure(std::shared_ptr<UiConfiguration> config) {
     configuration_ = std::move(config);
+
+    // Screen and widget construction creates LVGL objects while the renderer
+    // thread is already running.
+    ScopedLvglLock lvgl_guard;
 
     for(auto& screen_config : configuration_->screen_configurations) {
         auto screen = CreateScreen(screen_config);
@@ -476,6 +519,58 @@ void UiController::SetupTestConfiguration() {
     screen_configuration_1->AddWidget(std::move(widget1_0));
 
     ui_configuration->screen_configurations.push_back(std::move(screen_configuration_1));
+
+    // A settings screen is pure configuration: no C++ is written per config screen.
+    auto screen_configuration_2 = make_shared_pmr<ScreenConfiguration>(Mrm::GetExtPmr());
+    screen_configuration_2->id = 2;
+    screen_configuration_2->group_id = 2;
+    screen_configuration_2->z_index = 0;
+    screen_configuration_2->is_visible = true;
+    screen_configuration_2->type = ScreenType::Settings;
+    screen_configuration_2->grid.snap_enabled = true;
+    screen_configuration_2->grid.width = 466;
+    screen_configuration_2->grid.height = 466;
+    screen_configuration_2->grid.spacing_px = 0;
+
+    // Widget 2_0: IndicatorSetting - reads display.brightness back
+    auto widget2_0 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
+    widget2_0->type = WidgetType::IndicatorSetting;
+    widget2_0->id = 0;
+    widget2_0->position_grid.x = 80;
+    widget2_0->position_grid.y = 180;
+    widget2_0->size_grid.width = 300;
+    widget2_0->size_grid.height = 60;
+    widget2_0->z_index = 0;
+    widget2_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SETTING_ID)] = SettingId::DISPLAY_BRIGHTNESS;
+    widget2_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::LABEL)] = "Brightness";
+    screen_configuration_2->AddWidget(std::move(widget2_0));
+
+    // Widget 2_1: ControlSlider - writes display.brightness
+    auto widget2_1 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
+    widget2_1->type = WidgetType::ControlSlider;
+    widget2_1->id = 1;
+    widget2_1->position_grid.x = 80;
+    widget2_1->position_grid.y = 140;
+    widget2_1->size_grid.width = 300;
+    widget2_1->size_grid.height = 60;
+    widget2_1->z_index = 0;
+    widget2_1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SETTING_ID)] = SettingId::DISPLAY_BRIGHTNESS;
+    screen_configuration_2->AddWidget(std::move(widget2_1));
+
+    // Widget 2_2: ControlButton - back to the gauge group
+    auto widget2_2 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
+    widget2_2->type = WidgetType::ControlButton;
+    widget2_2->id = 2;
+    widget2_2->position_grid.x = 160;
+    widget2_2->position_grid.y = 40;
+    widget2_2->size_grid.width = 160;
+    widget2_2->size_grid.height = 60;
+    widget2_2->z_index = 0;
+    widget2_2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::LABEL)] = "Back";
+    widget2_2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::TARGET_GROUP)] = 0;
+    screen_configuration_2->AddWidget(std::move(widget2_2));
+
+    ui_configuration->screen_configurations.push_back(std::move(screen_configuration_2));
 
     ui_configuration_manager_->Update(*ui_configuration);
 }

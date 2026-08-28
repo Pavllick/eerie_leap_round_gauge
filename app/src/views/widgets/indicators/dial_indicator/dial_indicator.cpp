@@ -17,7 +17,7 @@ DialIndicator::DialIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetC
     : IndicatorBase(id, std::move(parent), std::move(context)) {}
 
 int DialIndicator::DoRender() {
-    auto lv_obj = Create(static_cast<int32_t>(range_start_), static_cast<int32_t>(range_end_));
+    auto lv_obj = Create();
     if(lv_obj == nullptr)
         return -1;
 
@@ -34,14 +34,14 @@ int DialIndicator::ApplyTheme(const ITheme& theme) {
     return 0;
 }
 
-lv_obj_t* DialIndicator::Create(int32_t range_start, int32_t range_end) {
+lv_obj_t* DialIndicator::Create() {
     needle_icon_ = std::make_unique<IconWidget>(id_, container_, context_, IconType::Image);
     needle_icon_->Configure(configuration_);
     if(needle_icon_->Render() != 0)
         return nullptr;
 
     lv_needle_icon_ = needle_icon_->GetContainer()->GetChild()->GetObject();
-    UpdateIndicator(start_angle_);
+    UpdateIndicator(range_start_);
 
     return needle_icon_->GetContainer()->GetObject();
 }
@@ -61,7 +61,7 @@ void DialIndicator::UpdateIndicator(float value) {
     // NOTE: lv_image_set_pivot is meant to work along with lv_image_set_rotation,
     // but it does not work as expected out of the box. There is a patch applyed to LVGL
     // in order to fix that bug. Transform is another option here, but it adds artifacts
-    // around an image when rotated.
+    // around the image when rotated.
     // lv_obj_set_style_transform_rotation(
     //     lv_needle_icon_,
     //     GetAngleForValue(value),

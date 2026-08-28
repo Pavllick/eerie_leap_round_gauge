@@ -4,13 +4,13 @@
 #include <memory_resource>
 #include <optional>
 
-#include "domain/ui_domain/services/i_settings_provider.h"
+#include "domain/settings_domain/utilities/i_settings_provider.h"
 
 #include "views/widgets/widget_base.h"
 
 namespace eerie_leap::views::widgets {
 
-using eerie_leap::domain::ui_domain::services::SettingRange;
+using eerie_leap::domain::settings_domain::utilities::SettingRange;
 using eerie_leap::utilities::type::ConfigValue;
 
 // Binds a widget to a setting id resolved through ISettingsProvider, so it never

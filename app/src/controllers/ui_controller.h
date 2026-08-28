@@ -18,7 +18,7 @@
 #include "domain/ui_domain/services/ui_renderer_service.h"
 #include "domain/ui_domain/services/sensors_rendering_service.h"
 #include "domain/ui_domain/services/navigation_service.h"
-#include "domain/ui_domain/services/settings_registry.h"
+#include "domain/settings_domain/utilities/settings_registry.h"
 #include "domain/ui_domain/services/ui_input_service.h"
 
 #include "views/main_view.h"
@@ -42,7 +42,7 @@ using eerie_leap::domain::ui_domain::event_bus::UiSubscriptionHandle;
 using eerie_leap::domain::ui_domain::services::UiRendererService;
 using eerie_leap::domain::ui_domain::services::SensorsRenderingService;
 using eerie_leap::domain::ui_domain::services::NavigationService;
-using eerie_leap::domain::ui_domain::services::SettingsRegistry;
+using eerie_leap::domain::settings_domain::utilities::SettingsRegistry;
 using eerie_leap::domain::ui_domain::services::UiInputService;
 
 using eerie_leap::views::MainView;
@@ -54,21 +54,31 @@ private:
     static constexpr const char* UI_CONFIGURATION_NAME = "ui_config";
     static constexpr const char* UI_ASSETS_DIR = "ui_assets";
 
+    // The first render of a screen group builds its whole LVGL tree, so it gets
+    // a stack of its own instead of running on the event bus worker.
+    static constexpr int ui_render_work_queue_stack_size_ = 8192;
+    static constexpr int ui_render_work_queue_priority_ = 9;
+
     std::shared_ptr<IFsService> fs_service_;
     std::shared_ptr<WorkQueueThread> config_work_queue_thread_;
     std::shared_ptr<ConfigurationService> configuration_service_;
+    std::shared_ptr<SettingsRegistry> settings_registry_;
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame_;
 
     std::shared_ptr<UiConfigurationManager> ui_configuration_manager_;
     std::shared_ptr<AssetsManager> ui_assets_manager_;
-    std::shared_ptr<UiRendererService> ui_renderer_service_;
     std::shared_ptr<SensorsRenderingService> sensors_rendering_service_;
     std::shared_ptr<NavigationService> navigation_service_;
-    std::shared_ptr<SettingsRegistry> settings_registry_;
 
     // Declared before ui_input_service_, which detaches from the view's LVGL object on teardown.
     std::unique_ptr<MainView> main_view_;
     std::shared_ptr<UiInputService> ui_input_service_;
+
+    std::unique_ptr<WorkQueueThread> ui_render_work_queue_thread_;
+
+    // Declared last so its thread stops calling lv_timer_handler() before any
+    // of the LVGL objects above are freed.
+    std::shared_ptr<UiRendererService> ui_renderer_service_;
 
     WidgetContext widget_context_;
     std::shared_ptr<UiConfiguration> configuration_;
@@ -91,6 +101,7 @@ public:
         std::shared_ptr<IFsService> fs_service,
         std::shared_ptr<WorkQueueThread> config_work_queue_thread,
         std::shared_ptr<ConfigurationService> configuration_service,
+        std::shared_ptr<SettingsRegistry> settings_registry,
         std::shared_ptr<SensorReadingsFrame> sensor_readings_frame);
     ~UiController();
 

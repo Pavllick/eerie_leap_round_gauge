@@ -8,12 +8,11 @@
 
 #include <zephyr/kernel.h>
 
-#include "domain/ui_domain/services/i_settings_provider.h"
+#include "domain/settings_domain/utilities/i_settings_provider.h"
 
-namespace eerie_leap::domain::ui_domain::services {
+namespace eerie_leap::domain::settings_domain::utilities {
 
-// Resolves setting ids onto the domain services that own them, so widgets stay
-// free of driver and configuration dependencies.
+// Resolves setting ids onto the domain services that own them.
 class SettingsRegistry : public ISettingsProvider {
 public:
     struct Binding {
@@ -57,4 +56,4 @@ public:
     std::optional<SettingRange> GetRange(std::string_view setting_id) const override;
 };
 
-} // namespace eerie_leap::domain::ui_domain::services
+} // namespace eerie_leap::domain::settings_domain::utilities

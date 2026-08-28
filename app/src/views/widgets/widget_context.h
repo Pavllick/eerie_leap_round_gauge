@@ -4,13 +4,13 @@
 
 #include "subsys/assets/assets_manager.h"
 
-#include "domain/ui_domain/services/i_settings_provider.h"
+#include "domain/settings_domain/utilities/i_settings_provider.h"
 #include "domain/ui_domain/services/navigation_service.h"
 
 namespace eerie_leap::views::widgets {
 
 using eerie_leap::subsys::assets::AssetsManager;
-using eerie_leap::domain::ui_domain::services::ISettingsProvider;
+using eerie_leap::domain::settings_domain::utilities::ISettingsProvider;
 using eerie_leap::domain::ui_domain::services::NavigationService;
 
 // Everything the view layer may hand to a screen or a widget, passed at

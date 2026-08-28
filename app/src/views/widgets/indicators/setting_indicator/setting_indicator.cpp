@@ -14,7 +14,7 @@ using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::themes;
 
-using eerie_leap::domain::ui_domain::services::ToSettingNumber;
+using eerie_leap::domain::settings_domain::utilities::ToSettingNumber;
 
 SettingIndicator::SettingIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : SettingWidgetBase(id, std::move(parent), std::move(context)) {}
