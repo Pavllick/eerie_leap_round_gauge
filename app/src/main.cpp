@@ -22,8 +22,11 @@
 #include "subsys/time/boot_elapsed_time_provider.h"
 
 #include "domain/configuration_domain/services/configuration_service.h"
+#include "domain/sensor_domain/event_bus/sensor_event_bus.h"
 #include "domain/sensor_domain/utilities/sensor_readings_frame.hpp"
 #include "domain/settings_domain/utilities/settings_registry.h"
+
+#include "event_bus/app_event_bus.h"
 
 #include "controllers/system_controller.h"
 #include "controllers/canbus_controller.h"
@@ -45,9 +48,12 @@ using namespace eerie_leap::subsys::threading;
 using namespace eerie_leap::subsys::time;
 
 using namespace eerie_leap::domain::configuration_domain::services;
+using namespace eerie_leap::domain::sensor_domain::event_bus;
 using namespace eerie_leap::domain::sensor_domain::utilities;
 using namespace eerie_leap::domain::ui_domain::services;
 using namespace eerie_leap::domain::settings_domain::utilities;
+
+using namespace eerie_leap::event_bus;
 
 using namespace eerie_leap::controllers;
 
@@ -57,6 +63,11 @@ constexpr uint32_t SLEEP_TIME_MS = 10000;
 
 int main() {
     // CoredumpReporter::PrintStoredDump();
+
+    // Channels are inert until their bus registers them, so both buses have to exist
+    // before any publisher runs or its events go nowhere.
+    SensorEventBus::GetInstance();
+    AppEventBus::GetInstance();
 
     DtConfigurator::Initialize(
         DtFeature::INTERNAL_FS

@@ -4,7 +4,7 @@
 
 #include <zephyr/logging/log.h>
 
-#include "domain/ui_domain/event_bus/ui_event_bus.h"
+#include "domain/ui_domain/event_bus/navigation_event_channel.h"
 
 #include "navigation_service.h"
 
@@ -18,14 +18,13 @@ LOG_MODULE_REGISTER(navigation_service_logger);
 
 namespace {
 
-void PublishNavigation(NavigationAction action, UiPayloadType target_type, uint32_t target_id) {
-    UiEventPayload payload;
-    payload[UiPayloadType::NavigationAction] = static_cast<uint32_t>(action);
-    payload[target_type] = target_id;
-
-    UiEventBus::GetInstance().PublishAsync({
-        .type = UiEventType::NavigationChanged,
-        .payload = payload
+void PublishNavigation(NavigationAction action, NavigationPayloadType target_type, uint32_t target_id) {
+    NavigationEventChannel::GetInstance().PublishAsync({
+        .type = NavigationEventType::Changed,
+        .payload = {
+            { NavigationPayloadType::Action, static_cast<uint32_t>(action) },
+            { target_type, target_id }
+        }
     });
 }
 
@@ -109,7 +108,7 @@ int NavigationService::RequestGroup(uint32_t group_id, bool record_history, std:
 
 void NavigationService::PublishGroup(const std::optional<uint32_t>& group_to_publish) {
     if(group_to_publish.has_value())
-        PublishNavigation(NavigationAction::ShowGroup, UiPayloadType::TargetGroupId, *group_to_publish);
+        PublishNavigation(NavigationAction::ShowGroup, NavigationPayloadType::TargetGroupId, *group_to_publish);
 }
 
 int NavigationService::GoToGroup(uint32_t group_id) {
@@ -182,7 +181,7 @@ int NavigationService::ShowOverlay(uint32_t screen_id) {
     active_overlay_screen_id_ = screen_id;
     k_mutex_unlock(&lock_);
 
-    PublishNavigation(NavigationAction::ShowOverlay, UiPayloadType::TargetScreenId, screen_id);
+    PublishNavigation(NavigationAction::ShowOverlay, NavigationPayloadType::TargetScreenId, screen_id);
 
     return 0;
 }
@@ -196,7 +195,7 @@ int NavigationService::CloseOverlay() {
     if(!closed_screen_id.has_value())
         return -ENOENT;
 
-    PublishNavigation(NavigationAction::CloseOverlay, UiPayloadType::TargetScreenId, *closed_screen_id);
+    PublishNavigation(NavigationAction::CloseOverlay, NavigationPayloadType::TargetScreenId, *closed_screen_id);
 
     return 0;
 }

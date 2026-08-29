@@ -6,15 +6,13 @@
 #include "subsys/threading/scoped_mutex.h"
 #include "utilities/string/string_helpers.h"
 
-// The only dependency this domain has on ui_domain: the event bus is the app's
-// notification channel, and a setting change has to reach the widgets bound to it.
-#include "domain/ui_domain/event_bus/ui_event_bus.h"
+#include "domain/settings_domain/event_bus/settings_events_channel.h"
 
 #include "settings_registry.h"
 
 namespace eerie_leap::domain::settings_domain::utilities {
 
-using namespace eerie_leap::domain::ui_domain::event_bus;
+using namespace eerie_leap::domain::settings_domain::event_bus;
 
 using eerie_leap::subsys::threading::ScopedMutex;
 using eerie_leap::utilities::string::StringHelpers;
@@ -91,12 +89,9 @@ int SettingsRegistry::Set(std::string_view setting_id, const ConfigValue& value)
     if(previous.has_value() && binding->get() == *previous)
         return 0;
 
-    UiEventPayload payload;
-    payload[UiPayloadType::SettingId] = StringHelpers::GetHash(setting_id);
-
-    UiEventBus::GetInstance().PublishAsync({
-        .type = UiEventType::SettingChanged,
-        .payload = payload
+    SettingsEventsChannel::GetInstance().PublishAsync({
+        .type = SettingsEventType::Changed,
+        .payload = { { SettingsPayloadType::SettingId, StringHelpers::GetHash(setting_id) } }
     });
 
     return 0;

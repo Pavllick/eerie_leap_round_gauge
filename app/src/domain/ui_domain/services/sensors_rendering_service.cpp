@@ -1,7 +1,7 @@
 #include <span>
 
 #include "subsys/time/time_helpers.hpp"
-#include "domain/ui_domain/event_bus/ui_event_bus.h"
+#include "domain/sensor_domain/event_bus/sensor_events_channel.h"
 
 #include "sensors_rendering_service.h"
 
@@ -9,7 +9,7 @@ namespace eerie_leap::domain::ui_domain::services {
 
 using namespace eerie_leap::subsys::time;
 using namespace eerie_leap::domain::sensor_domain::models;
-using namespace eerie_leap::domain::ui_domain::event_bus;
+using namespace eerie_leap::domain::sensor_domain::event_bus;
 
 LOG_MODULE_REGISTER(sensors_rendering_logger);
 
@@ -49,13 +49,12 @@ WorkQueueTaskResult SensorsRenderingService::ProcessWorkTask(SensorsRenderingTas
 }
 
 void SensorsRenderingService::SubmitToEventBus(const SensorReading& reading) {
-    UiEventPayload payload;
-    payload[UiPayloadType::SensorId] = reading.sensor->id_hash;
-    payload[UiPayloadType::Value] = reading.value.value_or(0.0f);
-
-    UiEventBus::GetInstance().PublishAsync({
-        .type = UiEventType::SensorDataUpdated,
-        .payload = payload
+    SensorEventsChannel::GetInstance().PublishAsync({
+        .type = SensorEventType::DataUpdated,
+        .payload = {
+            { SensorPayloadType::SensorId, reading.sensor->id_hash },
+            { SensorPayloadType::Value, reading.value.value_or(0.0f) }
+        }
     });
 }
 

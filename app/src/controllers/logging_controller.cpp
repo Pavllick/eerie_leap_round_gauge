@@ -4,6 +4,7 @@
 #include "utilities/memory/memory_resource_manager.h"
 #include "subsys/device_tree/dt_gpio.h"
 #include "domain/canbus_com_domain/commands/canbus_com_logging_command.h"
+#include "domain/logging_domain/event_bus/logging_events_channel.h"
 
 #include "logging_controller.h"
 
@@ -12,6 +13,10 @@ namespace eerie_leap::controllers {
 using namespace eerie_leap::utilities::memory;
 using namespace eerie_leap::subsys::device_tree;
 using namespace eerie_leap::domain::canbus_com_domain::commands;
+
+using eerie_leap::domain::logging_domain::event_bus::LoggingEventsChannel;
+using eerie_leap::domain::logging_domain::event_bus::LoggingEventType;
+using eerie_leap::domain::logging_domain::event_bus::LoggingPayloadType;
 
 LOG_MODULE_REGISTER(logging_controller_logger);
 
@@ -86,15 +91,10 @@ void LoggingController::LoggingStateUpdatedAck(bool success) {
 }
 
 void LoggingController::PublishLoggingState(bool is_logging) {
-    UiEventPayload payload;
-    payload[UiPayloadType::Value] = is_logging;
-
-    UiEvent event {
-        .type = UiEventType::LoggingStatusUpdated,
-        .payload = payload
-    };
-
-    UiEventBus::GetInstance().PublishAsync(event);
+    LoggingEventsChannel::GetInstance().PublishAsync({
+        .type = LoggingEventType::StatusUpdated,
+        .payload = { { LoggingPayloadType::IsActive, is_logging } }
+    });
 }
 
 } // namespace eerie_leap::controllers
