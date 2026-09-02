@@ -4,10 +4,13 @@
 #include <memory>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include <lvgl.h>
 
-#include "domain/ui_domain/event_bus/ui_event_bus.h"
+#include "subsys/event_bus/scoped_subscription.h"
+
+#include "domain/ui_domain/lvgl_lock.h"
 
 #include "views/renderable_base.h"
 #include "views/widgets/i_widget.h"
@@ -16,11 +19,10 @@
 
 namespace eerie_leap::views::widgets {
 
-using eerie_leap::domain::ui_domain::event_bus::UiEvent;
-using eerie_leap::domain::ui_domain::event_bus::UiEventBus;
-using eerie_leap::domain::ui_domain::event_bus::UiEventType;
-using eerie_leap::domain::ui_domain::event_bus::UiPayloadType;
-using eerie_leap::domain::ui_domain::event_bus::UiSubscriptionHandle;
+using eerie_leap::domain::ui_domain::ScopedLvglLock;
+using eerie_leap::subsys::event_bus::AcceptAllFilter;
+using eerie_leap::subsys::event_bus::AnySubscription;
+using eerie_leap::subsys::event_bus::CreateScopedSubscription;
 
 class WidgetBase : public IWidget, public RenderableBase {
 protected:
@@ -32,7 +34,7 @@ protected:
 
     std::shared_ptr<Frame> parent_;
 
-    std::vector<UiSubscriptionHandle> subscriptions_;
+    std::vector<AnySubscription> subscriptions_;
     std::shared_ptr<WidgetDispatchGuard> dispatch_guard_;
     WidgetContext context_;
 
@@ -40,30 +42,53 @@ protected:
 
     int SetVisibility(bool is_visible);
 
+    // Wraps a callback so it drops while the widget is unrendered or its group is
+    // hidden, and so a dispatch racing destruction becomes a no-op.
+    //
+    // LvglLock before the dispatch guard: ~WidgetBase runs under the LVGL lock and
+    // takes the guard second, so the reverse order deadlocks.
+    template<typename THandler>
+    auto GuardWhileActive(THandler handler) {
+        return [guard = dispatch_guard_, this, handler = std::move(handler)](auto&&... args) {
+            ScopedLvglLock lvgl_guard;
+
+            guard->Dispatch([&] {
+                if(IsReady() && IsActive())
+                    handler(std::forward<decltype(args)>(args)...);
+            });
+        };
+    }
+
     // Subscribes and drops events while the widget is unrendered or its group is hidden,
     // so a widget nobody can see never repaints or animates.
-    template<typename FilterType>
-    void SubscribeWhileActive(UiEventType type, FilterType filter, std::function<void(const UiEvent&)> handler) {
-        auto subscription = UiEventBus::GetInstance().Subscribe(
+    template<typename ChannelType, typename FilterType>
+    void SubscribeWhileActive(
+        ChannelType& channel,
+        typename ChannelType::EventTypeEnum type,
+        FilterType filter,
+        std::function<void(const typename ChannelType::EventMessage&)> handler) {
+
+        AddSubscription(CreateScopedSubscription(
+            channel,
             type,
             std::move(filter),
-            [guard = dispatch_guard_, this, handler = std::move(handler)](const UiEvent& event) {
-                guard->Dispatch([&] {
-                    if(IsReady() && IsActive())
-                        handler(event);
-                });
-            });
-
-        if(subscription)
-            subscriptions_.push_back(std::move(*subscription));
+            GuardWhileActive(std::move(handler))));
     }
 
-    void SubscribeWhileActive(UiEventType type, std::function<void(const UiEvent&)> handler) {
+    template<typename ChannelType>
+    void SubscribeWhileActive(
+        ChannelType& channel,
+        typename ChannelType::EventTypeEnum type,
+        std::function<void(const typename ChannelType::EventMessage&)> handler) {
+
         SubscribeWhileActive(
+            channel,
             type,
-            eerie_leap::subsys::event_bus::AcceptAllFilter<UiEventType, UiPayloadType>{ },
+            AcceptAllFilter<typename ChannelType::EventTypeEnum, typename ChannelType::PayloadTypeEnum>{ },
             std::move(handler));
     }
+
+    void AddSubscription(AnySubscription subscription);
 
     // Every destructor that runs before ~WidgetBase must call this first, or a
     // dispatch already in flight can reach members that have just been destroyed.

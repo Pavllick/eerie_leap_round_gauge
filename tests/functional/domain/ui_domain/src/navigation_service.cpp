@@ -1,29 +1,41 @@
 #include <cerrno>
 #include <cstddef>
 #include <cstdint>
-#include <optional>
 #include <utility>
 #include <variant>
 #include <vector>
 
 #include <zephyr/ztest.h>
 
-#include "domain/ui_domain/event_bus/ui_event_bus.h"
+#include "subsys/event_bus/event_bus.h"
+#include "subsys/event_bus/scoped_subscription.h"
+
+#include "domain/ui_domain/event_bus/navigation_event_channel.h"
 #include "domain/ui_domain/models/navigation_intent.h"
 #include "domain/ui_domain/services/navigation_service.h"
 
-using eerie_leap::domain::ui_domain::event_bus::UiEvent;
-using eerie_leap::domain::ui_domain::event_bus::UiEventBus;
-using eerie_leap::domain::ui_domain::event_bus::UiEventType;
-using eerie_leap::domain::ui_domain::event_bus::UiPayloadType;
-using eerie_leap::domain::ui_domain::event_bus::UiSubscriptionHandle;
+using eerie_leap::domain::ui_domain::event_bus::NavigationEventChannel;
+using eerie_leap::domain::ui_domain::event_bus::NavigationEventType;
+using eerie_leap::domain::ui_domain::event_bus::NavigationPayloadType;
 using eerie_leap::domain::ui_domain::models::NavigationAction;
 using eerie_leap::domain::ui_domain::models::NavigationIntent;
 using eerie_leap::domain::ui_domain::services::NavigationService;
+using eerie_leap::subsys::event_bus::AnySubscription;
+using eerie_leap::subsys::event_bus::CreateScopedSubscription;
+using eerie_leap::subsys::event_bus::EventBus;
 
 namespace {
 
 constexpr int DISPATCH_TIMEOUT_MS = 1000;
+constexpr int BUS_STACK_SIZE = 4096;
+
+// NavigationEventChannel is inert until a bus drains it, so the suite owns one.
+class TestEventBus : public EventBus {
+public:
+    TestEventBus() : EventBus("nav_test_bus", BUS_STACK_SIZE) {
+        RegisterChannel(NavigationEventChannel::GetInstance());
+    }
+};
 
 // NavigationService never applies a change itself - it publishes an intent and the
 // view calls SetActiveGroupId back. These helpers stand in for that view.
@@ -39,29 +51,22 @@ uint32_t ActiveGroupId(const NavigationService& service) {
     return *active_group_id;
 }
 
-// UiEventBus is a singleton, so a probe subscribes for the lifetime of one test only.
+// The channel is a singleton, so a probe subscribes for the lifetime of one test only.
 class NavigationProbe {
 public:
     NavigationProbe() {
         k_sem_init(&delivered_, 0, K_SEM_MAX_LIMIT);
 
-        auto subscription = UiEventBus::GetInstance().Subscribe(
-            UiEventType::NavigationChanged,
-            [this](const UiEvent& event) { Record(event); });
-
-        if(subscription)
-            handle_.emplace(std::move(*subscription));
-    }
-
-    ~NavigationProbe() {
-        if(handle_.has_value())
-            UiEventBus::GetInstance().Unsubscribe(handle_.value());
+        subscription_ = CreateScopedSubscription(
+            NavigationEventChannel::GetInstance(),
+            NavigationEventType::Changed,
+            [this](const NavigationEventChannel::EventMessage& event) { Record(event); });
     }
 
     NavigationProbe(const NavigationProbe&) = delete;
     NavigationProbe& operator=(const NavigationProbe&) = delete;
 
-    [[nodiscard]] bool IsSubscribed() const { return handle_.has_value(); }
+    [[nodiscard]] bool IsSubscribed() const { return subscription_ != nullptr; }
     bool WaitForEvent() { return k_sem_take(&delivered_, K_MSEC(DISPATCH_TIMEOUT_MS)) == 0; }
 
     [[nodiscard]] size_t Count() const { return actions_.size(); }
@@ -74,24 +79,32 @@ private:
     std::vector<NavigationAction> actions_;
     std::vector<uint32_t> target_group_ids_;
     std::vector<uint32_t> target_screen_ids_;
-    std::optional<UiSubscriptionHandle> handle_;
 
-    void Record(const UiEvent& event) {
-        if(auto it = event.payload.find(UiPayloadType::NavigationAction); it != event.payload.end())
+    // Declared last so it unsubscribes before the members a dispatch would touch.
+    AnySubscription subscription_;
+
+    void Record(const NavigationEventChannel::EventMessage& event) {
+        if(auto it = event.payload.find(NavigationPayloadType::Action); it != event.payload.end())
             if(const auto* action = std::get_if<uint32_t>(&it->second))
                 actions_.push_back(static_cast<NavigationAction>(*action));
 
-        if(auto it = event.payload.find(UiPayloadType::TargetGroupId); it != event.payload.end())
+        if(auto it = event.payload.find(NavigationPayloadType::TargetGroupId); it != event.payload.end())
             if(const auto* group_id = std::get_if<uint32_t>(&it->second))
                 target_group_ids_.push_back(*group_id);
 
-        if(auto it = event.payload.find(UiPayloadType::TargetScreenId); it != event.payload.end())
+        if(auto it = event.payload.find(NavigationPayloadType::TargetScreenId); it != event.payload.end())
             if(const auto* screen_id = std::get_if<uint32_t>(&it->second))
                 target_screen_ids_.push_back(*screen_id);
 
         k_sem_give(&delivered_);
     }
 };
+
+void* StartEventBus() {
+    static TestEventBus bus;
+
+    return nullptr;
+}
 
 // Let anything the previous test published drain while no probe is subscribed.
 void SettleEventBus(void*) {
@@ -100,7 +113,7 @@ void SettleEventBus(void*) {
 
 } // namespace
 
-ZTEST_SUITE(navigation_service, NULL, NULL, SettleEventBus, NULL, NULL);
+ZTEST_SUITE(navigation_service, NULL, StartEventBus, SettleEventBus, NULL, NULL);
 
 ZTEST(navigation_service, test_Next_advances_to_the_following_group) {
     NavigationService service;

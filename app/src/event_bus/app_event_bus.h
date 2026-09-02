@@ -5,6 +5,7 @@
 #include "domain/logging_domain/event_bus/logging_events_channel.h"
 #include "domain/settings_domain/event_bus/settings_events_channel.h"
 #include "domain/ui_domain/event_bus/navigation_event_channel.h"
+#include "domain/ui_domain/event_bus/ui_signal_channel.h"
 
 namespace eerie_leap::event_bus {
 
@@ -12,6 +13,7 @@ using eerie_leap::subsys::event_bus::EventBus;
 using eerie_leap::domain::logging_domain::event_bus::LoggingEventsChannel;
 using eerie_leap::domain::settings_domain::event_bus::SettingsEventsChannel;
 using eerie_leap::domain::ui_domain::event_bus::NavigationEventChannel;
+using eerie_leap::domain::ui_domain::event_bus::UiSignalChannel;
 
 class AppEventBus : public EventBus {
 private:
@@ -21,6 +23,7 @@ private:
         RegisterChannel(NavigationEventChannel::GetInstance());
         RegisterChannel(LoggingEventsChannel::GetInstance());
         RegisterChannel(SettingsEventsChannel::GetInstance());
+        RegisterChannel(UiSignalChannel::GetInstance());
     }
 
 public:

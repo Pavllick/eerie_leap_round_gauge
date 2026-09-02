@@ -3,18 +3,18 @@
 #include <cstdint>
 #include <variant>
 
-#include "domain/ui_domain/event_bus/ui_event_bus.h"
+#include "domain/settings_domain/event_bus/settings_events_channel.h"
 
 namespace eerie_leap::views::widgets::event_bus_filters {
 
-using eerie_leap::domain::ui_domain::event_bus::UiEvent;
-using eerie_leap::domain::ui_domain::event_bus::UiPayloadType;
+using eerie_leap::domain::settings_domain::event_bus::SettingsEventsChannel;
+using eerie_leap::domain::settings_domain::event_bus::SettingsPayloadType;
 
 struct SettingFilter {
     uint32_t setting_id;
 
-    bool operator()(const UiEvent& event) const {
-        if(auto it = event.payload.find(UiPayloadType::SettingId); it != event.payload.end()) {
+    bool operator()(const SettingsEventsChannel::EventMessage& event) const {
+        if(auto it = event.payload.find(SettingsPayloadType::SettingId); it != event.payload.end()) {
             if(auto id = std::get_if<uint32_t>(&it->second))
                 return *id == setting_id;
         }

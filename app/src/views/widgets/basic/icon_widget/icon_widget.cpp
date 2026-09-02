@@ -1,3 +1,6 @@
+#include <variant>
+
+#include "domain/ui_domain/event_bus/ui_signal_channel.h"
 #include "domain/ui_domain/models/widget_property.h"
 
 #include "views/utilitites/positioning_helpers.h"
@@ -11,10 +14,13 @@ namespace eerie_leap::views::widgets::basic {
 
 using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::domain::ui_domain::event_bus;
 using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::themes;
 using namespace eerie_leap::views::widgets::basic::icons;
+
+using eerie_leap::domain::ui_domain::event_bus::UiSignalType;
+using eerie_leap::domain::ui_domain::event_bus::UiSignalChannel;
+using eerie_leap::domain::ui_domain::event_bus::UiSignalPayloadType;
 
 IconWidget::IconWidget(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context, IconType icon_type)
     : WidgetBase(id, std::move(parent), std::move(context)), icon_type_(icon_type) {}
@@ -78,23 +84,23 @@ void IconWidget::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
         WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y),
         0);
 
-    auto event_type_raw = GetConfigValue<int>(
+    auto signal_raw = GetConfigValue<int>(
         configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::UI_EVENT_TYPE),
+        WidgetProperty::GetTypeName(WidgetPropertyType::UI_SIGNAL_TYPE),
         0);
-    auto event_type = static_cast<UiEventType>(event_type_raw);
 
-    if(event_type != UiEventType::None) {
-        SubscribeWhileActive(
-            event_type,
-            [this](const UiEvent& event) {
-                if (auto it = event.payload.find(UiPayloadType::Value); it != event.payload.end()) {
-                    if (auto* value = std::get_if<bool>(&it->second)) {
-                        icon_->SetIsActive(*value);
-                    }
-                }
-            });
-    }
+    auto signal = static_cast<UiSignalType>(signal_raw);
+    if(signal == UiSignalType::None)
+        return;
+
+    SubscribeWhileActive(
+        UiSignalChannel::GetInstance(),
+        signal,
+        [this](const UiSignalChannel::EventMessage& event) {
+            if(auto it = event.payload.find(UiSignalPayloadType::Value); it != event.payload.end())
+                if(const auto* is_active = std::get_if<bool>(&it->second))
+                    SetIsActive(*is_active);
+        });
 }
 
 } // namespace eerie_leap::views::widgets::basic

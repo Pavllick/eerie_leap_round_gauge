@@ -21,7 +21,5 @@ file(GLOB_RECURSE TEST_SOURCES src/*.c src/*.cpp)
 # Add all source files to the app target
 target_sources(app PRIVATE
   ${APP_SRC_SETTINGS_DOMAIN}
-  # SettingsRegistry publishes on the UI event bus, which locks LVGL to dispatch.
-  ${APP_SRC_DIR}/domain/ui_domain/lvgl_lock.cpp
   ${TEST_SOURCES}
 )

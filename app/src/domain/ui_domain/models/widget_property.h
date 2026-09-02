@@ -20,7 +20,7 @@ enum class WidgetPropertyType : std::uint16_t {
     SENSOR_ID,              // string
     CHART_POINT_COUNT,      // int
     CHART_TYPE,             // int (enum)
-    UI_EVENT_TYPE,          // UiEventType
+    UI_SIGNAL_TYPE,          // UiSignalType
     LABEL,                  // string
     VALUE_PRECISION,        // int
     EDGE_OFFSET,            // int
@@ -40,6 +40,7 @@ enum class WidgetPropertyType : std::uint16_t {
     STEP,                   // double
     UNIT,                   // string
     TARGET_GROUP,           // int
+    VALUE_SOURCE,           // IndicatorValueSource
 };
 
 class WidgetProperty {
@@ -53,7 +54,7 @@ private:
         "SENSOR_ID"sv,
         "CHART_POINT_COUNT"sv,
         "CHART_TYPE"sv,
-        "UI_EVENT_TYPE"sv,
+        "UI_SIGNAL_TYPE"sv,
         "LABEL"sv,
         "VALUE_PRECISION"sv,
         "EDGE_OFFSET"sv,
@@ -73,6 +74,7 @@ private:
         "STEP"sv,
         "UNIT"sv,
         "TARGET_GROUP"sv,
+        "VALUE_SOURCE"sv,
     };
 
 public:

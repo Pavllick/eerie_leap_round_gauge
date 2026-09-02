@@ -12,7 +12,8 @@
 #include "configuration/cbor/cbor_ui_config/cbor_ui_config.h"
 #include "configuration/services/cbor_configuration_service.h"
 
-#include "domain/ui_domain/event_bus/ui_event_type.h"
+#include "domain/ui_domain/event_bus/navigation_event_channel.h"
+#include "domain/ui_domain/event_bus/ui_signal_type.h"
 #include "domain/ui_domain/lvgl_lock.h"
 #include "domain/ui_domain/models/navigation_intent.h"
 #include "domain/ui_domain/models/widget_configuration.h"
@@ -20,6 +21,7 @@
 #include "domain/ui_domain/models/widget_property.h"
 #include "domain/ui_domain/models/icon_type.h"
 #include "domain/ui_domain/models/indicator_direction.h"
+#include "domain/ui_domain/models/indicator_value_source.h"
 #include "domain/settings_domain/models/setting_id.h"
 
 #include "views/screens/screen_factory.h"
@@ -43,9 +45,10 @@ using namespace eerie_leap::views::assets::images;
 namespace config_services = eerie_leap::configuration::services;
 
 using eerie_leap::domain::ui_domain::ScopedLvglLock;
-using eerie_leap::domain::ui_domain::event_bus::UiEventBus;
-using eerie_leap::domain::ui_domain::event_bus::UiEventType;
-using eerie_leap::domain::ui_domain::event_bus::UiPayloadType;
+using eerie_leap::domain::ui_domain::event_bus::NavigationEventType;
+using eerie_leap::domain::ui_domain::event_bus::NavigationPayloadType;
+using eerie_leap::domain::ui_domain::event_bus::UiSignalType;
+using eerie_leap::subsys::event_bus::CreateScopedSubscription;
 using eerie_leap::domain::settings_domain::models::SettingId;
 
 LOG_MODULE_REGISTER(ui_controller_logger);
@@ -63,8 +66,7 @@ UiController::UiController(
         sensor_readings_frame_(std::move(sensor_readings_frame)) {}
 
 UiController::~UiController() {
-    if(navigation_subscription_.has_value())
-        UiEventBus::GetInstance().Unsubscribe(navigation_subscription_.value());
+    navigation_subscription_.reset();
 
     // The dispatcher holds a raw pointer to a work queue destroyed before main_view_.
     if(main_view_ != nullptr)
@@ -199,20 +201,21 @@ int UiController::Configure(std::shared_ptr<UiConfiguration> config) {
 }
 
 void UiController::SubscribeToNavigation() {
-    auto subscription = UiEventBus::GetInstance().Subscribe(
-        UiEventType::NavigationChanged,
-        [this](const UiEvent& event) { OnNavigationChanged(event); });
+    navigation_subscription_ = CreateScopedSubscription(
+        NavigationEventChannel::GetInstance(),
+        NavigationEventType::Changed,
+        [this](const NavigationEventChannel::EventMessage& event) { OnNavigationChanged(event); });
 
-    if(subscription)
-        navigation_subscription_.emplace(std::move(*subscription));
-    else
+    if(navigation_subscription_ == nullptr)
         LOG_ERR("Failed to subscribe to navigation events.");
 }
 
-// Runs on the UI event bus thread, which already holds the LVGL lock.
-void UiController::OnNavigationChanged(const UiEvent& event) {
+void UiController::OnNavigationChanged(const NavigationEventChannel::EventMessage& event) {
+    // The bus no longer locks LVGL around dispatch, and SetActiveGroup renders.
+    ScopedLvglLock lvgl_guard;
+
     try {
-        auto action_it = event.payload.find(UiPayloadType::NavigationAction);
+        auto action_it = event.payload.find(NavigationPayloadType::Action);
         if(action_it == event.payload.end())
             return;
 
@@ -223,7 +226,7 @@ void UiController::OnNavigationChanged(const UiEvent& event) {
         if(static_cast<NavigationAction>(*action_raw) != NavigationAction::ShowGroup)
             return;
 
-        auto group_it = event.payload.find(UiPayloadType::TargetGroupId);
+        auto group_it = event.payload.find(NavigationPayloadType::TargetGroupId);
         if(group_it == event.payload.end())
             return;
 
@@ -315,6 +318,7 @@ void UiController::SetupTestConfiguration() {
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_SOURCE)] = static_cast<int>(IndicatorValueSource::Sensor);
     // widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_PRECISION)] = 2;
     // screen_configuration->AddWidget(std::move(widget1));
 
@@ -331,6 +335,7 @@ void UiController::SetupTestConfiguration() {
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_SOURCE)] = static_cast<int>(IndicatorValueSource::Sensor);
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::CHART_POINT_COUNT)] = 35;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE)] = static_cast<int>(HorizontalChartIndicatorType::Bar);
     screen_configuration->AddWidget(std::move(widget2));
@@ -348,6 +353,7 @@ void UiController::SetupTestConfiguration() {
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_SOURCE)] = static_cast<int>(IndicatorValueSource::Sensor);
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE)] = static_cast<int>(HorizontalChartIndicatorType::Line);
     screen_configuration->AddWidget(std::move(widget3));
 
@@ -363,6 +369,7 @@ void UiController::SetupTestConfiguration() {
     widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    widget4->properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_SOURCE)] = static_cast<int>(IndicatorValueSource::Sensor);
     // screen_configuration->AddWidget(std::move(widget4));
 
     // Widget: IndicatorArcFill
@@ -378,6 +385,7 @@ void UiController::SetupTestConfiguration() {
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_SOURCE)] = static_cast<int>(IndicatorValueSource::Sensor);
     // widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE)] = 0;
     // widget5->properties[WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE)] = 360;
     // screen_configuration->AddWidget(std::move(widget5));
@@ -394,6 +402,7 @@ void UiController::SetupTestConfiguration() {
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_SOURCE)] = static_cast<int>(IndicatorValueSource::Sensor);
     // // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE)] = 0;
     // // widget6->properties[WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE)] = 360;
     // screen_configuration->AddWidget(std::move(widget6));
@@ -413,7 +422,7 @@ void UiController::SetupTestConfiguration() {
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_Y)] = 0;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_ANGLE)] = 180.0F;
     widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::EDGE_OFFSET)] = 6;
-    widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::UI_EVENT_TYPE)] = static_cast<int>(UiEventType::LoggingStatusUpdated);
+    widget7->properties[WidgetProperty::GetTypeName(WidgetPropertyType::UI_SIGNAL_TYPE)] = static_cast<int>(UiSignalType::LoggingActive);
     screen_configuration->AddWidget(std::move(widget7));
 
     // auto widget8 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
@@ -431,7 +440,7 @@ void UiController::SetupTestConfiguration() {
     // widget8->properties[WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_ANGLE)] = -56.0F;
     // widget8->properties[WidgetProperty::GetTypeName(WidgetPropertyType::EDGE_OFFSET)] = 2;
     // widget8->properties[WidgetProperty::GetTypeName(WidgetPropertyType::LABEL)] = "log";
-    // widget8->properties[WidgetProperty::GetTypeName(WidgetPropertyType::UI_EVENT_TYPE)] = static_cast<int>(UiEventType::LoggingStatusUpdated);
+    // widget8->properties[WidgetProperty::GetTypeName(WidgetPropertyType::UI_SIGNAL_TYPE)] = static_cast<int>(UiSignalType::LoggingActive);
     // screen_configuration->AddWidget(std::move(widget8));
 
     // Widget: IndicatorDial
@@ -454,6 +463,7 @@ void UiController::SetupTestConfiguration() {
     widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_SOURCE)] = static_cast<int>(IndicatorValueSource::Sensor);
     // widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE)] = 0;
     // widget9->properties[WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE)] = 360;
     screen_configuration->AddWidget(std::move(widget9));
@@ -471,6 +481,7 @@ void UiController::SetupTestConfiguration() {
     widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    widget10->properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_SOURCE)] = static_cast<int>(IndicatorValueSource::Sensor);
     screen_configuration->AddWidget(std::move(widget10));
 
     // Widget: IndicatorBar - Vertical Bottom to top
@@ -487,6 +498,7 @@ void UiController::SetupTestConfiguration() {
     widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    widget11->properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_SOURCE)] = static_cast<int>(IndicatorValueSource::Sensor);
     // screen_configuration->AddWidget(std::move(widget11));
 
     ui_configuration->screen_configurations.push_back(std::move(screen_configuration));
@@ -515,6 +527,7 @@ void UiController::SetupTestConfiguration() {
     widget1_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget1_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget1_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    widget1_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_SOURCE)] = static_cast<int>(IndicatorValueSource::Sensor);
     // widget1_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_PRECISION)] = 2;
     screen_configuration_1->AddWidget(std::move(widget1_0));
 

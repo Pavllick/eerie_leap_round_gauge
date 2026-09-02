@@ -21,7 +21,7 @@ constexpr std::array all_types = {
     WidgetPropertyType::SENSOR_ID,
     WidgetPropertyType::CHART_POINT_COUNT,
     WidgetPropertyType::CHART_TYPE,
-    WidgetPropertyType::UI_EVENT_TYPE,
+    WidgetPropertyType::UI_SIGNAL_TYPE,
     WidgetPropertyType::LABEL,
     WidgetPropertyType::VALUE_PRECISION,
     WidgetPropertyType::EDGE_OFFSET,
@@ -40,7 +40,8 @@ constexpr std::array all_types = {
     WidgetPropertyType::SETTING_ID,
     WidgetPropertyType::STEP,
     WidgetPropertyType::UNIT,
-    WidgetPropertyType::TARGET_GROUP
+    WidgetPropertyType::TARGET_GROUP,
+    WidgetPropertyType::VALUE_SOURCE
 };
 
 } // namespace

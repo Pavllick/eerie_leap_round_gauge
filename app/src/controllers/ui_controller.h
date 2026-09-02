@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "subsys/assets/assets_manager.h"
+#include "subsys/event_bus/scoped_subscription.h"
 #include "subsys/fs/services/i_fs_service.h"
 #include "subsys/threading/work_queue_thread.h"
 
@@ -12,7 +13,7 @@
 #include "domain/sensor_domain/utilities/sensor_readings_frame.hpp"
 
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
-#include "domain/ui_domain/event_bus/ui_event_bus.h"
+#include "domain/ui_domain/event_bus/navigation_event_channel.h"
 #include "domain/ui_domain/models/ui_configuration.h"
 #include "domain/ui_domain/models/screen_configuration.h"
 #include "domain/ui_domain/services/ui_renderer_service.h"
@@ -20,6 +21,8 @@
 #include "domain/ui_domain/services/navigation_service.h"
 #include "domain/settings_domain/utilities/settings_registry.h"
 #include "domain/ui_domain/services/ui_input_service.h"
+
+#include "event_bus/ui_signal_bridge.h"
 
 #include "views/main_view.h"
 #include "views/screens/i_screen.h"
@@ -37,8 +40,8 @@ using eerie_leap::domain::sensor_domain::utilities::SensorReadingsFrame;
 using eerie_leap::domain::ui_domain::models::UiConfiguration;
 using eerie_leap::domain::ui_domain::models::ScreenConfiguration;
 using eerie_leap::domain::ui_domain::configuration::UiConfigurationManager;
-using eerie_leap::domain::ui_domain::event_bus::UiEvent;
-using eerie_leap::domain::ui_domain::event_bus::UiSubscriptionHandle;
+using eerie_leap::domain::ui_domain::event_bus::NavigationEventChannel;
+using eerie_leap::subsys::event_bus::AnySubscription;
 using eerie_leap::domain::ui_domain::services::UiRendererService;
 using eerie_leap::domain::ui_domain::services::SensorsRenderingService;
 using eerie_leap::domain::ui_domain::services::NavigationService;
@@ -83,14 +86,13 @@ private:
     WidgetContext widget_context_;
     std::shared_ptr<UiConfiguration> configuration_;
 
-    std::optional<UiSubscriptionHandle> navigation_subscription_;
-
+    AnySubscription navigation_subscription_;
     int Configure(std::shared_ptr<UiConfiguration> config);
 
     std::shared_ptr<IScreen> CreateScreen(std::shared_ptr<ScreenConfiguration> configuration);
 
     void SubscribeToNavigation();
-    void OnNavigationChanged(const UiEvent& event);
+    void OnNavigationChanged(const NavigationEventChannel::EventMessage& event);
 
     // TODO: For test purposes only
     void SetupTestConfiguration();

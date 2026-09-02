@@ -1,21 +1,20 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
 #include <variant>
 
-#include "domain/ui_domain/event_bus/ui_event_bus.h"
+#include "domain/sensor_domain/event_bus/sensor_events_channel.h"
 
 namespace eerie_leap::views::widgets::event_bus_filters {
 
-using eerie_leap::domain::ui_domain::event_bus::UiEvent;
-using eerie_leap::domain::ui_domain::event_bus::UiPayloadType;
+using eerie_leap::domain::sensor_domain::event_bus::SensorEventsChannel;
+using eerie_leap::domain::sensor_domain::event_bus::SensorPayloadType;
 
 struct SensorFilter {
     uint32_t sensor_id;
 
-    bool operator()(const UiEvent& event) const {
-        if(auto it = event.payload.find(UiPayloadType::SensorId); it != event.payload.end()) {
+    bool operator()(const SensorEventsChannel::EventMessage& event) const {
+        if(auto it = event.payload.find(SensorPayloadType::SensorId); it != event.payload.end()) {
             if(auto id = std::get_if<uint32_t>(&it->second))
                 return *id == sensor_id;
         }

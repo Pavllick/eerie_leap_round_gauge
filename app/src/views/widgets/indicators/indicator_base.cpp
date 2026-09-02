@@ -1,8 +1,11 @@
 #include <cmath>
+#include <optional>
 #include <variant>
 
 #include "utilities/string/string_helpers.h"
-#include "domain/ui_domain/event_bus/ui_event_bus.h"
+#include "domain/sensor_domain/event_bus/sensor_events_channel.h"
+#include "domain/ui_domain/event_bus/ui_signal_channel.h"
+#include "domain/ui_domain/models/indicator_value_source.h"
 #include "domain/ui_domain/models/widget_property.h"
 #include "views/widgets/event_bus_filters/sensor_filter.h"
 
@@ -12,9 +15,13 @@ namespace eerie_leap::views::widgets::indicators {
 
 using namespace eerie_leap::utilities::string;
 using namespace eerie_leap::utilities::type;
-using namespace eerie_leap::domain::ui_domain::event_bus;
+using namespace eerie_leap::domain::sensor_domain::event_bus;
 using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::widgets::event_bus_filters;
+
+using eerie_leap::domain::ui_domain::event_bus::UiSignalType;
+using eerie_leap::domain::ui_domain::event_bus::UiSignalChannel;
+using eerie_leap::domain::ui_domain::event_bus::UiSignalPayloadType;
 
 IndicatorBase::IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : WidgetBase(id, std::move(parent), std::move(context)) , value_filter_(0) {
@@ -112,27 +119,62 @@ std::optional<uint32_t> IndicatorBase::GetSensorIdHash() const {
     return sensor_id_hash_;
 }
 
-void IndicatorBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    WidgetBase::Configure(configuration);
-
+void IndicatorBase::SubscribeToSensor() {
     auto sensor_id = GetConfigValue<std::pmr::string>(
         configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID),
         "");
-    if(!sensor_id.empty()) {
-        sensor_id_hash_ = StringHelpers::GetHash(sensor_id);
+    if(sensor_id.empty())
+        return;
 
-        SubscribeWhileActive(
-            UiEventType::SensorDataUpdated,
-            SensorFilter { sensor_id_hash_.value() },
-            [this](const UiEvent& event) {
-                if (auto it = event.payload.find(UiPayloadType::Value); it != event.payload.end()) {
-                    if (auto* value = std::get_if<float>(&it->second)) {
-                        this->Update(*value);
-                    }
+    sensor_id_hash_ = StringHelpers::GetHash(sensor_id);
+
+    SubscribeWhileActive(
+        SensorEventsChannel::GetInstance(),
+        SensorEventType::DataUpdated,
+        SensorFilter { sensor_id_hash_.value() },
+        [this](const SensorEventsChannel::EventMessage& event) {
+            if (auto it = event.payload.find(SensorPayloadType::Value); it != event.payload.end()) {
+                if (auto* value = std::get_if<float>(&it->second)) {
+                    this->Update(*value);
                 }
-            });
-    }
+            }
+        });
+}
+
+void IndicatorBase::SubscribeToUiSignal() {
+    auto signal = static_cast<UiSignalType>(GetConfigValue<int>(
+        configuration_->properties,
+        WidgetProperty::GetTypeName(WidgetPropertyType::UI_SIGNAL_TYPE),
+        0));
+    if(signal == UiSignalType::None)
+        return;
+
+    SubscribeWhileActive(
+        UiSignalChannel::GetInstance(),
+        signal,
+        [this](const UiSignalChannel::EventMessage& event) {
+            if(auto it = event.payload.find(UiSignalPayloadType::Value); it != event.payload.end()) {
+                if(auto value = ValueToFloat(it->second)) {
+                    this->Update(*value);
+                }
+            }
+        });
+}
+
+void IndicatorBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
+    WidgetBase::Configure(configuration);
+
+    auto value_source = static_cast<IndicatorValueSource>(GetConfigValue<int>(
+        configuration_->properties,
+        WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_SOURCE),
+        static_cast<int>(IndicatorValueSource::Sensor)));
+
+    if(value_source == IndicatorValueSource::UiSignal)
+        SubscribeToUiSignal();
+    else
+        SubscribeToSensor();
+
     range_start_ = GetConfigValue<int>(
         configuration_->properties,
         WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE),
@@ -142,6 +184,18 @@ void IndicatorBase::Configure(std::shared_ptr<WidgetConfiguration> configuration
         WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE),
         100);
     value_ = 0;
+}
+
+// A signal carries whatever numeric type its source domain published.
+std::optional<float> IndicatorBase::ValueToFloat(const EventData& value) {
+    if(const auto* as_float = std::get_if<float>(&value))
+        return *as_float;
+    if(const auto* as_int = std::get_if<int>(&value))
+        return static_cast<float>(*as_int);
+    if(const auto* as_uint = std::get_if<uint32_t>(&value))
+        return static_cast<float>(*as_uint);
+
+    return std::nullopt;
 }
 
 } // namespace eerie_leap::views::widgets::indicators

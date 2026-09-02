@@ -27,6 +27,7 @@
 #include "domain/settings_domain/utilities/settings_registry.h"
 
 #include "event_bus/app_event_bus.h"
+#include "event_bus/ui_signal_bridge.h"
 
 #include "controllers/system_controller.h"
 #include "controllers/canbus_controller.h"
@@ -68,6 +69,10 @@ int main() {
     // before any publisher runs or its events go nowhere.
     SensorEventBus::GetInstance();
     AppEventBus::GetInstance();
+
+    // Outlives every widget, so the UI signals stay bound for the life of the process.
+    UiSignalBridge ui_signal_bridge;
+    ui_signal_bridge.Initialize();
 
     DtConfigurator::Initialize(
         DtFeature::INTERNAL_FS
@@ -178,24 +183,24 @@ int main() {
     SystemInfo::PrintThreadIds();
 
 	while(true) {
-        // SystemInfo::PrintHeapInfo();
-        // SystemInfo::PrintStackInfo();
+        SystemInfo::PrintHeapInfo();
+        SystemInfo::PrintStackInfo();
         // SystemInfo::PrintThreadIds();
-        // k_msleep(SLEEP_TIME_MS);
+        k_msleep(SLEEP_TIME_MS);
 
         // TODO: TEMPORARY navigation smoke test
-        static uint32_t nav_tick = 0;
-        if(++nav_tick % 250 == 0) {
-            auto nav = ui_controller->GetNavigationService();
-            LOG_INF("Navigation: active group %u -> requesting next.", nav->GetActiveGroupId().value_or(0));
-            nav->Next();
-            k_msleep(200);
-            LOG_INF("Navigation: active group is now %u.", nav->GetActiveGroupId().value_or(0));
-        }
+        // static uint32_t nav_tick = 0;
+        // if(++nav_tick % 250 == 0) {
+        //     auto nav = ui_controller->GetNavigationService();
+        //     LOG_INF("Navigation: active group %u -> requesting next.", nav->GetActiveGroupId().value_or(0));
+        //     nav->Next();
+        //     k_msleep(200);
+        //     LOG_INF("Navigation: active group is now %u.", nav->GetActiveGroupId().value_or(0));
+        // }
 
         // TODO: For test purposes only
-        sensors_controller->EmulateReadings();
-        k_msleep(20);
+        // sensors_controller->EmulateReadings();
+        // k_msleep(20);
 	}
 
 	return 0;

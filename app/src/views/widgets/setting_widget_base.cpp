@@ -14,7 +14,7 @@
 namespace eerie_leap::views::widgets {
 
 using namespace eerie_leap::utilities::type;
-using namespace eerie_leap::domain::ui_domain::event_bus;
+using namespace eerie_leap::domain::settings_domain::event_bus;
 using namespace eerie_leap::domain::ui_domain::models;
 
 using eerie_leap::utilities::string::StringHelpers;
@@ -44,9 +44,10 @@ void SettingWidgetBase::Configure(std::shared_ptr<WidgetConfiguration> configura
     RefreshRange();
 
     SubscribeWhileActive(
-        UiEventType::SettingChanged,
+        SettingsEventsChannel::GetInstance(),
+        SettingsEventType::Changed,
         SettingFilter { StringHelpers::GetHash(setting_id_) },
-        [this](const UiEvent&) { OnSettingChanged(); });
+        [this](const SettingsEventsChannel::EventMessage&) { OnSettingChanged(); });
 }
 
 void SettingWidgetBase::RefreshRange() {

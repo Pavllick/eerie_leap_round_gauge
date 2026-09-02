@@ -2,7 +2,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 #include <variant>
@@ -10,20 +9,24 @@
 
 #include <zephyr/ztest.h>
 
+#include "subsys/event_bus/event_bus.h"
+#include "subsys/event_bus/scoped_subscription.h"
+
 #include "utilities/string/string_helpers.h"
 
-#include "domain/ui_domain/event_bus/ui_event_bus.h"
+#include "domain/settings_domain/event_bus/settings_events_channel.h"
 #include "domain/settings_domain/utilities/settings_registry.h"
 
-using eerie_leap::domain::ui_domain::event_bus::UiEvent;
-using eerie_leap::domain::ui_domain::event_bus::UiEventBus;
-using eerie_leap::domain::ui_domain::event_bus::UiEventType;
-using eerie_leap::domain::ui_domain::event_bus::UiPayloadType;
-using eerie_leap::domain::ui_domain::event_bus::UiSubscriptionHandle;
+using eerie_leap::domain::settings_domain::event_bus::SettingsEventsChannel;
+using eerie_leap::domain::settings_domain::event_bus::SettingsEventType;
+using eerie_leap::domain::settings_domain::event_bus::SettingsPayloadType;
 using eerie_leap::domain::settings_domain::utilities::SettingRange;
 using eerie_leap::domain::settings_domain::utilities::SettingsRegistry;
 using eerie_leap::domain::settings_domain::utilities::ToSettingBoolean;
 using eerie_leap::domain::settings_domain::utilities::ToSettingNumber;
+using eerie_leap::subsys::event_bus::AnySubscription;
+using eerie_leap::subsys::event_bus::CreateScopedSubscription;
+using eerie_leap::subsys::event_bus::EventBus;
 using eerie_leap::utilities::string::StringHelpers;
 using eerie_leap::utilities::type::ConfigValue;
 
@@ -31,7 +34,16 @@ namespace {
 
 constexpr int DISPATCH_TIMEOUT_MS = 1000;
 constexpr int NO_DISPATCH_TIMEOUT_MS = 200;
+constexpr int BUS_STACK_SIZE = 4096;
 constexpr const char* BRIGHTNESS_ID = "display.brightness";
+
+// SettingsEventsChannel is inert until a bus drains it, so the suite owns one.
+class TestEventBus : public EventBus {
+public:
+    TestEventBus() : EventBus("settings_test_bus", BUS_STACK_SIZE) {
+        RegisterChannel(SettingsEventsChannel::GetInstance());
+    }
+};
 
 // Stands in for the domain service a binding would normally drive.
 struct FakeSetting {
@@ -68,31 +80,24 @@ SettingsRegistry::Binding MakeBinding(FakeSetting& setting) {
     };
 }
 
-// UiEventBus is a singleton, so a probe subscribes for the lifetime of one test
-// only. ProcessEvent snapshots handlers before invoking them, so what the
-// handler touches has to outlive the probe rather than the subscription.
+// The channel is a singleton, so a probe subscribes for the lifetime of one test
+// only. Dispatch snapshots handlers before invoking them, so what the handler
+// touches has to outlive the probe rather than the subscription.
 class SettingProbe {
 public:
     SettingProbe() : state_(std::make_shared<State>()) {
         k_sem_init(&state_->delivered, 0, K_SEM_MAX_LIMIT);
 
-        auto subscription = UiEventBus::GetInstance().Subscribe(
-            UiEventType::SettingChanged,
-            [state = state_](const UiEvent& event) { Record(*state, event); });
-
-        if(subscription)
-            handle_.emplace(std::move(*subscription));
-    }
-
-    ~SettingProbe() {
-        if(handle_.has_value())
-            UiEventBus::GetInstance().Unsubscribe(handle_.value());
+        subscription_ = CreateScopedSubscription(
+            SettingsEventsChannel::GetInstance(),
+            SettingsEventType::Changed,
+            [state = state_](const SettingsEventsChannel::EventMessage& event) { Record(*state, event); });
     }
 
     SettingProbe(const SettingProbe&) = delete;
     SettingProbe& operator=(const SettingProbe&) = delete;
 
-    [[nodiscard]] bool IsSubscribed() const { return handle_.has_value(); }
+    [[nodiscard]] bool IsSubscribed() const { return subscription_ != nullptr; }
     bool WaitForEvent() { return k_sem_take(&state_->delivered, K_MSEC(DISPATCH_TIMEOUT_MS)) == 0; }
     bool WaitForNoEvent() { return k_sem_take(&state_->delivered, K_MSEC(NO_DISPATCH_TIMEOUT_MS)) != 0; }
 
@@ -105,8 +110,8 @@ private:
         k_sem delivered{};
     };
 
-    static void Record(State& state, const UiEvent& event) {
-        if(auto it = event.payload.find(UiPayloadType::SettingId); it != event.payload.end()) {
+    static void Record(State& state, const SettingsEventsChannel::EventMessage& event) {
+        if(auto it = event.payload.find(SettingsPayloadType::SettingId); it != event.payload.end()) {
             if(auto* setting_id = std::get_if<uint32_t>(&it->second))
                 state.setting_ids.push_back(*setting_id);
         }
@@ -115,7 +120,7 @@ private:
     }
 
     std::shared_ptr<State> state_;
-    std::optional<UiSubscriptionHandle> handle_;
+    AnySubscription subscription_;
 };
 
 int RegisteredValue(const SettingsRegistry& registry, const char* setting_id) {
@@ -128,6 +133,12 @@ int RegisteredValue(const SettingsRegistry& registry, const char* setting_id) {
     return static_cast<int>(*number);
 }
 
+void* StartEventBus() {
+    static TestEventBus bus;
+
+    return nullptr;
+}
+
 // Let anything the previous test published drain while no probe is subscribed.
 void SettleEventBus(void*) {
     k_msleep(20);
@@ -135,7 +146,7 @@ void SettleEventBus(void*) {
 
 } // namespace
 
-ZTEST_SUITE(settings_registry, NULL, NULL, SettleEventBus, NULL, NULL);
+ZTEST_SUITE(settings_registry, NULL, StartEventBus, SettleEventBus, NULL, NULL);
 
 ZTEST(settings_registry, test_unregistered_setting_is_not_resolved) {
     SettingsRegistry registry;

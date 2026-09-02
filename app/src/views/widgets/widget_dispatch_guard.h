@@ -8,14 +8,15 @@ namespace eerie_leap::views::widgets {
 
 using eerie_leap::subsys::threading::ScopedMutex;
 
-// EventBus::ProcessEvent copies the matching handlers out from under its
+// EventChannel::Dispatch copies the matching handlers out from under its
 // subscriber lock and only then invokes them, so Unsubscribe() cannot cancel a
 // dispatch that was already snapshotted. Handlers therefore hold a shared
 // reference to this guard instead of the widget, and a dispatch that loses the
 // race against destruction becomes a no-op instead of a dangling access.
 //
-// Lock order is always LvglLock (taken by the bus dispatch guard) then this
-// lock; Detach() must never be called while holding this lock.
+// Lock order is always LvglLock (taken by the subscriber, see
+// WidgetBase::SubscribeWhileActive) then this lock; Detach() must never be
+// called while holding this lock.
 class WidgetDispatchGuard {
 private:
     k_mutex lock_;

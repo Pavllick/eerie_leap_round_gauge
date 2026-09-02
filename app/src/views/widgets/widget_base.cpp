@@ -1,4 +1,3 @@
-#include "domain/ui_domain/event_bus/ui_event_bus.h"
 #include "domain/ui_domain/models/widget_property.h"
 
 #include "widget_base.h"
@@ -7,7 +6,6 @@ namespace eerie_leap::views::widgets {
 
 using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::domain::ui_domain::event_bus;
 
 WidgetBase::WidgetBase(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : id_(id), parent_(std::move(parent)),
@@ -23,12 +21,17 @@ WidgetBase::WidgetBase(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext
 WidgetBase::~WidgetBase() {
     DetachDispatch();
 
-    for(auto& subscription : subscriptions_)
-        UiEventBus::GetInstance().Unsubscribe(subscription);
+    // Before any other member goes: each entry unsubscribes as it is destroyed.
+    subscriptions_.clear();
 }
 
 void WidgetBase::DetachDispatch() {
     dispatch_guard_->Detach();
+}
+
+void WidgetBase::AddSubscription(AnySubscription subscription) {
+    if(subscription != nullptr)
+        subscriptions_.push_back(std::move(subscription));
 }
 
 uint32_t WidgetBase::GetId() const {
