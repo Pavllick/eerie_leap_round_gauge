@@ -20,7 +20,7 @@ enum class WidgetPropertyType : std::uint16_t {
     SENSOR_ID,              // string
     CHART_POINT_COUNT,      // int
     CHART_TYPE,             // int (enum)
-    UI_SIGNAL_TYPE,          // UiSignalType
+    UI_SIGNAL_TYPE,         // UiSignalType
     LABEL,                  // string
     VALUE_PRECISION,        // int
     EDGE_OFFSET,            // int
