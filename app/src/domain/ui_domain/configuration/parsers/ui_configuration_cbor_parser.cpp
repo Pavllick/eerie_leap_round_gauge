@@ -102,17 +102,6 @@ ConfigValue FromCborPropertyValue(std::pmr::memory_resource* mr, const CborPrope
     return value;
 }
 
-// The property name table has static storage, unlike the model strings a temporary map would hold.
-void AppendBoolProperty(CborPropertiesConfig& properties_config, WidgetPropertyType type, bool value) {
-    CborPropertiesConfig_CborPropertyValueType_m entry(std::allocator_arg, Mrm::GetExtPmr());
-
-    entry.CborPropertyValueType_m_key = CborHelpers::ToZcborString(WidgetProperty::GetTypeName(type));
-    entry.CborPropertyValueType_m.value = value;
-    entry.CborPropertyValueType_m.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_bool_c;
-
-    properties_config.CborPropertyValueType_m.push_back(std::move(entry));
-}
-
 void ToCborBindings(std::pmr::vector<CborPropertyBinding>& bindings_config, const std::pmr::vector<PropertyBinding>& bindings) {
     for(const auto& binding : bindings) {
         CborPropertyBinding binding_config(std::allocator_arg, Mrm::GetExtPmr());
@@ -199,16 +188,9 @@ pmr_unique_ptr<CborUiConfig> UiConfigurationCborParser::Serialize(const UiConfig
             widget_config.size.height = configuration.screen_configurations[i]->widget_configurations[j]->size_grid.height;
             widget_config.z_index = configuration.screen_configurations[i]->widget_configurations[j]->z_index;
 
-            widget_config.properties_present = true;
-            if(configuration.screen_configurations[i]->widget_configurations[j]->properties.size() > 0)
+            widget_config.properties_present = configuration.screen_configurations[i]->widget_configurations[j]->properties.size() > 0;
+            if(widget_config.properties_present)
                 ValueTypeToCborPropertyValueType(widget_config.properties, configuration.screen_configurations[i]->widget_configurations[j]->properties);
-
-            // Visibility rides in the property map now; WidgetConfiguration::is_visible is the
-            // in-memory relic that step 3.5 removes.
-            AppendBoolProperty(
-                widget_config.properties,
-                WidgetPropertyType::IS_VISIBLE,
-                configuration.screen_configurations[i]->widget_configurations[j]->is_visible);
 
             widget_config.CborPropertyBinding_m.clear();
             ToCborBindings(
@@ -260,15 +242,6 @@ pmr_unique_ptr<UiConfiguration> UiConfigurationCborParser::Deserialize(
 
             if(config.CborScreenConfig_m[i].CborWidgetConfig_m[j].properties_present)
                 CborPropertyValueTypeToValueType(mr, widget_configuration->properties, config.CborScreenConfig_m[i].CborWidgetConfig_m[j].properties);
-
-            auto is_visible = widget_configuration->properties.find(
-                WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE));
-
-            // Lifted back out of the map, so re-serializing cannot write the key twice.
-            if(is_visible != widget_configuration->properties.end()) {
-                widget_configuration->is_visible = ConfigValueAs<bool>(is_visible->second, true);
-                widget_configuration->properties.erase(is_visible);
-            }
 
             FromCborBindings(
                 mr,

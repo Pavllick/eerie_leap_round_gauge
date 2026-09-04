@@ -80,7 +80,7 @@ pmr_unique_ptr<UiConfiguration> ui_configuration_parser_GetTestUiConfiguration()
     widget2->position_grid.y = 1;
     widget2->size_grid.width = 1;
     widget2->size_grid.height = 1;
-    widget2->is_visible = false;
+    widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = false;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
@@ -140,7 +140,6 @@ void ui_configuration_parser_CompareUiConfigurations(UiConfiguration& ui_configu
             zassert_equal(deserialized_ui_configuration.screen_configurations[i]->widget_configurations[j]->size_grid.width, ui_configuration.screen_configurations[i]->widget_configurations[j]->size_grid.width);
             zassert_equal(deserialized_ui_configuration.screen_configurations[i]->widget_configurations[j]->size_grid.height, ui_configuration.screen_configurations[i]->widget_configurations[j]->size_grid.height);
             zassert_equal(deserialized_ui_configuration.screen_configurations[i]->widget_configurations[j]->z_index, ui_configuration.screen_configurations[i]->widget_configurations[j]->z_index);
-            zassert_equal(deserialized_ui_configuration.screen_configurations[i]->widget_configurations[j]->is_visible, ui_configuration.screen_configurations[i]->widget_configurations[j]->is_visible);
             zassert_equal(deserialized_ui_configuration.screen_configurations[i]->widget_configurations[j]->properties.size(), ui_configuration.screen_configurations[i]->widget_configurations[j]->properties.size());
             for(auto& property : ui_configuration.screen_configurations[i]->widget_configurations[j]->properties) {
                 zassert_true(deserialized_ui_configuration.screen_configurations[i]->widget_configurations[j]->properties[property.first] == ui_configuration.screen_configurations[i]->widget_configurations[j]->properties[property.first]);

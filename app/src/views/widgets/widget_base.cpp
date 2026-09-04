@@ -115,9 +115,6 @@ void WidgetBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
 
     RegisterProperties(*properties_);
 
-    // Visibility is still a field on the configuration rather than a persisted property.
-    properties_->Set(WidgetPropertyType::IS_VISIBLE, ConfigValue { configuration_->is_visible });
-
     for(const auto& [key, value] : configuration_->properties) {
         try {
             if(!properties_->Set(WidgetProperty::GetType(key), value))
