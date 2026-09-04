@@ -23,6 +23,7 @@ private:
     static void ValidateWidgetSize(const ScreenConfiguration& screen_configuration);
     static void ValidateWidgetPosition(const ScreenConfiguration& screen_configuration);
     static void ValidateWidgetProperties(const ScreenConfiguration& screen_configuration);
+    static void ValidateWidgetBindings(const ScreenConfiguration& screen_configuration);
 
 public:
     static void Validate(const UiConfiguration& configuration);

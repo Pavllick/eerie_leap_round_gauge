@@ -54,6 +54,37 @@ static bool HoldsPropertyValueKind(const ConfigValue& value, PropertyValueKind k
     return false;
 }
 
+static bool IsValidEventChannelId(EventChannelId channel) {
+    switch(channel) {
+        case EventChannelId::Sensors:
+        case EventChannelId::Logging:
+        case EventChannelId::Navigation:
+        case EventChannelId::Settings:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+static bool IsValidBindingDirection(PropertyBindingDirection direction) {
+    switch(direction) {
+        case PropertyBindingDirection::In:
+        case PropertyBindingDirection::Out:
+        case PropertyBindingDirection::InOut:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+// A selector is compared against a uint32 already in the payload: text is hashed, an integer is
+// used as it stands. Nothing else reduces to that comparison.
+static bool IsComparableSelectorValue(const ConfigValue& value) {
+    return std::holds_alternative<std::pmr::string>(value) || std::holds_alternative<int>(value);
+}
+
 static void InvalidUiConfiguration(std::string_view message) {
     throw std::invalid_argument(
         "Invalid UI configuration. "
@@ -153,6 +184,7 @@ void UiConfigurationValidator::ValidateWidgets(const ScreenConfiguration& screen
     ValidateWidgetSize(screen_configuration);
     ValidateWidgetPosition(screen_configuration);
     ValidateWidgetProperties(screen_configuration);
+    ValidateWidgetBindings(screen_configuration);
 }
 
 void UiConfigurationValidator::ValidateWidgetId(const ScreenConfiguration& screen_configuration) {
@@ -274,6 +306,52 @@ void UiConfigurationValidator::ValidateWidgetProperties(const ScreenConfiguratio
                     screen_configuration.id,
                     widget_configuration->id,
                     "Invalid value type for widget property '" + std::string(key.data(), key.size()) + "'."
+                );
+        }
+    }
+}
+
+// Whether the target property means anything for this widget type is not checked here: only the
+// widget classes know what they support, and they warn about the rest when they configure.
+void UiConfigurationValidator::ValidateWidgetBindings(const ScreenConfiguration& screen_configuration) {
+    for(const auto& widget_configuration : screen_configuration.widget_configurations) {
+        for(const auto& binding : widget_configuration->bindings) {
+            if(!IsValidEventChannelId(binding.channel))
+                InvalidWidgetConfiguration(
+                    screen_configuration.id,
+                    widget_configuration->id,
+                    "Binding names an unknown event channel."
+                );
+
+            if(!IsValidBindingDirection(binding.direction))
+                InvalidWidgetConfiguration(
+                    screen_configuration.id,
+                    widget_configuration->id,
+                    "Binding has an invalid direction."
+                );
+
+            if(binding.target == WidgetPropertyType::NONE)
+                InvalidWidgetConfiguration(
+                    screen_configuration.id,
+                    widget_configuration->id,
+                    "Binding must name a target property."
+                );
+
+            try {
+                WidgetProperty::GetTypeName(binding.target);
+            } catch(const std::runtime_error&) {
+                InvalidWidgetConfiguration(
+                    screen_configuration.id,
+                    widget_configuration->id,
+                    "Binding names an unknown target property."
+                );
+            }
+
+            if(binding.HasSelector() && !IsComparableSelectorValue(binding.selector_value))
+                InvalidWidgetConfiguration(
+                    screen_configuration.id,
+                    widget_configuration->id,
+                    "Binding selector value must be text or an integer."
                 );
         }
     }

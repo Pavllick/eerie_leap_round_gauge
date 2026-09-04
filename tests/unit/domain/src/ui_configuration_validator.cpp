@@ -11,6 +11,7 @@
 #include "domain/ui_domain/models/ui_configuration.h"
 #include "domain/ui_domain/models/widget_type.h"
 #include "domain/ui_domain/models/widget_property.h"
+#include "domain/ui_domain/models/property_binding.h"
 #include "domain/ui_domain/configuration/parsers/ui_configuration_validator.h"
 
 using namespace eerie_memory;
@@ -65,6 +66,22 @@ bool Validates(const UiConfiguration& configuration) {
     }
 
     return true;
+}
+
+PropertyBinding MakeSensorBinding() {
+    PropertyBinding binding;
+    binding.target = WidgetPropertyType::VALUE;
+    binding.channel = EventChannelId::Sensors;
+    binding.event_type = 0;
+    binding.payload_key = 1;
+    binding.selector_key = 0;
+    binding.selector_value = std::pmr::string("sensor_1");
+
+    return binding;
+}
+
+void AddBinding(UiConfiguration& configuration, PropertyBinding binding) {
+    configuration.screen_configurations[0]->widget_configurations[0]->bindings.push_back(std::move(binding));
 }
 
 } // namespace
@@ -245,6 +262,126 @@ ZTEST(ui_configuration_validator, test_numeric_setting_id_is_invalid) {
     auto& properties = configuration->screen_configurations[0]->widget_configurations[0]->properties;
 
     properties[WidgetProperty::GetTypeName(WidgetPropertyType::SETTING_ID)] = 1;
+
+    zassert_false(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_a_widget_without_bindings_is_valid) {
+    auto configuration = MakeConfiguration();
+
+    zassert_true(configuration->screen_configurations[0]->widget_configurations[0]->bindings.empty());
+    zassert_true(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_a_sensor_binding_is_valid) {
+    auto configuration = MakeConfiguration();
+
+    AddBinding(*configuration, MakeSensorBinding());
+
+    zassert_true(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_an_unconditional_binding_is_valid) {
+    auto configuration = MakeConfiguration();
+
+    auto binding = MakeSensorBinding();
+    binding.selector_key = 0;
+    binding.selector_value = { };
+
+    zassert_false(binding.HasSelector());
+
+    AddBinding(*configuration, std::move(binding));
+
+    zassert_true(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_several_bindings_may_share_one_source) {
+    auto configuration = MakeConfiguration();
+
+    auto first = MakeSensorBinding();
+    auto second = MakeSensorBinding();
+    second.target = WidgetPropertyType::IS_VISIBLE;
+
+    AddBinding(*configuration, std::move(first));
+    AddBinding(*configuration, std::move(second));
+
+    zassert_true(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_a_binding_without_a_channel_is_invalid) {
+    auto configuration = MakeConfiguration();
+
+    auto binding = MakeSensorBinding();
+    binding.channel = EventChannelId::None;
+
+    AddBinding(*configuration, std::move(binding));
+
+    zassert_false(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_an_unknown_channel_is_invalid) {
+    auto configuration = MakeConfiguration();
+
+    auto binding = MakeSensorBinding();
+    binding.channel = static_cast<EventChannelId>(99);
+
+    AddBinding(*configuration, std::move(binding));
+
+    zassert_false(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_an_unknown_direction_is_invalid) {
+    auto configuration = MakeConfiguration();
+
+    auto binding = MakeSensorBinding();
+    binding.direction = static_cast<PropertyBindingDirection>(99);
+
+    AddBinding(*configuration, std::move(binding));
+
+    zassert_false(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_a_binding_without_a_target_is_invalid) {
+    auto configuration = MakeConfiguration();
+
+    auto binding = MakeSensorBinding();
+    binding.target = WidgetPropertyType::NONE;
+
+    AddBinding(*configuration, std::move(binding));
+
+    zassert_false(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_an_unknown_target_property_is_invalid) {
+    auto configuration = MakeConfiguration();
+
+    auto binding = MakeSensorBinding();
+    binding.target = static_cast<WidgetPropertyType>(9999);
+
+    AddBinding(*configuration, std::move(binding));
+
+    zassert_false(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_an_integer_selector_is_valid) {
+    auto configuration = MakeConfiguration();
+
+    auto binding = MakeSensorBinding();
+    binding.selector_value = 42;
+
+    AddBinding(*configuration, std::move(binding));
+
+    zassert_true(Validates(*configuration));
+}
+
+ZTEST(ui_configuration_validator, test_a_selector_that_cannot_be_compared_is_invalid) {
+    auto configuration = MakeConfiguration();
+
+    // A selector is matched against a uint32 in the payload; a bool cannot reduce to one.
+    auto binding = MakeSensorBinding();
+    binding.selector_value = true;
+
+    AddBinding(*configuration, std::move(binding));
 
     zassert_false(Validates(*configuration));
 }
