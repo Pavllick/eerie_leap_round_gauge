@@ -3,9 +3,11 @@
 #include <memory_resource>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "utilities/type/config_value.h"
 
+#include "property_binding.h"
 #include "widget_type.h"
 #include "widget_position.h"
 #include "widget_size.h"
@@ -24,9 +26,10 @@ struct WidgetConfiguration {
     int32_t z_index = 0;
     bool is_visible = true;
     std::pmr::unordered_map<std::pmr::string, ConfigValue> properties;
+    std::pmr::vector<PropertyBinding> bindings;
 
     WidgetConfiguration(std::allocator_arg_t, allocator_type alloc)
-        : properties(alloc) {}
+        : properties(alloc), bindings(alloc) {}
 
     WidgetConfiguration(const WidgetConfiguration&) = delete;
     WidgetConfiguration& operator=(const WidgetConfiguration&) = delete;
@@ -41,7 +44,8 @@ struct WidgetConfiguration {
           size_grid(other.size_grid),
           z_index(other.z_index),
           is_visible(other.is_visible),
-          properties(std::move(other.properties), alloc) {}
+          properties(std::move(other.properties), alloc),
+          bindings(std::move(other.bindings), alloc) {}
 };
 
 } // namespace eerie_leap::domain::ui_domain::models
