@@ -1,5 +1,6 @@
 #include <span>
 
+#include "utilities/reflection/caller_name.h"
 #include "subsys/time/time_helpers.hpp"
 #include "domain/sensor_domain/event_bus/sensor_events_channel.h"
 
@@ -10,6 +11,8 @@ namespace eerie_leap::domain::ui_domain::services {
 using namespace eerie_leap::subsys::time;
 using namespace eerie_leap::domain::sensor_domain::models;
 using namespace eerie_leap::domain::sensor_domain::event_bus;
+
+using eerie_leap::utilities::reflection::GetCallerName;
 
 LOG_MODULE_REGISTER(sensors_rendering_logger);
 
@@ -49,7 +52,10 @@ WorkQueueTaskResult SensorsRenderingService::ProcessWorkTask(SensorsRenderingTas
 }
 
 void SensorsRenderingService::SubmitToEventBus(const SensorReading& reading) {
+    static constexpr auto caller = GetCallerName();
+
     SensorEventsChannel::GetInstance().PublishAsync({
+        .source_id = caller.hash,
         .type = SensorEventType::DataUpdated,
         .payload = {
             { SensorPayloadType::SensorId, reading.sensor->id_hash },

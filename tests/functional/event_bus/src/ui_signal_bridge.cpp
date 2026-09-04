@@ -63,9 +63,9 @@ private:
 
 void PublishLoggingStatus(bool is_active) {
     LoggingEventsChannel::GetInstance().Publish({
+        .source_id = 0x7E57,
         .type = LoggingEventType::StatusUpdated,
-        .payload = { { LoggingPayloadType::IsActive, is_active } },
-        .source_id = "test"
+        .payload = { { LoggingPayloadType::IsActive, is_active } }
     });
 }
 
@@ -121,9 +121,9 @@ ZTEST(ui_signal_bridge, test_a_source_event_without_the_linked_key_is_ignored) {
     SignalProbe probe(UiSignalType::LoggingActive);
 
     LoggingEventsChannel::GetInstance().Publish({
+        .source_id = 0x7E57,
         .type = LoggingEventType::StatusUpdated,
-        .payload = {},
-        .source_id = "test"
+        .payload = {}
     });
 
     zassert_equal(probe.Calls(), 0);

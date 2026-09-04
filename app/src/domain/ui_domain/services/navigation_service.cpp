@@ -4,6 +4,8 @@
 
 #include <zephyr/logging/log.h>
 
+#include "utilities/reflection/caller_name.h"
+
 #include "domain/ui_domain/event_bus/navigation_event_channel.h"
 
 #include "navigation_service.h"
@@ -12,6 +14,7 @@ namespace eerie_leap::domain::ui_domain::services {
 
 using namespace eerie_leap::domain::ui_domain::event_bus;
 
+using eerie_leap::utilities::reflection::GetCallerName;
 using eerie_leap::domain::ui_domain::models::NavigationAction;
 
 LOG_MODULE_REGISTER(navigation_service_logger);
@@ -19,7 +22,10 @@ LOG_MODULE_REGISTER(navigation_service_logger);
 namespace {
 
 void PublishNavigation(NavigationAction action, NavigationPayloadType target_type, uint32_t target_id) {
+    static constexpr auto caller = GetCallerName();
+
     NavigationEventChannel::GetInstance().PublishAsync({
+        .source_id = caller.hash,
         .type = NavigationEventType::Changed,
         .payload = {
             { NavigationPayloadType::Action, static_cast<uint32_t>(action) },

@@ -3,8 +3,9 @@
 
 #include <zephyr/logging/log.h>
 
-#include "subsys/threading/scoped_mutex.h"
+#include "utilities/reflection/caller_name.h"
 #include "utilities/string/string_helpers.h"
+#include "subsys/threading/scoped_mutex.h"
 
 #include "domain/settings_domain/event_bus/settings_events_channel.h"
 
@@ -14,8 +15,9 @@ namespace eerie_leap::domain::settings_domain::utilities {
 
 using namespace eerie_leap::domain::settings_domain::event_bus;
 
-using eerie_leap::subsys::threading::ScopedMutex;
+using eerie_leap::utilities::reflection::GetCallerName;
 using eerie_leap::utilities::string::StringHelpers;
+using eerie_leap::subsys::threading::ScopedMutex;
 
 LOG_MODULE_REGISTER(settings_registry_logger);
 
@@ -69,6 +71,8 @@ std::optional<ConfigValue> SettingsRegistry::Get(std::string_view setting_id) co
 }
 
 int SettingsRegistry::Set(std::string_view setting_id, const ConfigValue& value) {
+    static constexpr auto caller = GetCallerName();
+
     auto binding = Find(setting_id);
     if(!binding.has_value())
         return -ENOENT;
@@ -90,6 +94,7 @@ int SettingsRegistry::Set(std::string_view setting_id, const ConfigValue& value)
         return 0;
 
     SettingsEventsChannel::GetInstance().PublishAsync({
+        .source_id = caller.hash,
         .type = SettingsEventType::Changed,
         .payload = { { SettingsPayloadType::SettingId, StringHelpers::GetHash(setting_id) } }
     });

@@ -2,6 +2,7 @@
 #include <eerie_memory.hpp>
 
 #include "utilities/memory/memory_resource_manager.h"
+#include "utilities/reflection/caller_name.h"
 #include "subsys/device_tree/dt_gpio.h"
 #include "domain/canbus_com_domain/commands/canbus_com_logging_command.h"
 #include "domain/logging_domain/event_bus/logging_events_channel.h"
@@ -17,6 +18,7 @@ using namespace eerie_leap::domain::canbus_com_domain::commands;
 using eerie_leap::domain::logging_domain::event_bus::LoggingEventsChannel;
 using eerie_leap::domain::logging_domain::event_bus::LoggingEventType;
 using eerie_leap::domain::logging_domain::event_bus::LoggingPayloadType;
+using eerie_leap::utilities::reflection::GetCallerName;
 
 LOG_MODULE_REGISTER(logging_controller_logger);
 
@@ -91,7 +93,10 @@ void LoggingController::LoggingStateUpdatedAck(bool success) {
 }
 
 void LoggingController::PublishLoggingState(bool is_logging) {
+    static constexpr auto caller = GetCallerName();
+
     LoggingEventsChannel::GetInstance().PublishAsync({
+        .source_id = caller.hash,
         .type = LoggingEventType::StatusUpdated,
         .payload = { { LoggingPayloadType::IsActive, is_logging } }
     });
