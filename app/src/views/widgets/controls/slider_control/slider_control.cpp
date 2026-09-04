@@ -18,13 +18,24 @@ using eerie_leap::domain::settings_domain::utilities::ToSettingNumber;
 SliderControl::SliderControl(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : ControlBase(id, std::move(parent), std::move(context), true) {}
 
-void SliderControl::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    ControlBase::Configure(configuration);
+void SliderControl::RegisterProperties(WidgetPropertyStore& store) {
+    ControlBase::RegisterProperties(store);
 
-    configured_step_ = GetConfigValue<double>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::STEP),
-        0);
+    store.Register(WidgetPropertyType::STEP, ConfigValue { 0.0 }, PropertyChangeEffect::Repaint);
+}
+
+void SliderControl::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
+    if(type == WidgetPropertyType::STEP) {
+        configured_step_ = ConfigValueAs<double>(value, 0);
+        return;
+    }
+
+    ControlBase::OnPropertyChanged(type, value);
+}
+
+// After the base has resolved the setting range, which ApplyRange reads.
+void SliderControl::OnConfigured() {
+    ControlBase::OnConfigured();
 
     ApplyRange();
 }

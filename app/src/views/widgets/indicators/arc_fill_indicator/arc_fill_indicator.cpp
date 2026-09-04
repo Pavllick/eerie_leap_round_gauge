@@ -57,18 +57,27 @@ void ArcFillIndicator::UpdateIndicator(float value) {
     lv_arc_set_value(lv_arc_, static_cast<int32_t>(value));
 }
 
-void ArcFillIndicator::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    IndicatorBase::Configure(configuration);
+void ArcFillIndicator::RegisterProperties(WidgetPropertyStore& store) {
+    IndicatorBase::RegisterProperties(store);
 
-    start_angle_ = GetConfigValue<int>(
-        configuration->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE),
-        DEFAULT_START_ANGLE);
+    store.Register(WidgetPropertyType::START_ANGLE, ConfigValue { DEFAULT_START_ANGLE }, PropertyChangeEffect::Repaint);
+    store.Register(WidgetPropertyType::END_ANGLE, ConfigValue { DEFAULT_END_ANGLE }, PropertyChangeEffect::Repaint);
+}
 
-    end_angle_ = GetConfigValue<int>(
-        configuration->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE),
-        DEFAULT_END_ANGLE);
+void ArcFillIndicator::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
+    switch(type) {
+        case WidgetPropertyType::START_ANGLE:
+            start_angle_ = ConfigValueAs<int>(value, DEFAULT_START_ANGLE);
+            break;
+
+        case WidgetPropertyType::END_ANGLE:
+            end_angle_ = ConfigValueAs<int>(value, DEFAULT_END_ANGLE);
+            break;
+
+        default:
+            IndicatorBase::OnPropertyChanged(type, value);
+            break;
+    }
 }
 
 } // namespace eerie_leap::views::widgets::indicators

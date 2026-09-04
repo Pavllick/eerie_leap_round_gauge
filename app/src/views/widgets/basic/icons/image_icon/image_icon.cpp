@@ -83,37 +83,22 @@ lv_obj_t* ImageIcon::Create(lv_obj_t* parent) {
     return lv_image;
 }
 
-void ImageIcon::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    IconBase::Configure(configuration);
+void ImageIcon::Configure(std::shared_ptr<WidgetPropertyStore> properties) {
+    IconBase::Configure(std::move(properties));
 
-    file_path_ = GetConfigValue<std::pmr::string>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::FILE_PATH),
-        "");
-
-    image_width_ = GetConfigValue<int>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::IMG_WIDTH),
-        0);
-
-    image_height_ = GetConfigValue<int>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::IMG_HEIGHT),
-        0);
+    file_path_ = properties_->GetAs<std::pmr::string>(WidgetPropertyType::FILE_PATH, "");
+    image_width_ = properties_->GetAs<int>(WidgetPropertyType::IMG_WIDTH, 0);
+    image_height_ = properties_->GetAs<int>(WidgetPropertyType::IMG_HEIGHT, 0);
 
     if(image_width_ <= 0 || image_height_ <= 0)
         return;
 
-    pivot_x_ = GetConfigValue<int>(
-        configuration->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::PIVOT_X),
-        image_width_ / 2);
+    // A registered property always has a value, so the "centre it" default needs a sentinel.
+    pivot_x_ = properties_->GetAs<int>(WidgetPropertyType::PIVOT_X, pivot_centered);
+    if(pivot_x_ == pivot_centered)
+        pivot_x_ = image_width_ / 2;
 
-    pivot_y_ = GetConfigValue<int>(
-        configuration->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::PIVOT_Y),
-        0);
-    pivot_y_ = image_height_ - pivot_y_;
+    pivot_y_ = image_height_ - properties_->GetAs<int>(WidgetPropertyType::PIVOT_Y, 0);
 }
 
 } // namespace eerie_leap::views::widgets::basic::icons

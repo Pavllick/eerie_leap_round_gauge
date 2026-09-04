@@ -89,18 +89,31 @@ void HorizontalChartIndicator::Update(float value) {
     UpdateIndicator(value);
 }
 
-void HorizontalChartIndicator::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    IndicatorBase::Configure(configuration);
+void HorizontalChartIndicator::RegisterProperties(WidgetPropertyStore& store) {
+    IndicatorBase::RegisterProperties(store);
 
-    point_count_ = GetConfigValue<int>(
-        configuration->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::CHART_POINT_COUNT),
-        30);
+    store.Register(WidgetPropertyType::CHART_POINT_COUNT, ConfigValue { 30 }, PropertyChangeEffect::Rebuild);
+    store.Register(
+        WidgetPropertyType::CHART_TYPE,
+        ConfigValue { static_cast<int>(HorizontalChartIndicatorType::Bar) },
+        PropertyChangeEffect::Rebuild);
+}
 
-    chart_type_ = static_cast<HorizontalChartIndicatorType>(GetConfigValue<int>(
-        configuration->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE),
-        std::to_underlying(HorizontalChartIndicatorType::Bar)));
+void HorizontalChartIndicator::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
+    switch(type) {
+        case WidgetPropertyType::CHART_POINT_COUNT:
+            point_count_ = ConfigValueAs<int>(value, 30);
+            break;
+
+        case WidgetPropertyType::CHART_TYPE:
+            chart_type_ = static_cast<HorizontalChartIndicatorType>(
+                ConfigValueAs<int>(value, static_cast<int>(HorizontalChartIndicatorType::Bar)));
+            break;
+
+        default:
+            IndicatorBase::OnPropertyChanged(type, value);
+            break;
+    }
 }
 
 } // namespace eerie_leap::views::widgets::indicators

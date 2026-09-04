@@ -21,21 +21,32 @@ static constexpr int32_t no_target_group = -1;
 ButtonControl::ButtonControl(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : ControlBase(id, std::move(parent), std::move(context), false) {}
 
-void ButtonControl::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    ControlBase::Configure(configuration);
+void ButtonControl::RegisterProperties(WidgetPropertyStore& store) {
+    ControlBase::RegisterProperties(store);
 
-    label_ = GetConfigValue<std::pmr::string>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::LABEL),
-        "");
+    store.Register(WidgetPropertyType::LABEL, ConfigValue { std::pmr::string { } }, PropertyChangeEffect::Repaint);
+    store.Register(WidgetPropertyType::TARGET_GROUP, ConfigValue { no_target_group }, PropertyChangeEffect::None);
+}
 
-    auto target_group = GetConfigValue<int>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::TARGET_GROUP),
-        no_target_group);
+void ButtonControl::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
+    switch(type) {
+        case WidgetPropertyType::LABEL:
+            label_ = ConfigValueAs<std::pmr::string>(value, "");
+            break;
 
-    if(target_group >= 0)
-        target_group_id_ = static_cast<uint32_t>(target_group);
+        case WidgetPropertyType::TARGET_GROUP: {
+            auto target_group = ConfigValueAs<int>(value, no_target_group);
+
+            if(target_group >= 0)
+                target_group_id_ = static_cast<uint32_t>(target_group);
+
+            break;
+        }
+
+        default:
+            ControlBase::OnPropertyChanged(type, value);
+            break;
+    }
 }
 
 int ButtonControl::DoRender() {

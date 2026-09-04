@@ -52,7 +52,10 @@ public:
     void OnDeactivated() override;
 
     std::optional<uint32_t> GetSensorIdHash() const override;
-    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
+protected:
+    void RegisterProperties(WidgetPropertyStore& store) override;
+    void OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) override;
+    void OnConfigured() override;
 };
 
 } // namespace eerie_leap::views::widgets::indicators

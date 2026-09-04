@@ -68,13 +68,10 @@ lv_obj_t* LabelIcon::Create(lv_obj_t* parent) {
     return lv_icon;
 }
 
-void LabelIcon::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    IconBase::Configure(configuration);
+void LabelIcon::Configure(std::shared_ptr<WidgetPropertyStore> properties) {
+    IconBase::Configure(std::move(properties));
 
-    label_ = GetConfigValue<std::pmr::string>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::LABEL),
-        "");
+    label_ = properties_->GetAs<std::pmr::string>(WidgetPropertyType::LABEL, "");
 }
 
 } // namespace eerie_leap::views::widgets::basic::icons

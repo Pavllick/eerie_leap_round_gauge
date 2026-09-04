@@ -14,7 +14,7 @@ using eerie_leap::views::RenderableBase;
 class IconBase : public RenderableBase, public IIcon {
 protected:
     std::shared_ptr<Frame> parent_;
-    std::shared_ptr<WidgetConfiguration> configuration_;
+    std::shared_ptr<WidgetPropertyStore> properties_;
     bool is_active_;
 
     std::shared_ptr<AssetsManager> ui_assets_manager_ = nullptr;
@@ -26,7 +26,7 @@ public:
     void SetAssetsManager(std::shared_ptr<AssetsManager> ui_assets_manager) override;
 
     void SetIsActive(bool is_active) override;
-    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
+    void Configure(std::shared_ptr<WidgetPropertyStore> properties) override;
 };
 
 } // namespace eerie_leap::views::widgets::basic::icons

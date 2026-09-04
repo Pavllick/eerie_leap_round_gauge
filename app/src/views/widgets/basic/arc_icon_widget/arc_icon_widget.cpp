@@ -33,18 +33,27 @@ int ArcIconWidget::ApplyTheme(const ITheme& theme) {
     return 0;
 }
 
-void ArcIconWidget::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    IconWidget::Configure(configuration);
+void ArcIconWidget::RegisterProperties(WidgetPropertyStore& store) {
+    IconWidget::RegisterProperties(store);
 
-    position_angle_ = GetConfigValue<double>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::POSITION_ANGLE),
-        -90.0F);
+    store.Register(WidgetPropertyType::POSITION_ANGLE, ConfigValue { -90.0 }, PropertyChangeEffect::Relayout);
+    store.Register(WidgetPropertyType::EDGE_OFFSET, ConfigValue { 0 }, PropertyChangeEffect::Relayout);
+}
 
-    edge_offset_px_ = GetConfigValue<int>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::EDGE_OFFSET),
-        0);
+void ArcIconWidget::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
+    switch(type) {
+        case WidgetPropertyType::POSITION_ANGLE:
+            position_angle_ = ConfigValueAs<double>(value, -90.0);
+            break;
+
+        case WidgetPropertyType::EDGE_OFFSET:
+            edge_offset_px_ = ConfigValueAs<int>(value, 0);
+            break;
+
+        default:
+            IconWidget::OnPropertyChanged(type, value);
+            break;
+    }
 }
 
 } // namespace eerie_leap::views::widgets::basic

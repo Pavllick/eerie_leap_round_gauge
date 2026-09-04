@@ -53,13 +53,19 @@ void DigitalIndicator::UpdateIndicator(float value) {
     lv_label_set_text(lv_label_, value_str);
 }
 
-void DigitalIndicator::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    IndicatorBase::Configure(configuration);
+void DigitalIndicator::RegisterProperties(WidgetPropertyStore& store) {
+    IndicatorBase::RegisterProperties(store);
 
-    value_precision_ = GetConfigValue<int>(
-        configuration->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_PRECISION),
-        0);
+    store.Register(WidgetPropertyType::VALUE_PRECISION, ConfigValue { 0 }, PropertyChangeEffect::Repaint);
+}
+
+void DigitalIndicator::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
+    if(type == WidgetPropertyType::VALUE_PRECISION) {
+        value_precision_ = ConfigValueAs<int>(value, 0);
+        return;
+    }
+
+    IndicatorBase::OnPropertyChanged(type, value);
 }
 
 } // namespace eerie_leap::views::widgets::indicators

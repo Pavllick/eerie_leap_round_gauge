@@ -21,19 +21,7 @@ using ConfigValue = std::variant<
 >;
 
 template<typename T>
-T GetConfigValue(
-    const std::pmr::unordered_map<std::pmr::string, ConfigValue>& config,
-    const std::pmr::string& key,
-    const T& default_value) {
-
-    auto it = config.find(key);
-
-    if(it == config.end()) {
-        return default_value;
-    }
-
-    const ConfigValue& value = it->second;
-
+T ConfigValueAs(const ConfigValue& value, const T& default_value) {
     if(std::holds_alternative<T>(value)) {
         return std::get<T>(value);
     }

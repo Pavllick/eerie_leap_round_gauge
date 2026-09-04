@@ -33,13 +33,10 @@ void IconBase::SetIsActive(bool is_active) {
     container_->Invalidate();
 }
 
-void IconBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    configuration_ = std::move(configuration);
+void IconBase::Configure(std::shared_ptr<WidgetPropertyStore> properties) {
+    properties_ = std::move(properties);
 
-    is_active_ = GetConfigValue<bool>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::IS_ACTIVE),
-        true);
+    is_active_ = properties_->GetAs<bool>(WidgetPropertyType::IS_ACTIVE, true);
 }
 
 } // namespace eerie_leap::views::widgets::basic::icons

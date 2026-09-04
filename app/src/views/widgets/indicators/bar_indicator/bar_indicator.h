@@ -21,7 +21,11 @@ protected:
     int DoRender() override;
     int ApplyTheme(const ITheme& theme) override;
 
-    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
+protected:
+    void RegisterProperties(WidgetPropertyStore& store) override;
+    void OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) override;
+
+public:
     static void UpdateDirection(lv_obj_t* lv_bar, InidicatorDirection direction, int32_t range_start, int32_t range_end);
 
 public:

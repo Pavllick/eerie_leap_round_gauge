@@ -41,7 +41,9 @@ constexpr std::array all_types = {
     WidgetPropertyType::STEP,
     WidgetPropertyType::UNIT,
     WidgetPropertyType::TARGET_GROUP,
-    WidgetPropertyType::VALUE_SOURCE
+    WidgetPropertyType::VALUE_SOURCE,
+    WidgetPropertyType::IS_VISIBLE,
+    WidgetPropertyType::VALUE
 };
 
 } // namespace

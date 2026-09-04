@@ -20,7 +20,7 @@ public:
 
     int ApplyTheme(const ITheme& theme) override;
     int DoRender() override;
-    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
+    void Configure(std::shared_ptr<WidgetPropertyStore> properties) override;
 
     [[nodiscard]] IconType GetIconType() const override { return IconType::Label; }
 };

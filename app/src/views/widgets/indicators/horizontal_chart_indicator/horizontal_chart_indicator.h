@@ -36,7 +36,11 @@ public:
     // every animation frame instead of once per real update.
     void Update(float value) override;
 
-    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
+protected:
+    void RegisterProperties(WidgetPropertyStore& store) override;
+    void OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) override;
+
+public:
 };
 
 } // namespace eerie_leap::views::widgets::indicators

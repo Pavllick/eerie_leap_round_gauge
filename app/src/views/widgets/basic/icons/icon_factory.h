@@ -27,7 +27,7 @@ public:
     void Register(const IconType type);
     void Register(const IconType type, IconCreator creator);
 
-    std::unique_ptr<IIcon> Create(const IconType type, std::shared_ptr<WidgetConfiguration> configuration, std::shared_ptr<Frame> parent);
+    std::unique_ptr<IIcon> Create(const IconType type, std::shared_ptr<WidgetPropertyStore> properties, std::shared_ptr<Frame> parent);
 
     std::vector<IconType> GetAvailableTypes() const;
 };

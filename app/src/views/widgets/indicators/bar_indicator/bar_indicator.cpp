@@ -71,13 +71,24 @@ void BarIndicator::UpdateIndicator(float value) {
     lv_bar_set_value(lv_bar_, static_cast<int32_t>(value), LV_ANIM_OFF);
 }
 
-void BarIndicator::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    IndicatorBase::Configure(configuration);
+void BarIndicator::RegisterProperties(WidgetPropertyStore& store) {
+    IndicatorBase::RegisterProperties(store);
 
-    direction_ = static_cast<InidicatorDirection>(GetConfigValue<int>(
-        configuration->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::DIRECTION),
-        std::to_underlying(InidicatorDirection::LeftToRight)));
+    store.Register(
+        WidgetPropertyType::DIRECTION,
+        ConfigValue { static_cast<int>(InidicatorDirection::LeftToRight) },
+        PropertyChangeEffect::Repaint);
+}
+
+void BarIndicator::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
+    if(type == WidgetPropertyType::DIRECTION) {
+        direction_ = static_cast<InidicatorDirection>(
+            ConfigValueAs<int>(value, static_cast<int>(InidicatorDirection::LeftToRight)));
+
+        return;
+    }
+
+    IndicatorBase::OnPropertyChanged(type, value);
 }
 
 } // namespace eerie_leap::views::widgets::indicators

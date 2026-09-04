@@ -1,3 +1,8 @@
+#include <algorithm>
+#include <exception>
+
+#include <zephyr/logging/log.h>
+
 #include "domain/ui_domain/models/widget_property.h"
 
 #include "widget_base.h"
@@ -7,8 +12,10 @@ namespace eerie_leap::views::widgets {
 using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::models;
 
+LOG_MODULE_REGISTER(widget_base_logger);
+
 WidgetBase::WidgetBase(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
-    : id_(id), parent_(std::move(parent)),
+    : id_(id), properties_(std::make_shared<WidgetPropertyStore>()), parent_(std::move(parent)),
     dispatch_guard_(std::make_shared<WidgetDispatchGuard>(this)),
     context_(std::move(context)) {
 
@@ -44,16 +51,84 @@ bool WidgetBase::IsActive() const {
 
 void WidgetBase::OnActivated() {
     is_active_ = true;
+
+    // The store kept tracking while the group was hidden, so this is where the widget catches up.
+    if(IsReady())
+        ReplayProperties();
 }
 
 void WidgetBase::OnDeactivated() {
     is_active_ = false;
 }
 
+void WidgetBase::RegisterProperties(WidgetPropertyStore& store) {
+    store.Register(WidgetPropertyType::IS_VISIBLE, ConfigValue { true }, PropertyChangeEffect::None);
+    store.Register(WidgetPropertyType::IS_SMOOTHED, ConfigValue { false }, PropertyChangeEffect::None);
+}
+
+void WidgetBase::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
+    if(type == WidgetPropertyType::IS_VISIBLE)
+        SetVisibility(ConfigValueAs<bool>(value, true));
+}
+
+void WidgetBase::OnConfigured() { }
+
+void WidgetBase::RunEffect(PropertyChangeEffect effect) {
+    if(effect == PropertyChangeEffect::None || !IsReady())
+        return;
+
+    container_->Invalidate();
+}
+
+void WidgetBase::ApplyProperty(WidgetPropertyType type, const ConfigValue& value) {
+    if(!properties_->Set(type, value))
+        return;
+
+    auto effect = properties_->GetEffect(type);
+
+    // LvglLock before the dispatch guard: ~WidgetBase runs under the LVGL lock and takes the
+    // guard second, so the reverse order deadlocks.
+    ScopedLvglLock lvgl_guard;
+
+    dispatch_guard_->Dispatch([&] {
+        if(!IsActive())
+            return;
+
+        OnPropertyChanged(type, value);
+        RunEffect(effect);
+    });
+}
+
+void WidgetBase::ReplayProperties() {
+    auto strongest = PropertyChangeEffect::None;
+
+    for(auto type : properties_->GetRegisteredTypes()) {
+        OnPropertyChanged(type, properties_->Get(type));
+        strongest = std::max(strongest, properties_->GetEffect(type));
+    }
+
+    RunEffect(strongest);
+}
+
 void WidgetBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
     configuration_ = std::move(configuration);
 
-    SetVisibility(IsVisible());
+    RegisterProperties(*properties_);
+
+    // Visibility is still a field on the configuration rather than a persisted property.
+    properties_->Set(WidgetPropertyType::IS_VISIBLE, ConfigValue { configuration_->is_visible });
+
+    for(const auto& [key, value] : configuration_->properties) {
+        try {
+            if(!properties_->Set(WidgetProperty::GetType(key), value))
+                LOG_WRN("Widget %u does not support property '%s'.", id_, key.c_str());
+        } catch(const std::exception&) {
+            LOG_WRN("Widget %u carries unknown property '%s'.", id_, key.c_str());
+        }
+    }
+
+    ReplayProperties();
+    OnConfigured();
 }
 
 std::shared_ptr<WidgetConfiguration> WidgetBase::GetConfiguration() const {
@@ -70,14 +145,11 @@ int WidgetBase::SetVisibility(bool is_visible) {
 }
 
 bool WidgetBase::IsVisible() const {
-    return configuration_->is_visible;
+    return properties_->GetAs<bool>(WidgetPropertyType::IS_VISIBLE, true);
 }
 
 bool WidgetBase::IsSmoothed() const {
-    return GetConfigValue<bool>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED),
-        false);
+    return properties_->GetAs<bool>(WidgetPropertyType::IS_SMOOTHED, false);
 }
 
 WidgetPosition WidgetBase::GetPositionPx() const {

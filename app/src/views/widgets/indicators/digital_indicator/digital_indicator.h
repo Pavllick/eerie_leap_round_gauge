@@ -17,7 +17,11 @@ private:
     int DoRender() override;
     int ApplyTheme(const ITheme& theme) override;
 
-    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
+protected:
+    void RegisterProperties(WidgetPropertyStore& store) override;
+    void OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) override;
+
+public:
 
 public:
     explicit DigitalIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context);

@@ -96,18 +96,27 @@ void SegmentArcIndicator::UpdateIndicator(float value) {
     }
 }
 
-void SegmentArcIndicator::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    IndicatorBase::Configure(configuration);
+void SegmentArcIndicator::RegisterProperties(WidgetPropertyStore& store) {
+    IndicatorBase::RegisterProperties(store);
 
-    start_angle_ = GetConfigValue<int>(
-        configuration->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::START_ANGLE),
-        45);
+    store.Register(WidgetPropertyType::START_ANGLE, ConfigValue { 45 }, PropertyChangeEffect::Repaint);
+    store.Register(WidgetPropertyType::END_ANGLE, ConfigValue { 315 }, PropertyChangeEffect::Repaint);
+}
 
-    end_angle_ = GetConfigValue<int>(
-        configuration->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::END_ANGLE),
-        315);
+void SegmentArcIndicator::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
+    switch(type) {
+        case WidgetPropertyType::START_ANGLE:
+            start_angle_ = ConfigValueAs<int>(value, 45);
+            break;
+
+        case WidgetPropertyType::END_ANGLE:
+            end_angle_ = ConfigValueAs<int>(value, 315);
+            break;
+
+        default:
+            IndicatorBase::OnPropertyChanged(type, value);
+            break;
+    }
 }
 
 } // namespace eerie_leap::views::widgets::indicators

@@ -16,6 +16,7 @@
 #include "views/widgets/i_widget.h"
 #include "views/widgets/widget_context.h"
 #include "views/widgets/widget_dispatch_guard.h"
+#include "views/widgets/widget_property_store.h"
 
 namespace eerie_leap::views::widgets {
 
@@ -29,6 +30,7 @@ protected:
     uint32_t id_;
 
     std::shared_ptr<WidgetConfiguration> configuration_;
+    std::shared_ptr<WidgetPropertyStore> properties_;
     WidgetPosition position_px_;
     WidgetSize size_px_;
 
@@ -90,6 +92,28 @@ protected:
 
     void AddSubscription(AnySubscription subscription);
 
+    // Declares what this widget understands, base class first. A derived override calls its base
+    // before adding its own, so the replay below applies base properties first.
+    virtual void RegisterProperties(WidgetPropertyStore& store);
+
+    // Reacts to one property. A derived override handles its own keys and delegates the rest.
+    // Runs before the LVGL objects exist, so it may only touch members and the container.
+    virtual void OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value);
+
+    // One-shot setup after every property has been applied, for work that must not repeat when a
+    // property changes again - subscriptions above all.
+    virtual void OnConfigured();
+
+    // Inbound value from an event. Always updates the store, even while the widget is hidden or
+    // unrendered, so it never goes stale; only the effect is guarded and deferred.
+    void ApplyProperty(WidgetPropertyType type, const ConfigValue& value);
+
+    // Applies the current stored value of every registered property and runs the strongest effect
+    // once. Callers are already on the UI thread, so this skips the dispatch guard.
+    void ReplayProperties();
+
+    void RunEffect(PropertyChangeEffect effect);
+
     // Every destructor that runs before ~WidgetBase must call this first, or a
     // dispatch already in flight can reach members that have just been destroyed.
     void DetachDispatch();
@@ -106,7 +130,9 @@ public:
     void OnActivated() override;
     void OnDeactivated() override;
 
-    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
+    // Sealed: the configuration path is register -> seed -> replay -> OnConfigured, and a derived
+    // override would run its own reads after the replay had already used the defaults.
+    void Configure(std::shared_ptr<WidgetConfiguration> configuration) final;
     std::shared_ptr<WidgetConfiguration> GetConfiguration() const override;
 
     WidgetPosition GetPositionPx() const override;

@@ -28,7 +28,12 @@ public:
 
     void SetIsActive(bool is_active);
 
-    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
+protected:
+    void RegisterProperties(WidgetPropertyStore& store) override;
+    void OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) override;
+    void OnConfigured() override;
+
+public:
     int ApplyTheme(const ITheme& theme) override;
 
     WidgetType GetType() const override { return WidgetType::BasicIcon; }

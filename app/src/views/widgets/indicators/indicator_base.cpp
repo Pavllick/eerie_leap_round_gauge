@@ -120,10 +120,7 @@ std::optional<uint32_t> IndicatorBase::GetSensorIdHash() const {
 }
 
 void IndicatorBase::SubscribeToSensor() {
-    auto sensor_id = GetConfigValue<std::pmr::string>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID),
-        "");
+    auto sensor_id = properties_->GetAs<std::pmr::string>(WidgetPropertyType::SENSOR_ID, "");
     if(sensor_id.empty())
         return;
 
@@ -143,10 +140,8 @@ void IndicatorBase::SubscribeToSensor() {
 }
 
 void IndicatorBase::SubscribeToUiSignal() {
-    auto signal = static_cast<UiSignalType>(GetConfigValue<int>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::UI_SIGNAL_TYPE),
-        0));
+    auto signal = static_cast<UiSignalType>(
+        properties_->GetAs<int>(WidgetPropertyType::UI_SIGNAL_TYPE, 0));
     if(signal == UiSignalType::None)
         return;
 
@@ -162,28 +157,51 @@ void IndicatorBase::SubscribeToUiSignal() {
         });
 }
 
-void IndicatorBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    WidgetBase::Configure(configuration);
+void IndicatorBase::RegisterProperties(WidgetPropertyStore& store) {
+    WidgetBase::RegisterProperties(store);
 
-    auto value_source = static_cast<IndicatorValueSource>(GetConfigValue<int>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_SOURCE),
+    store.Register(WidgetPropertyType::MIN_VALUE, ConfigValue { 0 }, PropertyChangeEffect::Repaint);
+    store.Register(WidgetPropertyType::MAX_VALUE, ConfigValue { 100 }, PropertyChangeEffect::Repaint);
+    store.Register(WidgetPropertyType::VALUE, ConfigValue { 0.0 }, PropertyChangeEffect::Repaint);
+    store.Register(WidgetPropertyType::SENSOR_ID, ConfigValue { std::pmr::string { } }, PropertyChangeEffect::None);
+    store.Register(WidgetPropertyType::UI_SIGNAL_TYPE, ConfigValue { 0 }, PropertyChangeEffect::None);
+    store.Register(
+        WidgetPropertyType::VALUE_SOURCE,
+        ConfigValue { static_cast<int>(IndicatorValueSource::Sensor) },
+        PropertyChangeEffect::None);
+}
+
+void IndicatorBase::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
+    switch(type) {
+        case WidgetPropertyType::MIN_VALUE:
+            range_start_ = ConfigValueAs<double>(value, 0);
+            break;
+
+        case WidgetPropertyType::MAX_VALUE:
+            range_end_ = ConfigValueAs<double>(value, 100);
+            break;
+
+        case WidgetPropertyType::VALUE:
+            Update(static_cast<float>(ConfigValueAs<double>(value, 0)));
+            break;
+
+        default:
+            WidgetBase::OnPropertyChanged(type, value);
+            break;
+    }
+}
+
+void IndicatorBase::OnConfigured() {
+    WidgetBase::OnConfigured();
+
+    auto value_source = static_cast<IndicatorValueSource>(properties_->GetAs<int>(
+        WidgetPropertyType::VALUE_SOURCE,
         static_cast<int>(IndicatorValueSource::Sensor)));
 
     if(value_source == IndicatorValueSource::UiSignal)
         SubscribeToUiSignal();
     else
         SubscribeToSensor();
-
-    range_start_ = GetConfigValue<int>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE),
-        0);
-    range_end_ = GetConfigValue<int>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE),
-        100);
-    value_ = 0;
 }
 
 // A signal carries whatever numeric type its source domain published.

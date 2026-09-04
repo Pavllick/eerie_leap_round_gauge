@@ -38,7 +38,10 @@ protected:
 public:
     ~SettingWidgetBase() = default;
 
-    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
+protected:
+    void RegisterProperties(WidgetPropertyStore& store) override;
+    void OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) override;
+    void OnConfigured() override;
 
     // Settings only publish on change, so a widget hidden while one moved has no
     // other chance to catch up.

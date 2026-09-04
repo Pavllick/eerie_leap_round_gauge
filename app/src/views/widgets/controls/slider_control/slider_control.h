@@ -34,7 +34,12 @@ protected:
 public:
     explicit SliderControl(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context);
 
-    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
+protected:
+    void RegisterProperties(WidgetPropertyStore& store) override;
+    void OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) override;
+    void OnConfigured() override;
+
+public:
     WidgetType GetType() const override { return WidgetType::ControlSlider; }
 };
 

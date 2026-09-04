@@ -41,6 +41,8 @@ enum class WidgetPropertyType : std::uint16_t {
     UNIT,                   // string
     TARGET_GROUP,           // int
     VALUE_SOURCE,           // IndicatorValueSource
+    IS_VISIBLE,             // bool
+    VALUE,                  // double
 };
 
 class WidgetProperty {
@@ -75,6 +77,8 @@ private:
         "UNIT"sv,
         "TARGET_GROUP"sv,
         "VALUE_SOURCE"sv,
+        "IS_VISIBLE"sv,
+        "VALUE"sv,
     };
 
 public:

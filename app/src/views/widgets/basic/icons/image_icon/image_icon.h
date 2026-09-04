@@ -24,12 +24,15 @@ private:
     lv_obj_t* Create(lv_obj_t* parent);
 
 public:
+    // Sentinel for PIVOT_X: a registered property always has a value, so "centre it" needs one.
+    static constexpr int pivot_centered = -1;
+
     explicit ImageIcon(std::shared_ptr<Frame> parent);
     virtual ~ImageIcon() = default;
 
     int ApplyTheme(const ITheme& theme) override;
     int DoRender() override;
-    void Configure(std::shared_ptr<WidgetConfiguration> configuration) override;
+    void Configure(std::shared_ptr<WidgetPropertyStore> properties) override;
 
     [[nodiscard]] IconType GetIconType() const override { return IconType::Image; }
 };

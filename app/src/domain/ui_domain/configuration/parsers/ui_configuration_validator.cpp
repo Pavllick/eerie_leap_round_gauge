@@ -46,7 +46,7 @@ static bool HoldsPropertyValueKind(const ConfigValue& value, PropertyValueKind k
         case PropertyValueKind::Text:
             return std::holds_alternative<std::pmr::string>(value);
 
-        // GetConfigValue converts between int and double.
+        // ConfigValueAs converts between int and double.
         case PropertyValueKind::Numeric:
             return std::holds_alternative<int>(value) || std::holds_alternative<double>(value);
     }

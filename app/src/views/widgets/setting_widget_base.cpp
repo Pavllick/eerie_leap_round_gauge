@@ -25,13 +25,23 @@ LOG_MODULE_REGISTER(setting_widget_base_logger);
 SettingWidgetBase::SettingWidgetBase(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : WidgetBase(id, std::move(parent), std::move(context)) { }
 
-void SettingWidgetBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    WidgetBase::Configure(configuration);
+void SettingWidgetBase::RegisterProperties(WidgetPropertyStore& store) {
+    WidgetBase::RegisterProperties(store);
 
-    setting_id_ = GetConfigValue<std::pmr::string>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::SETTING_ID),
-        "");
+    store.Register(WidgetPropertyType::SETTING_ID, ConfigValue { std::pmr::string { } }, PropertyChangeEffect::None);
+}
+
+void SettingWidgetBase::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
+    if(type == WidgetPropertyType::SETTING_ID) {
+        setting_id_ = ConfigValueAs<std::pmr::string>(value, "");
+        return;
+    }
+
+    WidgetBase::OnPropertyChanged(type, value);
+}
+
+void SettingWidgetBase::OnConfigured() {
+    WidgetBase::OnConfigured();
 
     if(setting_id_.empty())
         return;

@@ -19,27 +19,33 @@ using eerie_leap::domain::settings_domain::utilities::ToSettingNumber;
 SettingIndicator::SettingIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : SettingWidgetBase(id, std::move(parent), std::move(context)) {}
 
-void SettingIndicator::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
-    SettingWidgetBase::Configure(configuration);
+void SettingIndicator::RegisterProperties(WidgetPropertyStore& store) {
+    SettingWidgetBase::RegisterProperties(store);
 
-    label_ = GetConfigValue<std::pmr::string>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::LABEL),
-        "");
+    store.Register(WidgetPropertyType::LABEL, ConfigValue { std::pmr::string { } }, PropertyChangeEffect::Repaint);
+    store.Register(WidgetPropertyType::UNIT, ConfigValue { std::pmr::string { } }, PropertyChangeEffect::Repaint);
+    store.Register(WidgetPropertyType::VALUE_PRECISION, ConfigValue { 0 }, PropertyChangeEffect::Repaint);
+}
 
-    unit_ = GetConfigValue<std::pmr::string>(
-        configuration_->properties,
-        WidgetProperty::GetTypeName(WidgetPropertyType::UNIT),
-        "");
+void SettingIndicator::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
+    switch(type) {
+        case WidgetPropertyType::LABEL:
+            label_ = ConfigValueAs<std::pmr::string>(value, "");
+            break;
 
-    // Bounded because it reaches snprintf's "%.*f" precision.
-    value_precision_ = std::clamp(
-        GetConfigValue<int>(
-            configuration_->properties,
-            WidgetProperty::GetTypeName(WidgetPropertyType::VALUE_PRECISION),
-            0),
-        0,
-        max_value_precision_);
+        case WidgetPropertyType::UNIT:
+            unit_ = ConfigValueAs<std::pmr::string>(value, "");
+            break;
+
+        // Bounded because it reaches snprintf's "%.*f" precision.
+        case WidgetPropertyType::VALUE_PRECISION:
+            value_precision_ = std::clamp(ConfigValueAs<int>(value, 0), 0, max_value_precision_);
+            break;
+
+        default:
+            SettingWidgetBase::OnPropertyChanged(type, value);
+            break;
+    }
 }
 
 int SettingIndicator::DoRender() {
