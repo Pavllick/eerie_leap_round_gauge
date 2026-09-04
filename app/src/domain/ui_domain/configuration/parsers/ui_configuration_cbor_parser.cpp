@@ -18,6 +18,91 @@ using namespace eerie_leap::domain::ui_domain::models;
 
 namespace {
 
+// zcbor_string is a non-owning view, so whatever it points at has to outlive the encoded config.
+// Text taken from the model is safe because the caller holds the model across the encode.
+void ToCborPropertyValue(CborPropertyValueType_r& prop, const ConfigValue& value) {
+    std::visit([&](auto&& arg) {
+        using T = std::decay_t<decltype(arg)>;
+
+        if constexpr (std::is_same_v<T, int>) {
+            prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_int_c;
+            prop.value = static_cast<int32_t>(arg);
+        } else if constexpr (std::is_same_v<T, double>) {
+            prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_float_c;
+            prop.value = static_cast<double>(arg);
+        } else if constexpr (std::is_same_v<T, std::pmr::string>) {
+            prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_tstr_c;
+            prop.value = CborHelpers::ToZcborString(arg);
+        } else if constexpr (std::is_same_v<T, bool>) {
+            prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_bool_c;
+            prop.value = arg;
+        } else if constexpr (std::is_same_v<T, std::pmr::vector<int>>) {
+            prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_int_l_c;
+
+            prop.value = std::pmr::vector<int32_t>(Mrm::GetExtPmr());
+            for(const auto& item : arg)
+                std::get<std::pmr::vector<int32_t>>(prop.value).push_back(item);
+        } else if constexpr (std::is_same_v<T, std::pmr::vector<std::pmr::string>>) {
+            prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_tstr_l_c;
+
+            prop.value = std::pmr::vector<zcbor_string>(Mrm::GetExtPmr());
+            for(const auto& item : arg)
+                std::get<std::pmr::vector<zcbor_string>>(prop.value).push_back(CborHelpers::ToZcborString(item));
+        } else if constexpr (std::is_same_v<T, std::pmr::unordered_map<std::pmr::string, std::pmr::string>>) {
+            prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_map_c;
+
+            prop.value = std::pmr::vector<map_tstrtstr>(Mrm::GetExtPmr());
+            for(const auto& [key, item] : arg) {
+                std::get<std::pmr::vector<map_tstrtstr>>(prop.value).push_back({
+                    .tstrtstr_key = CborHelpers::ToZcborString(key),
+                    .tstrtstr = CborHelpers::ToZcborString(item)
+                });
+            }
+        } else {
+            throw std::runtime_error("Unsupported property value type");
+        }
+    }, value);
+}
+
+ConfigValue FromCborPropertyValue(std::pmr::memory_resource* mr, const CborPropertyValueType_r& prop) {
+    ConfigValue value;
+
+    std::visit([&](auto&& arg) {
+        using T = std::decay_t<decltype(arg)>;
+
+        if constexpr (std::is_same_v<T, int32_t>) {
+            value = arg;
+        } else if constexpr (std::is_same_v<T, double>) {
+            value = static_cast<double>(arg);
+        } else if constexpr (std::is_same_v<T, zcbor_string>) {
+            value = CborHelpers::ToPmrString(mr, arg);
+        } else if constexpr (std::is_same_v<T, bool>) {
+            value = arg;
+        } else if constexpr (std::is_same_v<T, std::pmr::vector<int32_t>>) {
+            value = std::pmr::vector<int>(mr);
+            for(const auto& item : arg)
+                std::get<std::pmr::vector<int>>(value).push_back(item);
+        } else if constexpr (std::is_same_v<T, std::pmr::vector<zcbor_string>>) {
+            value = std::pmr::vector<std::pmr::string>(mr);
+            for(const auto& item : arg)
+                std::get<std::pmr::vector<std::pmr::string>>(value).push_back(CborHelpers::ToPmrString(mr, item));
+        } else if constexpr (std::is_same_v<T, std::pmr::vector<map_tstrtstr>>) {
+            value = std::pmr::unordered_map<std::pmr::string, std::pmr::string>(mr);
+            for(const auto& item : arg) {
+                std::get<std::pmr::unordered_map<std::pmr::string, std::pmr::string>>(value).insert({
+                    CborHelpers::ToPmrString(mr, item.tstrtstr_key),
+                    CborHelpers::ToPmrString(mr, item.tstrtstr)
+                });
+            }
+        } else {
+            throw std::runtime_error("Unsupported property value type");
+        }
+    }, prop.value);
+
+    return value;
+}
+
+// The property name table has static storage, unlike the model strings a temporary map would hold.
 void AppendBoolProperty(CborPropertiesConfig& properties_config, WidgetPropertyType type, bool value) {
     CborPropertiesConfig_CborPropertyValueType_m entry(std::allocator_arg, Mrm::GetExtPmr());
 
@@ -26,6 +111,52 @@ void AppendBoolProperty(CborPropertiesConfig& properties_config, WidgetPropertyT
     entry.CborPropertyValueType_m.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_bool_c;
 
     properties_config.CborPropertyValueType_m.push_back(std::move(entry));
+}
+
+void ToCborBindings(std::pmr::vector<CborPropertyBinding>& bindings_config, const std::pmr::vector<PropertyBinding>& bindings) {
+    for(const auto& binding : bindings) {
+        CborPropertyBinding binding_config(std::allocator_arg, Mrm::GetExtPmr());
+
+        binding_config.target = static_cast<uint32_t>(binding.target);
+        binding_config.channel = static_cast<uint32_t>(binding.channel);
+        binding_config.event_type = binding.event_type;
+        binding_config.payload_key = binding.payload_key;
+        binding_config.direction = static_cast<uint32_t>(binding.direction);
+        binding_config.outbound_event_type = binding.outbound_event_type;
+        binding_config.selector_key = binding.selector_key;
+        binding_config.has_selector = binding.HasSelector();
+
+        // The schema has no null, so an absent selector still has to encode some value.
+        if(binding_config.has_selector)
+            ToCborPropertyValue(binding_config.selector_value, binding.selector_value);
+        else
+            ToCborPropertyValue(binding_config.selector_value, ConfigValue { 0 });
+
+        bindings_config.push_back(std::move(binding_config));
+    }
+}
+
+void FromCborBindings(
+    std::pmr::memory_resource* mr,
+    std::pmr::vector<PropertyBinding>& bindings,
+    const std::pmr::vector<CborPropertyBinding>& bindings_config) {
+
+    for(const auto& binding_config : bindings_config) {
+        PropertyBinding binding;
+
+        binding.target = static_cast<WidgetPropertyType>(binding_config.target);
+        binding.channel = static_cast<EventChannelId>(binding_config.channel);
+        binding.event_type = binding_config.event_type;
+        binding.payload_key = binding_config.payload_key;
+        binding.direction = static_cast<PropertyBindingDirection>(binding_config.direction);
+        binding.outbound_event_type = binding_config.outbound_event_type;
+        binding.selector_key = binding_config.selector_key;
+
+        if(binding_config.has_selector)
+            binding.selector_value = FromCborPropertyValue(mr, binding_config.selector_value);
+
+        bindings.push_back(std::move(binding));
+    }
 }
 
 } // namespace
@@ -80,6 +211,9 @@ pmr_unique_ptr<CborUiConfig> UiConfigurationCborParser::Serialize(const UiConfig
                 configuration.screen_configurations[i]->widget_configurations[j]->is_visible);
 
             widget_config.CborPropertyBinding_m.clear();
+            ToCborBindings(
+                widget_config.CborPropertyBinding_m,
+                configuration.screen_configurations[i]->widget_configurations[j]->bindings);
 
             screen_config.CborWidgetConfig_m.push_back(std::move(widget_config));
         }
@@ -136,6 +270,11 @@ pmr_unique_ptr<UiConfiguration> UiConfigurationCborParser::Deserialize(
                 widget_configuration->properties.erase(is_visible);
             }
 
+            FromCborBindings(
+                mr,
+                widget_configuration->bindings,
+                config.CborScreenConfig_m[i].CborWidgetConfig_m[j].CborPropertyBinding_m);
+
             screen_configuration->AddWidget(std::move(widget_configuration));
         }
 
@@ -148,58 +287,13 @@ pmr_unique_ptr<UiConfiguration> UiConfigurationCborParser::Deserialize(
 }
 
 void UiConfigurationCborParser::ValueTypeToCborPropertyValueType(CborPropertiesConfig& properties_config, const std::pmr::unordered_map<std::pmr::string, ConfigValue>& properties) {
-    size_t i = 0;
     for(auto& [key, value] : properties) {
         CborPropertiesConfig_CborPropertyValueType_m property_value(std::allocator_arg, Mrm::GetExtPmr());
         property_value.CborPropertyValueType_m_key = CborHelpers::ToZcborString(key);
 
-        auto& prop = property_value.CborPropertyValueType_m;
-        std::visit([&](auto&& arg) {
-            using T = std::decay_t<decltype(arg)>;
-
-            if constexpr (std::is_same_v<T, int>) {
-                prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_int_c;
-                prop.value = static_cast<int32_t>(arg);
-            } else if constexpr (std::is_same_v<T, double>) {
-                prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_float_c;
-                prop.value = static_cast<double>(arg);
-            } else if constexpr (std::is_same_v<T, std::pmr::string>) {
-                prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_tstr_c;
-                prop.value = CborHelpers::ToZcborString(arg);
-            }
-            else if constexpr (std::is_same_v<T, bool>) {
-                prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_bool_c;
-                prop.value = arg;
-            } else if constexpr (std::is_same_v<T, std::pmr::vector<int>>) {
-                prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_int_l_c;
-
-                prop.value = std::pmr::vector<int32_t>(Mrm::GetExtPmr());
-                for (auto it = arg.begin(); it != arg.end(); ++it)
-                    std::get<std::pmr::vector<int32_t>>(prop.value).push_back(*it);
-            } else if constexpr (std::is_same_v<T, std::pmr::vector<std::pmr::string>>) {
-                prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_tstr_l_c;
-
-                prop.value = std::pmr::vector<zcbor_string>(Mrm::GetExtPmr());
-                for (auto it = arg.begin(); it != arg.end(); ++it)
-                    std::get<std::pmr::vector<zcbor_string>>(prop.value).push_back(CborHelpers::ToZcborString(*it));
-            } else if constexpr (std::is_same_v<T, std::pmr::unordered_map<std::pmr::string, std::pmr::string>>) {
-                prop.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_map_c;
-
-                prop.value = std::pmr::vector<map_tstrtstr>(Mrm::GetExtPmr());
-                for (auto it = arg.begin(); it != arg.end(); ++it) {
-                    std::get<std::pmr::vector<map_tstrtstr>>(prop.value).push_back({
-                        .tstrtstr_key = CborHelpers::ToZcborString(it->first),
-                        .tstrtstr = CborHelpers::ToZcborString(it->second)
-                    });
-                }
-            } else {
-                throw std::runtime_error("Unsupported property value type");
-            }
-        }, value);
+        ToCborPropertyValue(property_value.CborPropertyValueType_m, value);
 
         properties_config.CborPropertyValueType_m.push_back(std::move(property_value));
-
-        ++i;
     }
 }
 
@@ -208,44 +302,10 @@ void UiConfigurationCborParser::CborPropertyValueTypeToValueType(
     std::pmr::unordered_map<std::pmr::string, ConfigValue>& properties,
     const CborPropertiesConfig& properties_config) {
 
-    if(properties_config.CborPropertyValueType_m.size() == 0)
-        return;
-
     for(auto& property : properties_config.CborPropertyValueType_m) {
-        ConfigValue value;
-        std::visit([&](auto&& arg) {
-            using T = std::decay_t<decltype(arg)>;
-
-            if constexpr (std::is_same_v<T, int32_t>) {
-                value = arg;
-            } else if constexpr (std::is_same_v<T, double>) {
-                value = static_cast<double>(arg);
-            } else if constexpr (std::is_same_v<T, zcbor_string>) {
-                value = CborHelpers::ToPmrString(mr, arg);
-            } else if constexpr (std::is_same_v<T, bool>) {
-                value = arg;
-            } else if constexpr (std::is_same_v<T, std::pmr::vector<int32_t>>) {
-                value = std::pmr::vector<int>(mr);
-                for (const auto& it : arg)
-                    std::get<std::pmr::vector<int>>(value).push_back(it);
-            } else if constexpr (std::is_same_v<T, std::pmr::vector<zcbor_string>>) {
-                value = std::pmr::vector<std::pmr::string>(mr);
-                for (const auto& it : arg)
-                    std::get<std::pmr::vector<std::pmr::string>>(value).push_back(CborHelpers::ToPmrString(mr, it));
-            } else if constexpr (std::is_same_v<T, std::pmr::unordered_map<zcbor_string, zcbor_string>>) {
-                value = std::pmr::unordered_map<std::pmr::string, std::pmr::string>(mr);
-                for (const auto& it : arg) {
-                    std::get<std::pmr::unordered_map<std::pmr::string, std::pmr::string>>(value).insert({
-                        CborHelpers::ToPmrString(mr, it.tstrtstr_key),
-                        CborHelpers::ToPmrString(mr, it.tstrtstr)
-                    });
-                }
-            } else {
-                throw std::runtime_error("Unsupported property value type");
-            }
-        }, property.CborPropertyValueType_m.value);
-
-        properties.emplace(CborHelpers::ToPmrString(mr, property.CborPropertyValueType_m_key), std::move(value));
+        properties.emplace(
+            CborHelpers::ToPmrString(mr, property.CborPropertyValueType_m_key),
+            FromCborPropertyValue(mr, property.CborPropertyValueType_m));
     }
 }
 

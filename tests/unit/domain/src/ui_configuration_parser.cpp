@@ -50,6 +50,26 @@ pmr_unique_ptr<UiConfiguration> ui_configuration_parser_GetTestUiConfiguration()
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+
+    // Two targets fed by one source, which is the fan-out the binding list exists for.
+    PropertyBinding value_binding;
+    value_binding.target = WidgetPropertyType::VALUE;
+    value_binding.channel = EventChannelId::Sensors;
+    value_binding.event_type = 0;
+    value_binding.payload_key = 1;
+    value_binding.selector_key = 0;
+    value_binding.selector_value = std::pmr::string("sensor_1");
+    widget1->bindings.push_back(std::move(value_binding));
+
+    PropertyBinding visibility_binding;
+    visibility_binding.target = WidgetPropertyType::IS_VISIBLE;
+    visibility_binding.channel = EventChannelId::Sensors;
+    visibility_binding.event_type = 0;
+    visibility_binding.payload_key = 1;
+    visibility_binding.selector_key = 0;
+    visibility_binding.selector_value = std::pmr::string("sensor_1");
+    widget1->bindings.push_back(std::move(visibility_binding));
+
     screen_configuration->AddWidget(std::move(widget1));
 
     // Second widget
@@ -64,6 +84,17 @@ pmr_unique_ptr<UiConfiguration> ui_configuration_parser_GetTestUiConfiguration()
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+
+    // Two-way and unconditional: the selector stays unset and the outbound event carries the write.
+    PropertyBinding setting_binding;
+    setting_binding.target = WidgetPropertyType::VALUE;
+    setting_binding.channel = EventChannelId::Settings;
+    setting_binding.event_type = 0;
+    setting_binding.payload_key = 1;
+    setting_binding.direction = PropertyBindingDirection::InOut;
+    setting_binding.outbound_event_type = 2;
+    widget2->bindings.push_back(std::move(setting_binding));
+
     screen_configuration->AddWidget(std::move(widget2));
 
     // Third widget
@@ -114,6 +145,23 @@ void ui_configuration_parser_CompareUiConfigurations(UiConfiguration& ui_configu
             for(auto& property : ui_configuration.screen_configurations[i]->widget_configurations[j]->properties) {
                 zassert_true(deserialized_ui_configuration.screen_configurations[i]->widget_configurations[j]->properties[property.first] == ui_configuration.screen_configurations[i]->widget_configurations[j]->properties[property.first]);
             }
+
+            const auto& bindings = ui_configuration.screen_configurations[i]->widget_configurations[j]->bindings;
+            const auto& deserialized_bindings = deserialized_ui_configuration.screen_configurations[i]->widget_configurations[j]->bindings;
+
+            zassert_equal(deserialized_bindings.size(), bindings.size());
+
+            for(std::size_t k = 0; k < bindings.size(); k++) {
+                zassert_equal(deserialized_bindings[k].target, bindings[k].target);
+                zassert_equal(deserialized_bindings[k].channel, bindings[k].channel);
+                zassert_equal(deserialized_bindings[k].event_type, bindings[k].event_type);
+                zassert_equal(deserialized_bindings[k].payload_key, bindings[k].payload_key);
+                zassert_equal(deserialized_bindings[k].direction, bindings[k].direction);
+                zassert_equal(deserialized_bindings[k].outbound_event_type, bindings[k].outbound_event_type);
+                zassert_equal(deserialized_bindings[k].selector_key, bindings[k].selector_key);
+                zassert_equal(deserialized_bindings[k].HasSelector(), bindings[k].HasSelector());
+                zassert_true(deserialized_bindings[k].selector_value == bindings[k].selector_value);
+            }
         }
     }
 }
@@ -128,6 +176,46 @@ ZTEST(ui_configuration_parser, test_CborSerializeDeserialize) {
 
     ui_configuration_parser_CompareUiConfigurations(
         *ui_configuration, *deserialized_ui_configuration);
+}
+
+ZTEST(ui_configuration_parser, test_CborRoundTripKeepsBindingDetail) {
+    UiConfigurationCborParser parser;
+
+    auto ui_configuration = ui_configuration_parser_GetTestUiConfiguration();
+    auto serialized = parser.Serialize(*ui_configuration);
+    auto deserialized = parser.Deserialize(Mrm::GetDefaultPmr(), *serialized.get());
+
+    const auto& widgets = deserialized->screen_configurations[0]->widget_configurations;
+
+    const auto& fanned_out = widgets[0]->bindings;
+    zassert_equal(fanned_out.size(), 2U);
+
+    // Same source, two targets.
+    zassert_equal(fanned_out[0].channel, EventChannelId::Sensors);
+    zassert_equal(fanned_out[1].channel, EventChannelId::Sensors);
+    zassert_equal(fanned_out[0].payload_key, fanned_out[1].payload_key);
+    zassert_not_equal(fanned_out[0].target, fanned_out[1].target);
+
+    zassert_true(fanned_out[0].HasSelector());
+    zassert_true(std::get<std::pmr::string>(fanned_out[0].selector_value) == "sensor_1");
+
+    const auto& two_way = widgets[1]->bindings;
+    zassert_equal(two_way.size(), 1U);
+    zassert_equal(two_way[0].direction, PropertyBindingDirection::InOut);
+    zassert_equal(two_way[0].outbound_event_type, 2U);
+
+    // An unset selector must not come back as a decoded value.
+    zassert_false(two_way[0].HasSelector());
+}
+
+ZTEST(ui_configuration_parser, test_CborRoundTripKeepsAWidgetWithoutBindings) {
+    UiConfigurationCborParser parser;
+
+    auto ui_configuration = ui_configuration_parser_GetTestUiConfiguration();
+    auto serialized = parser.Serialize(*ui_configuration);
+    auto deserialized = parser.Deserialize(Mrm::GetDefaultPmr(), *serialized.get());
+
+    zassert_true(deserialized->screen_configurations[0]->widget_configurations[2]->bindings.empty());
 }
 
 ZTEST(ui_configuration_parser, test_CborDeserializeOrdersWidgetsByZIndex) {
