@@ -13,14 +13,15 @@ class ToggleControl : public ControlBase {
 private:
     lv_obj_t* lv_switch_ = nullptr;
 
-    void SyncFromSetting();
+    void UpdateSwitch();
 
     int DoRender() override;
     int ApplyTheme(const ITheme& theme) override;
 
 protected:
     void OnControlEvent(lv_event_code_t code) override;
-    void OnSettingChanged() override;
+    void RegisterProperties(WidgetPropertyStore& store) override;
+    void OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) override;
 
 public:
     explicit ToggleControl(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context);

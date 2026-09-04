@@ -23,7 +23,7 @@
 
 #include "domain/configuration_domain/services/configuration_service.h"
 #include "domain/sensor_domain/utilities/sensor_readings_frame.hpp"
-#include "domain/settings_domain/utilities/settings_registry.h"
+#include "domain/settings_domain/services/settings_persistence_service.h"
 
 #include "event_bus/event_channels.h"
 #include "event_bus/ui_signal_bridge.h"
@@ -50,7 +50,7 @@ using namespace eerie_leap::subsys::time;
 using namespace eerie_leap::domain::configuration_domain::services;
 using namespace eerie_leap::domain::sensor_domain::utilities;
 using namespace eerie_leap::domain::ui_domain::services;
-using namespace eerie_leap::domain::settings_domain::utilities;
+using namespace eerie_leap::domain::settings_domain::services;
 
 using namespace eerie_leap::event_bus;
 
@@ -114,13 +114,16 @@ int main() {
         gpio = nullptr;
     }
 
-    auto settings_registry = std::make_shared<SettingsRegistry>();
+    // Owns the debounce between a setting settling and its owner writing flash. Constructed
+    // before any owner so a change published during initialization is already observed.
+    auto settings_persistence_service = std::make_shared<SettingsPersistenceService>(config_work_queue_thread);
+    if(settings_persistence_service->Initialize() != 0)
+        LOG_ERR("Failed to initialize the settings persistence service.");
 
     auto display_controller = std::make_shared<DisplayController>(
         fs_service,
         config_work_queue_thread,
-        configuration_service,
-        settings_registry);
+        configuration_service);
     if(display_controller->Initialize() != 0) {
         LOG_ERR("Failed to initialize the display controller.");
         return -1;
@@ -132,7 +135,6 @@ int main() {
         fs_service,
         config_work_queue_thread,
         configuration_service,
-        settings_registry,
         sensor_readings_frame);
     if(ui_controller->Initialize() != 0) {
         LOG_ERR("Failed to initialize the UI controller.");

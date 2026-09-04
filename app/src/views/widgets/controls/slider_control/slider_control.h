@@ -12,7 +12,8 @@ namespace eerie_leap::views::widgets::controls {
 class SliderControl : public ControlBase {
 private:
     lv_obj_t* lv_slider_ = nullptr;
-    double configured_step_ = 0;
+
+    // Ordered and quantized form of MIN_VALUE/MAX_VALUE/STEP; LVGL works in whole steps.
     double min_ = 0;
     double max_ = 0;
     double step_ = 1;
@@ -21,23 +22,19 @@ private:
     int32_t ToIndex(double value) const;
     double ToValue(int32_t index) const;
     void ApplyRange();
-    void SyncFromSetting();
+    void UpdateSlider();
 
     int DoRender() override;
     int ApplyTheme(const ITheme& theme) override;
 
 protected:
-    void OnRangeResolved() override;
     void OnControlEvent(lv_event_code_t code) override;
-    void OnSettingChanged() override;
 
 public:
     explicit SliderControl(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context);
 
 protected:
-    void RegisterProperties(WidgetPropertyStore& store) override;
     void OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) override;
-    void OnConfigured() override;
 
 public:
     WidgetType GetType() const override { return WidgetType::ControlSlider; }

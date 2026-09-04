@@ -14,8 +14,6 @@ using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::themes;
 
-using eerie_leap::domain::settings_domain::utilities::ToSettingNumber;
-
 SettingIndicator::SettingIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : SettingWidgetBase(id, std::move(parent), std::move(context)) {}
 
@@ -42,10 +40,15 @@ void SettingIndicator::OnPropertyChanged(WidgetPropertyType type, const ConfigVa
             value_precision_ = std::clamp(ConfigValueAs<int>(value, 0), 0, max_value_precision_);
             break;
 
+        case WidgetPropertyType::VALUE:
+            break;
+
         default:
             SettingWidgetBase::OnPropertyChanged(type, value);
-            break;
+            return;
     }
+
+    UpdateText();
 }
 
 int SettingIndicator::DoRender() {
@@ -71,25 +74,17 @@ int SettingIndicator::ApplyTheme(const ITheme& theme) {
     return 0;
 }
 
-void SettingIndicator::OnSettingChanged() {
-    UpdateText();
-}
-
 void SettingIndicator::UpdateText() {
     if(lv_label_ == nullptr)
         return;
 
-    std::optional<double> number;
-    if(auto value = GetSettingValue())
-        number = ToSettingNumber(*value);
-
     char text[128];
-    if(number.has_value())
+    if(HasSetting())
         snprintf(text, sizeof(text), "%s%s%.*f%s",
             label_.c_str(),
             label_.empty() ? "" : " ",
             value_precision_,
-            *number,
+            properties_->GetAs<double>(WidgetPropertyType::VALUE, 0),
             unit_.c_str());
     else
         snprintf(text, sizeof(text), "%s", label_.c_str());

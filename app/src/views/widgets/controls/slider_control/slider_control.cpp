@@ -13,50 +13,48 @@ using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::themes;
 
-using eerie_leap::domain::settings_domain::utilities::ToSettingNumber;
-
 SliderControl::SliderControl(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : ControlBase(id, std::move(parent), std::move(context), true) {}
 
-void SliderControl::RegisterProperties(WidgetPropertyStore& store) {
-    ControlBase::RegisterProperties(store);
-
-    store.Register(WidgetPropertyType::STEP, ConfigValue { 0.0 }, PropertyChangeEffect::Repaint);
-}
-
 void SliderControl::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
-    if(type == WidgetPropertyType::STEP) {
-        configured_step_ = ConfigValueAs<double>(value, 0);
-        return;
+    switch(type) {
+        case WidgetPropertyType::MIN_VALUE:
+        case WidgetPropertyType::MAX_VALUE:
+        case WidgetPropertyType::STEP:
+            ControlBase::OnPropertyChanged(type, value);
+            ApplyRange();
+            break;
+
+        case WidgetPropertyType::VALUE:
+            ControlBase::OnPropertyChanged(type, value);
+            UpdateSlider();
+            break;
+
+        default:
+            ControlBase::OnPropertyChanged(type, value);
+            break;
     }
-
-    ControlBase::OnPropertyChanged(type, value);
 }
 
-// After the base has resolved the setting range, which ApplyRange reads.
-void SliderControl::OnConfigured() {
-    ControlBase::OnConfigured();
-
-    ApplyRange();
-}
-
-void SliderControl::OnRangeResolved() {
-    ApplyRange();
-}
-
+// Reads the store rather than caching each bound value: the three arrive as separate events and
+// only make sense together.
 void SliderControl::ApplyRange() {
-    double range_step = range_.has_value() && range_->step > 0 ? range_->step : 1.0;
-    step_ = configured_step_ > 0 ? configured_step_ : range_step;
+    double low = properties_->GetAs<double>(WidgetPropertyType::MIN_VALUE, 0);
+    double high = properties_->GetAs<double>(WidgetPropertyType::MAX_VALUE, 0);
+    double step = properties_->GetAs<double>(WidgetPropertyType::STEP, 0);
 
-    // Ordered up front so a binding that declares its bounds the wrong way round
-    // cannot reach std::clamp with lo > hi.
-    min_ = range_.has_value() ? std::min(range_->min, range_->max) : 0;
-    max_ = range_.has_value() ? std::max(range_->min, range_->max) : 0;
+    // Ordered up front so an owner that declares its bounds the wrong way round cannot reach
+    // std::clamp with lo > hi.
+    min_ = std::min(low, high);
+    max_ = std::max(low, high);
+    step_ = step > 0 ? step : 1.0;
 
     step_count_ = std::max(static_cast<int32_t>(std::lround((max_ - min_) / step_)), 1);
 
     if(lv_slider_ != nullptr)
         lv_slider_set_range(lv_slider_, 0, step_count_);
+
+    UpdateSlider();
 }
 
 int32_t SliderControl::ToIndex(double value) const {
@@ -78,7 +76,7 @@ int SliderControl::DoRender() {
 
     AttachEvents(lv_slider_, { LV_EVENT_VALUE_CHANGED, LV_EVENT_RELEASED });
 
-    SyncFromSetting();
+    UpdateSlider();
 
     container_->SetChild(std::make_shared<Frame>(Frame::Create(lv_slider_).Build()));
 
@@ -100,48 +98,31 @@ int SliderControl::ApplyTheme(const ITheme& theme) {
 
 void SliderControl::OnControlEvent(lv_event_code_t code) {
     if(code == LV_EVENT_VALUE_CHANGED) {
-        // Writing without a resolved range would send the binding a value derived
-        // from the placeholder 0..0 bounds.
-        if(!range_.has_value())
+        // Asking without a range would send a value derived from the placeholder 0..0 bounds.
+        if(max_ <= min_)
             return;
 
-        if(SetSettingValue(ConfigValue { ToValue(lv_slider_get_value(lv_slider_)) }) != 0)
-            SyncFromSetting();
+        RequestSettingValue(ConfigValue { ToValue(lv_slider_get_value(lv_slider_)) });
 
         return;
     }
 
-    // Applied on every drag tick, persisted only once the finger is lifted. The
-    // sync settles the knob onto whatever the binding actually took, since the
-    // publications raised during the drag were ignored.
-    if(code == LV_EVENT_RELEASED) {
-        CommitSetting();
-        SyncFromSetting();
-    }
+    // Requests go out on every drag tick; the settle happens once the finger is lifted, when
+    // the knob is free to jump to whatever the owner actually took.
+    if(code == LV_EVENT_RELEASED)
+        UpdateSlider();
 }
 
-void SliderControl::OnSettingChanged() {
-    // The publication this widget just caused would otherwise snap the knob away
-    // from the finger between drag ticks.
-    if(lv_slider_ != nullptr && lv_obj_has_state(lv_slider_, LV_STATE_PRESSED))
-        return;
-
-    SyncFromSetting();
-}
-
-void SliderControl::SyncFromSetting() {
+void SliderControl::UpdateSlider() {
     if(lv_slider_ == nullptr)
         return;
 
-    auto value = GetSettingValue();
-    if(!value.has_value())
+    // The value this widget just asked for would otherwise snap the knob away from the finger
+    // between drag ticks.
+    if(lv_obj_has_state(lv_slider_, LV_STATE_PRESSED))
         return;
 
-    auto number = ToSettingNumber(*value);
-    if(!number.has_value())
-        return;
-
-    lv_slider_set_value(lv_slider_, ToIndex(*number), LV_ANIM_OFF);
+    lv_slider_set_value(lv_slider_, ToIndex(properties_->GetAs<double>(WidgetPropertyType::VALUE, 0)), LV_ANIM_OFF);
 }
 
 } // namespace eerie_leap::views::widgets::controls

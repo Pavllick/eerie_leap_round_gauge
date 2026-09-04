@@ -1,17 +1,32 @@
 #include <utility>
 
+#include "domain/ui_domain/models/widget_property.h"
+
 #include "toggle_control.h"
 
 namespace eerie_leap::views::widgets::controls {
 
 using namespace eerie_leap::utilities::type;
+using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::themes;
 
-using eerie_leap::domain::settings_domain::utilities::ToSettingBoolean;
-
 ToggleControl::ToggleControl(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : ControlBase(id, std::move(parent), std::move(context), true) {}
+
+// A toggle carries a boolean where the base assumes a number.
+void ToggleControl::RegisterProperties(WidgetPropertyStore& store) {
+    ControlBase::RegisterProperties(store);
+
+    store.Register(WidgetPropertyType::VALUE, ConfigValue { false }, PropertyChangeEffect::Repaint);
+}
+
+void ToggleControl::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
+    ControlBase::OnPropertyChanged(type, value);
+
+    if(type == WidgetPropertyType::VALUE)
+        UpdateSwitch();
+}
 
 int ToggleControl::DoRender() {
     lv_switch_ = lv_switch_create(container_->GetObject());
@@ -20,7 +35,7 @@ int ToggleControl::DoRender() {
 
     AttachEvents(lv_switch_, { LV_EVENT_VALUE_CHANGED });
 
-    SyncFromSetting();
+    UpdateSwitch();
 
     container_->SetChild(std::make_shared<Frame>(Frame::Create(lv_switch_).Build()));
 
@@ -44,34 +59,14 @@ void ToggleControl::OnControlEvent(lv_event_code_t code) {
     if(code != LV_EVENT_VALUE_CHANGED)
         return;
 
-    bool is_checked = lv_obj_has_state(lv_switch_, LV_STATE_CHECKED);
-
-    // A toggle has no drag, so applying and persisting happen together.
-    if(SetSettingValue(ConfigValue { is_checked }) != 0) {
-        SyncFromSetting();
-        return;
-    }
-
-    CommitSetting();
+    RequestSettingValue(ConfigValue { lv_obj_has_state(lv_switch_, LV_STATE_CHECKED) });
 }
 
-void ToggleControl::OnSettingChanged() {
-    SyncFromSetting();
-}
-
-void ToggleControl::SyncFromSetting() {
+void ToggleControl::UpdateSwitch() {
     if(lv_switch_ == nullptr)
         return;
 
-    auto value = GetSettingValue();
-    if(!value.has_value())
-        return;
-
-    auto is_checked = ToSettingBoolean(*value);
-    if(!is_checked.has_value())
-        return;
-
-    if(*is_checked)
+    if(properties_->GetAs<bool>(WidgetPropertyType::VALUE, false))
         lv_obj_add_state(lv_switch_, LV_STATE_CHECKED);
     else
         lv_obj_remove_state(lv_switch_, LV_STATE_CHECKED);

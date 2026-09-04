@@ -57,12 +57,10 @@ UiController::UiController(
     std::shared_ptr<IFsService> fs_service,
     std::shared_ptr<WorkQueueThread> config_work_queue_thread,
     std::shared_ptr<ConfigurationService> configuration_service,
-    std::shared_ptr<SettingsRegistry> settings_registry,
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame)
         : fs_service_(std::move(fs_service)),
         config_work_queue_thread_(std::move(config_work_queue_thread)),
         configuration_service_(std::move(configuration_service)),
-        settings_registry_(std::move(settings_registry)),
         sensor_readings_frame_(std::move(sensor_readings_frame)) {}
 
 UiController::~UiController() {
@@ -127,7 +125,6 @@ int UiController::Initialize() {
 
     widget_context_ = WidgetContext {
         .assets_manager = ui_assets_manager_,
-        .settings_provider = settings_registry_,
         .navigation_service = navigation_service_
     };
 
@@ -249,10 +246,6 @@ void UiController::OnNavigationChanged(const NavigationEventChannel::EventMessag
 
 std::shared_ptr<NavigationService> UiController::GetNavigationService() const {
     return navigation_service_;
-}
-
-std::shared_ptr<SettingsRegistry> UiController::GetSettingsRegistry() const {
-    return settings_registry_;
 }
 
 std::shared_ptr<IScreen> UiController::CreateScreen(std::shared_ptr<ScreenConfiguration> configuration) {

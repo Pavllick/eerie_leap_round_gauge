@@ -29,9 +29,6 @@ private:
     int DoRender() override;
     int ApplyTheme(const ITheme& theme) override;
 
-protected:
-    void OnSettingChanged() override;
-
 public:
     explicit SettingIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context);
 

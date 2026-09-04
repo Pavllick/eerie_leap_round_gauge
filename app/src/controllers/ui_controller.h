@@ -19,7 +19,6 @@
 #include "domain/ui_domain/services/ui_renderer_service.h"
 #include "domain/ui_domain/services/sensors_rendering_service.h"
 #include "domain/ui_domain/services/navigation_service.h"
-#include "domain/settings_domain/utilities/settings_registry.h"
 #include "domain/ui_domain/services/ui_input_service.h"
 
 #include "event_bus/ui_signal_bridge.h"
@@ -45,7 +44,6 @@ using eerie_leap::subsys::event_bus::AnySubscription;
 using eerie_leap::domain::ui_domain::services::UiRendererService;
 using eerie_leap::domain::ui_domain::services::SensorsRenderingService;
 using eerie_leap::domain::ui_domain::services::NavigationService;
-using eerie_leap::domain::settings_domain::utilities::SettingsRegistry;
 using eerie_leap::domain::ui_domain::services::UiInputService;
 
 using eerie_leap::views::MainView;
@@ -65,7 +63,6 @@ private:
     std::shared_ptr<IFsService> fs_service_;
     std::shared_ptr<WorkQueueThread> config_work_queue_thread_;
     std::shared_ptr<ConfigurationService> configuration_service_;
-    std::shared_ptr<SettingsRegistry> settings_registry_;
     std::shared_ptr<SensorReadingsFrame> sensor_readings_frame_;
 
     std::shared_ptr<UiConfigurationManager> ui_configuration_manager_;
@@ -103,7 +100,6 @@ public:
         std::shared_ptr<IFsService> fs_service,
         std::shared_ptr<WorkQueueThread> config_work_queue_thread,
         std::shared_ptr<ConfigurationService> configuration_service,
-        std::shared_ptr<SettingsRegistry> settings_registry,
         std::shared_ptr<SensorReadingsFrame> sensor_readings_frame);
     ~UiController();
 
@@ -111,7 +107,6 @@ public:
     int Start();
 
     std::shared_ptr<NavigationService> GetNavigationService() const;
-    std::shared_ptr<SettingsRegistry> GetSettingsRegistry() const;
 };
 
 } // namespace eerie_leap::controllers

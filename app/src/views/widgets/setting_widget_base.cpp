@@ -1,13 +1,17 @@
-#include <cerrno>
+#include <cstdint>
 #include <utility>
+#include <variant>
 
 #include <zephyr/logging/log.h>
 
+#include "utilities/reflection/caller_name.h"
 #include "utilities/string/string_helpers.h"
 
+#include "domain/settings_domain/event_bus/settings_events_channel.h"
 #include "domain/ui_domain/models/widget_property.h"
 
 #include "views/widgets/event_bus_filters/setting_filter.h"
+#include "views/widgets/property_value_conversion.h"
 
 #include "setting_widget_base.h"
 
@@ -17,6 +21,7 @@ using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::settings_domain::event_bus;
 using namespace eerie_leap::domain::ui_domain::models;
 
+using eerie_leap::utilities::reflection::GetCallerName;
 using eerie_leap::utilities::string::StringHelpers;
 using eerie_leap::views::widgets::event_bus_filters::SettingFilter;
 
@@ -29,11 +34,17 @@ void SettingWidgetBase::RegisterProperties(WidgetPropertyStore& store) {
     WidgetBase::RegisterProperties(store);
 
     store.Register(WidgetPropertyType::SETTING_ID, ConfigValue { std::pmr::string { } }, PropertyChangeEffect::None);
+    store.Register(WidgetPropertyType::VALUE, ConfigValue { 0.0 }, PropertyChangeEffect::Repaint);
+    store.Register(WidgetPropertyType::MIN_VALUE, ConfigValue { 0.0 }, PropertyChangeEffect::Relayout);
+    store.Register(WidgetPropertyType::MAX_VALUE, ConfigValue { 0.0 }, PropertyChangeEffect::Relayout);
+    store.Register(WidgetPropertyType::STEP, ConfigValue { 0.0 }, PropertyChangeEffect::Relayout);
 }
 
 void SettingWidgetBase::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
     if(type == WidgetPropertyType::SETTING_ID) {
         setting_id_ = ConfigValueAs<std::pmr::string>(value, "");
+        setting_id_hash_ = setting_id_.empty() ? 0 : StringHelpers::GetHash(setting_id_);
+
         return;
     }
 
@@ -43,72 +54,77 @@ void SettingWidgetBase::OnPropertyChanged(WidgetPropertyType type, const ConfigV
 void SettingWidgetBase::OnConfigured() {
     WidgetBase::OnConfigured();
 
-    if(setting_id_.empty())
+    if(!HasSetting())
         return;
-
-    if(context_.settings_provider == nullptr) {
-        LOG_WRN("Widget %u binds setting '%s' without a settings provider.", id_, setting_id_.c_str());
-        return;
-    }
-
-    RefreshRange();
 
     SubscribeWhileActive(
         SettingsEventsChannel::GetInstance(),
         SettingsEventType::Changed,
-        SettingFilter { StringHelpers::GetHash(setting_id_) },
-        [this](const SettingsEventsChannel::EventMessage&) { OnSettingChanged(); });
-}
+        SettingFilter { setting_id_hash_ },
+        [this](const SettingsEventsChannel::EventMessage& event) {
+            auto it = event.payload.find(SettingsPayloadType::Value);
+            if(it != event.payload.end())
+                ApplyProperty(WidgetPropertyType::VALUE, ToConfigValue(it->second));
+        });
 
-void SettingWidgetBase::RefreshRange() {
-    if(range_.has_value() || !HasSetting())
-        return;
+    SubscribeWhileActive(
+        SettingsEventsChannel::GetInstance(),
+        SettingsEventType::RangeChanged,
+        SettingFilter { setting_id_hash_ },
+        [this](const SettingsEventsChannel::EventMessage& event) {
+            auto min = event.payload.find(SettingsPayloadType::MinValue);
+            if(min != event.payload.end())
+                ApplyProperty(WidgetPropertyType::MIN_VALUE, ToConfigValue(min->second));
 
-    range_ = context_.settings_provider->GetRange(setting_id_);
-    if(!range_.has_value()) {
-        LOG_WRN("Widget %u binds unregistered setting '%s'.", id_, setting_id_.c_str());
-        return;
-    }
+            auto max = event.payload.find(SettingsPayloadType::MaxValue);
+            if(max != event.payload.end())
+                ApplyProperty(WidgetPropertyType::MAX_VALUE, ToConfigValue(max->second));
 
-    OnRangeResolved();
+            auto step = event.payload.find(SettingsPayloadType::Step);
+            if(step != event.payload.end())
+                ApplyProperty(WidgetPropertyType::STEP, ToConfigValue(step->second));
+        });
+
+    RequestSettingState();
 }
 
 void SettingWidgetBase::OnActivated() {
     WidgetBase::OnActivated();
 
-    RefreshRange();
-
-    if(IsReady())
-        OnSettingChanged();
+    RequestSettingState();
 }
-
-void SettingWidgetBase::OnRangeResolved() { }
-
-void SettingWidgetBase::OnSettingChanged() { }
 
 bool SettingWidgetBase::HasSetting() const {
-    return !setting_id_.empty() && context_.settings_provider != nullptr;
+    return setting_id_hash_ != 0;
 }
 
-std::optional<ConfigValue> SettingWidgetBase::GetSettingValue() const {
-    if(!HasSetting())
-        return std::nullopt;
+void SettingWidgetBase::RequestSettingValue(const ConfigValue& value) const {
+    static constexpr auto caller = GetCallerName();
 
-    return context_.settings_provider->Get(setting_id_);
+    if(!HasSetting())
+        return;
+
+    SettingsEventsChannel::GetInstance().PublishAsync({
+        .source_id = caller.hash,
+        .type = SettingsEventType::ChangeRequested,
+        .payload = {
+            { SettingsPayloadType::SettingId, setting_id_hash_ },
+            { SettingsPayloadType::Value, ToEventData(value) }
+        }
+    });
 }
 
-int SettingWidgetBase::SetSettingValue(const ConfigValue& value) {
+void SettingWidgetBase::RequestSettingState() const {
+    static constexpr auto caller = GetCallerName();
+
     if(!HasSetting())
-        return -ENOENT;
+        return;
 
-    return context_.settings_provider->Set(setting_id_, value);
-}
-
-int SettingWidgetBase::CommitSetting() {
-    if(!HasSetting())
-        return -ENOENT;
-
-    return context_.settings_provider->Commit(setting_id_);
+    SettingsEventsChannel::GetInstance().PublishAsync({
+        .source_id = caller.hash,
+        .type = SettingsEventType::StateRequested,
+        .payload = { { SettingsPayloadType::SettingId, setting_id_hash_ } }
+    });
 }
 
 } // namespace eerie_leap::views::widgets

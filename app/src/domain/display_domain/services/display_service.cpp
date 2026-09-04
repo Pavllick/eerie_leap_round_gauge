@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <cerrno>
+#include <cmath>
 #include <utility>
 
 #include <zephyr/device.h>
@@ -7,7 +9,10 @@
 
 #include "subsys/device_tree/dt_display.h"
 #include "subsys/threading/scoped_mutex.h"
+#include "utilities/reflection/caller_name.h"
+#include "utilities/string/string_helpers.h"
 
+#include "domain/settings_domain/models/setting_id.h"
 #include "domain/ui_domain/lvgl_lock.h"
 
 #include "display_service.h"
@@ -15,10 +20,36 @@
 namespace eerie_leap::domain::display_domain::services {
 
 using eerie_leap::subsys::device_tree::DtDisplay;
+using eerie_leap::subsys::event_bus::CreateScopedSubscription;
 using eerie_leap::subsys::threading::ScopedMutex;
+using eerie_leap::utilities::reflection::GetCallerName;
+using eerie_leap::utilities::string::StringHelpers;
+using eerie_leap::domain::settings_domain::models::SettingId;
 using eerie_leap::domain::ui_domain::ScopedLvglLock;
 
+using namespace eerie_leap::domain::settings_domain::event_bus;
+
 LOG_MODULE_REGISTER(display_service_logger);
+
+namespace {
+
+uint32_t BrightnessSettingId() {
+    static const uint32_t id = StringHelpers::GetHash(SettingId::DISPLAY_BRIGHTNESS);
+
+    return id;
+}
+
+bool IsBrightnessSetting(const SettingsEventsChannel::EventMessage& event) {
+    auto it = event.payload.find(SettingsPayloadType::SettingId);
+    if(it == event.payload.end())
+        return false;
+
+    const auto* id = std::get_if<uint32_t>(&it->second);
+
+    return id != nullptr && *id == BrightnessSettingId();
+}
+
+} // namespace
 
 DisplayService::DisplayService(
     std::shared_ptr<DisplayConfigurationManager> configuration_manager,
@@ -30,6 +61,10 @@ DisplayService::DisplayService(
 }
 
 DisplayService::~DisplayService() {
+    change_requested_subscription_.reset();
+    state_requested_subscription_.reset();
+    persist_requested_subscription_.reset();
+
     if(persist_task_.has_value())
         persist_task_->Cancel();
 }
@@ -65,9 +100,91 @@ int DisplayService::Initialize() {
     ApplyBlanking(snapshot.blanking_enabled);
     ApplyBrightness(snapshot.brightness);
 
+    SubscribeSettings();
+
     LOG_INF("Display service initialized. Brightness: %u.", snapshot.brightness);
 
     return 0;
+}
+
+void DisplayService::SubscribeSettings() {
+    change_requested_subscription_ = CreateScopedSubscription(
+        SettingsEventsChannel::GetInstance(),
+        SettingsEventType::ChangeRequested,
+        IsBrightnessSetting,
+        [this](const SettingsEventsChannel::EventMessage& event) { OnBrightnessChangeRequested(event); });
+
+    state_requested_subscription_ = CreateScopedSubscription(
+        SettingsEventsChannel::GetInstance(),
+        SettingsEventType::StateRequested,
+        IsBrightnessSetting,
+        [this](const SettingsEventsChannel::EventMessage&) {
+            PublishBrightnessRange();
+            PublishBrightnessValue();
+        });
+
+    persist_requested_subscription_ = CreateScopedSubscription(
+        SettingsEventsChannel::GetInstance(),
+        SettingsEventType::PersistRequested,
+        IsBrightnessSetting,
+        [this](const SettingsEventsChannel::EventMessage&) { Persist(); });
+
+    PublishBrightnessRange();
+    PublishBrightnessValue();
+}
+
+void DisplayService::OnBrightnessChangeRequested(const SettingsEventsChannel::EventMessage& event) {
+    auto it = event.payload.find(SettingsPayloadType::Value);
+    if(it == event.payload.end())
+        return;
+
+    double requested = 0;
+    if(const auto* int_value = std::get_if<int>(&it->second))
+        requested = *int_value;
+    else if(const auto* float_value = std::get_if<float>(&it->second))
+        requested = *float_value;
+    else
+        return;
+
+    auto clamped = static_cast<uint8_t>(std::lround(std::clamp(requested, brightness_min_, brightness_max_)));
+
+    // Only a value that actually moved is a fact worth waking every subscriber - and worth
+    // re-arming the persistence debounce - for.
+    if(clamped == GetBrightness())
+        return;
+
+    if(SetBrightness(clamped) != 0)
+        return;
+
+    PublishBrightnessValue();
+}
+
+void DisplayService::PublishBrightnessValue() const {
+    static constexpr auto caller = GetCallerName();
+
+    SettingsEventsChannel::GetInstance().PublishAsync({
+        .source_id = caller.hash,
+        .type = SettingsEventType::Changed,
+        .payload = {
+            { SettingsPayloadType::SettingId, BrightnessSettingId() },
+            { SettingsPayloadType::Value, static_cast<int>(GetBrightness()) }
+        }
+    });
+}
+
+void DisplayService::PublishBrightnessRange() const {
+    static constexpr auto caller = GetCallerName();
+
+    SettingsEventsChannel::GetInstance().PublishAsync({
+        .source_id = caller.hash,
+        .type = SettingsEventType::RangeChanged,
+        .payload = {
+            { SettingsPayloadType::SettingId, BrightnessSettingId() },
+            { SettingsPayloadType::MinValue, static_cast<float>(brightness_min_) },
+            { SettingsPayloadType::MaxValue, static_cast<float>(brightness_max_) },
+            { SettingsPayloadType::Step, static_cast<float>(brightness_step_) }
+        }
+    });
 }
 
 bool DisplayService::IsInitialized() const {
@@ -163,8 +280,12 @@ int DisplayService::Reload() {
     ApplyBlanking(snapshot.blanking_enabled);
     ApplyBrightness(snapshot.brightness);
 
-    ScopedMutex guard(lock_);
-    configuration_ = snapshot;
+    {
+        ScopedMutex guard(lock_);
+        configuration_ = snapshot;
+    }
+
+    PublishBrightnessValue();
 
     return 0;
 }
@@ -173,8 +294,9 @@ int DisplayService::Persist() {
     if(!persist_task_.has_value())
         return -ENODEV;
 
-    // Every commit pushes the deadline out, so a burst of them reaches flash once.
-    persist_task_->Reschedule(persist_debounce_);
+    // Reached from the event bus worker, which must not block on flash. Requests that arrive
+    // while a write is already pending coalesce into it.
+    persist_task_->Reschedule(K_NO_WAIT);
 
     return 0;
 }
