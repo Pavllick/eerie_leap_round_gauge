@@ -562,7 +562,6 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_Save_successfully_saved
     widget1.size.width = 100;
     widget1.size.height = 100;
     widget1.z_index = 1;
-    widget1.is_visible = true;
     widget1.properties_present = true;
 
     CborPropertiesConfig_CborPropertyValueType_m prop1(std::allocator_arg, Mrm::GetDefaultPmr());
@@ -582,7 +581,6 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_Save_successfully_saved
     widget2.size.width = 100;
     widget2.size.height = 100;
     widget2.z_index = -4;
-    widget2.is_visible = false;
     widget2.properties_present = true;
 
     CborPropertiesConfig_CborPropertyValueType_m prop2_1(std::allocator_arg, Mrm::GetDefaultPmr());
@@ -655,7 +653,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_Save_successfully_saved
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].size.width, 100);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].size.height, 100);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].z_index, 1);
-    zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].is_visible, true);
+    zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].CborPropertyBinding_m.size(), 0U);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].properties_present, true);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].properties.CborPropertyValueType_m.size(), 1);
     zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[0].properties.CborPropertyValueType_m[0].CborPropertyValueType_m_key), keys[0]);
@@ -669,7 +667,7 @@ ZTEST(configuration_service_ui_config, test_CborUiConfig_Save_successfully_saved
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].size.width, 100);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].size.height, 100);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].z_index, -4);
-    zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].is_visible, false);
+    zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].CborPropertyBinding_m.size(), 0U);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].properties_present, true);
     zassert_equal(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].properties.CborPropertyValueType_m.size(), 4);
     zassert_equal(CborHelpers::ToStdString(loaded_config.value().config->CborScreenConfig_m[0].CborWidgetConfig_m[1].properties.CborPropertyValueType_m[0].CborPropertyValueType_m_key), keys[0]);

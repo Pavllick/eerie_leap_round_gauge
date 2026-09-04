@@ -28,8 +28,20 @@ CborWidgetConfig = [
     position: CborWidgetPositionConfig,
     size: CborWidgetSizeConfig,
     z_index: int,
-    is_visible: bool,
-    ? properties: CborPropertiesConfig
+    ? properties: CborPropertiesConfig,
+    bindings: [* CborPropertyBinding]
+]
+
+CborPropertyBinding = [
+    target: uint,
+    channel: uint,
+    event_type: uint,
+    payload_key: uint,
+    direction: uint,
+    outbound_event_type: uint,
+    has_selector: bool,
+    selector_key: uint,
+    selector_value: CborPropertyValueType
 ]
 
 CborPropertiesConfig = {

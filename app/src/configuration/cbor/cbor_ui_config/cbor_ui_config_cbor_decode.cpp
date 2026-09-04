@@ -22,6 +22,7 @@ static bool decode_CborPropertiesConfig(zcbor_state_t *state, struct CborPropert
 static bool decode_CborGridSettingsConfig(zcbor_state_t *state, struct CborGridSettingsConfig *result);
 static bool decode_CborWidgetPositionConfig(zcbor_state_t *state, struct CborWidgetPositionConfig *result);
 static bool decode_CborWidgetSizeConfig(zcbor_state_t *state, struct CborWidgetSizeConfig *result);
+static bool decode_CborPropertyBinding(zcbor_state_t *state, struct CborPropertyBinding *result);
 static bool decode_CborWidgetConfig(zcbor_state_t *state, struct CborWidgetConfig *result);
 static bool decode_CborScreenConfig(zcbor_state_t *state, struct CborScreenConfig *result);
 static bool decode_CborUiConfig(zcbor_state_t *state, struct CborUiConfig *result);
@@ -251,6 +252,25 @@ static bool decode_CborWidgetSizeConfig(
 	return res;
 }
 
+static bool decode_CborPropertyBinding(
+		zcbor_state_t *state, struct CborPropertyBinding *result)
+{
+	zcbor_log("%s\r\n", __func__);
+
+	bool res = (((zcbor_list_start_decode(state) && ((((zcbor_uint32_decode(state, (&(*result).target))))
+	&& ((zcbor_uint32_decode(state, (&(*result).channel))))
+	&& ((zcbor_uint32_decode(state, (&(*result).event_type))))
+	&& ((zcbor_uint32_decode(state, (&(*result).payload_key))))
+	&& ((zcbor_uint32_decode(state, (&(*result).direction))))
+	&& ((zcbor_uint32_decode(state, (&(*result).outbound_event_type))))
+	&& ((zcbor_bool_decode(state, (&(*result).has_selector))))
+	&& ((zcbor_uint32_decode(state, (&(*result).selector_key))))
+	&& ((decode_CborPropertyValueType(state, (&(*result).selector_value))))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))));
+
+	log_result(state, res, __func__);
+	return res;
+}
+
 static bool decode_CborWidgetConfig(
 		zcbor_state_t *state, struct CborWidgetConfig *result)
 {
@@ -285,12 +305,30 @@ static bool decode_CborWidgetConfig(
 		return false;
 	}
 
-	if (!zcbor_bool_decode(state, &result->is_visible)) {
+	result->properties_present = decode_CborPropertiesConfig(state, &result->properties);
+
+	if (!zcbor_list_start_decode(state)) {
 		zcbor_list_end_decode(state);
 		return false;
 	}
 
-	result->properties_present = decode_CborPropertiesConfig(state, &result->properties);
+	result->CborPropertyBinding_m.clear();
+
+	while (!zcbor_array_at_end(state)) {
+		result->CborPropertyBinding_m.emplace_back();
+		if (!decode_CborPropertyBinding(state, &result->CborPropertyBinding_m.back())) {
+			result->CborPropertyBinding_m.pop_back();
+			zcbor_list_map_end_force_decode(state);
+			zcbor_list_end_decode(state);
+			zcbor_list_end_decode(state);
+			return false;
+		}
+	}
+
+	if (!zcbor_list_end_decode(state)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
 
 	if (!zcbor_list_end_decode(state)) {
 		return false;

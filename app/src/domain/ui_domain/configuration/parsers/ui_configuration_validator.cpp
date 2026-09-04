@@ -24,6 +24,7 @@ static PropertyValueKind GetPropertyValueKind(WidgetPropertyType type) {
     switch(type) {
         case WidgetPropertyType::IS_ACTIVE:
         case WidgetPropertyType::IS_SMOOTHED:
+        case WidgetPropertyType::IS_VISIBLE:
             return PropertyValueKind::Boolean;
 
         case WidgetPropertyType::SENSOR_ID:

@@ -115,6 +115,40 @@ struct CborWidgetSizeConfig {
 	uint32_t height{};
 };
 
+struct CborPropertyBinding {
+	using allocator_type = std::pmr::polymorphic_allocator<>;
+
+	uint32_t target{};
+	uint32_t channel{};
+	uint32_t event_type{};
+	uint32_t payload_key{};
+	uint32_t direction{};
+	uint32_t outbound_event_type{};
+	bool has_selector{};
+	uint32_t selector_key{};
+	CborPropertyValueType_r selector_value;
+
+	CborPropertyBinding(std::allocator_arg_t, allocator_type alloc)
+		: selector_value(std::allocator_arg, alloc) {}
+
+	CborPropertyBinding(const CborPropertyBinding&) = delete;
+	CborPropertyBinding& operator=(const CborPropertyBinding&) noexcept = default;
+	CborPropertyBinding& operator=(CborPropertyBinding&&) noexcept = default;
+	CborPropertyBinding(CborPropertyBinding&&) noexcept = default;
+	~CborPropertyBinding() = default;
+
+	CborPropertyBinding(CborPropertyBinding&& other, allocator_type alloc)
+		: target(other.target),
+		channel(other.channel),
+		event_type(other.event_type),
+		payload_key(other.payload_key),
+		direction(other.direction),
+		outbound_event_type(other.outbound_event_type),
+		has_selector(other.has_selector),
+		selector_key(other.selector_key),
+		selector_value(std::move(other.selector_value), alloc) {}
+};
+
 struct CborWidgetConfig {
 	using allocator_type = std::pmr::polymorphic_allocator<>;
 
@@ -123,12 +157,12 @@ struct CborWidgetConfig {
 	CborWidgetPositionConfig position{};
 	CborWidgetSizeConfig size{};
 	int32_t z_index{};
-	bool is_visible{};
 	CborPropertiesConfig properties;
 	bool properties_present{};
+	std::pmr::vector<CborPropertyBinding> CborPropertyBinding_m;
 
 	CborWidgetConfig(std::allocator_arg_t, allocator_type alloc)
-        : properties(std::allocator_arg, alloc) {}
+        : properties(std::allocator_arg, alloc), CborPropertyBinding_m(alloc) {}
 
     CborWidgetConfig(const CborWidgetConfig&) = delete;
 	CborWidgetConfig& operator=(const CborWidgetConfig&) noexcept = default;
@@ -142,9 +176,9 @@ struct CborWidgetConfig {
 		position(other.position),
 		size(other.size),
 		z_index(other.z_index),
-		is_visible(other.is_visible),
 		properties(std::move(other.properties), alloc),
-		properties_present(other.properties_present) {}
+		properties_present(other.properties_present),
+		CborPropertyBinding_m(std::move(other.CborPropertyBinding_m), alloc) {}
 };
 
 struct CborScreenConfig {

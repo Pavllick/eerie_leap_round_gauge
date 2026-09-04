@@ -111,7 +111,6 @@ static size_t cbor_get_size_CborUiConfig(const CborUiConfig& config) {
                 .AddUint(widget.size.height);
 
             builder.AddInt(widget.z_index);
-            builder.AddBool(widget.is_visible);
 
             builder.AddOptional(widget.properties_present,
                 widget.properties,
@@ -127,6 +126,21 @@ static size_t cbor_get_size_CborUiConfig(const CborUiConfig& config) {
 
                 return builder.Build();
             });
+
+            builder.AddIndefiniteArrayStart();
+            for(const auto& binding : widget.CborPropertyBinding_m) {
+                builder.AddIndefiniteArrayStart();
+
+                builder.AddUint(binding.target)
+                    .AddUint(binding.channel)
+                    .AddUint(binding.event_type)
+                    .AddUint(binding.payload_key)
+                    .AddUint(binding.direction)
+                    .AddUint(binding.outbound_event_type)
+                    .AddBool(binding.has_selector)
+                    .AddUint(binding.selector_key)
+                    .AddSize(GetCborPropertyValueTypeSize(binding.selector_value));
+            }
         }
     }
 

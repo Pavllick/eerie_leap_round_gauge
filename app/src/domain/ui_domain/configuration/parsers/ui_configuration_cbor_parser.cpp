@@ -3,6 +3,8 @@
 #include "utilities/cbor/cbor_helpers.hpp"
 #include "utilities/memory/memory_resource_manager.h"
 
+#include "domain/ui_domain/models/widget_property.h"
+
 #include "ui_configuration_validator.h"
 #include "ui_configuration_cbor_parser.h"
 
@@ -11,13 +13,29 @@ namespace eerie_leap::domain::ui_domain::configuration::parsers {
 using namespace eerie_memory;
 using namespace eerie_leap::utilities::cbor;
 using namespace eerie_leap::utilities::memory;
+using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::models;
+
+namespace {
+
+void AppendBoolProperty(CborPropertiesConfig& properties_config, WidgetPropertyType type, bool value) {
+    CborPropertiesConfig_CborPropertyValueType_m entry(std::allocator_arg, Mrm::GetExtPmr());
+
+    entry.CborPropertyValueType_m_key = CborHelpers::ToZcborString(WidgetProperty::GetTypeName(type));
+    entry.CborPropertyValueType_m.value = value;
+    entry.CborPropertyValueType_m.CborPropertyValueType_choice = CborPropertyValueType_r::CborPropertyValueType_bool_c;
+
+    properties_config.CborPropertyValueType_m.push_back(std::move(entry));
+}
+
+} // namespace
 
 pmr_unique_ptr<CborUiConfig> UiConfigurationCborParser::Serialize(const UiConfiguration& configuration) {
     UiConfigurationValidator::Validate(configuration);
 
     auto config = make_unique_pmr<CborUiConfig>(Mrm::GetExtPmr());
 
+    config->version = configuration_version;
     config->active_screen_group_id = configuration.active_screen_group_id;
 
     config->properties_present = configuration.properties.size() > 0;
@@ -49,11 +67,20 @@ pmr_unique_ptr<CborUiConfig> UiConfigurationCborParser::Serialize(const UiConfig
             widget_config.size.width = configuration.screen_configurations[i]->widget_configurations[j]->size_grid.width;
             widget_config.size.height = configuration.screen_configurations[i]->widget_configurations[j]->size_grid.height;
             widget_config.z_index = configuration.screen_configurations[i]->widget_configurations[j]->z_index;
-            widget_config.is_visible = configuration.screen_configurations[i]->widget_configurations[j]->is_visible;
 
-            widget_config.properties_present = configuration.screen_configurations[i]->widget_configurations[j]->properties.size() > 0;
+            widget_config.properties_present = true;
             if(configuration.screen_configurations[i]->widget_configurations[j]->properties.size() > 0)
                 ValueTypeToCborPropertyValueType(widget_config.properties, configuration.screen_configurations[i]->widget_configurations[j]->properties);
+
+            // Visibility rides in the property map now; WidgetConfiguration::is_visible is the
+            // in-memory relic that step 3.5 removes.
+            AppendBoolProperty(
+                widget_config.properties,
+                WidgetPropertyType::IS_VISIBLE,
+                configuration.screen_configurations[i]->widget_configurations[j]->is_visible);
+
+            widget_config.CborPropertyBinding_m.clear();
+
             screen_config.CborWidgetConfig_m.push_back(std::move(widget_config));
         }
 
@@ -96,10 +123,18 @@ pmr_unique_ptr<UiConfiguration> UiConfigurationCborParser::Deserialize(
             widget_configuration->size_grid.width = config.CborScreenConfig_m[i].CborWidgetConfig_m[j].size.width;
             widget_configuration->size_grid.height = config.CborScreenConfig_m[i].CborWidgetConfig_m[j].size.height;
             widget_configuration->z_index = config.CborScreenConfig_m[i].CborWidgetConfig_m[j].z_index;
-            widget_configuration->is_visible = config.CborScreenConfig_m[i].CborWidgetConfig_m[j].is_visible;
 
             if(config.CborScreenConfig_m[i].CborWidgetConfig_m[j].properties_present)
                 CborPropertyValueTypeToValueType(mr, widget_configuration->properties, config.CborScreenConfig_m[i].CborWidgetConfig_m[j].properties);
+
+            auto is_visible = widget_configuration->properties.find(
+                WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE));
+
+            // Lifted back out of the map, so re-serializing cannot write the key twice.
+            if(is_visible != widget_configuration->properties.end()) {
+                widget_configuration->is_visible = ConfigValueAs<bool>(is_visible->second, true);
+                widget_configuration->properties.erase(is_visible);
+            }
 
             screen_configuration->AddWidget(std::move(widget_configuration));
         }

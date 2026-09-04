@@ -20,6 +20,8 @@ private:
         const CborPropertiesConfig& properties_config);
 
 public:
+    static constexpr uint32_t configuration_version = 1;
+
     UiConfigurationCborParser() = default;
 
     eerie_memory::pmr_unique_ptr<CborUiConfig> Serialize(const UiConfiguration& configuration);
