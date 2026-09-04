@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "subsys/assets/assets_manager.h"
-#include "subsys/event_bus/scoped_subscription.h"
+#include "subsys/event_bus/i_scoped_subscription.h"
 #include "subsys/fs/services/i_fs_service.h"
 #include "subsys/threading/work_queue_thread.h"
 

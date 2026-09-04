@@ -8,7 +8,7 @@
 #include <zephyr/ztest.h>
 
 #include "subsys/event_bus/event_bus.h"
-#include "subsys/event_bus/scoped_subscription.h"
+#include "subsys/event_bus/event_channel.h"
 
 #include "domain/ui_domain/event_bus/navigation_event_channel.h"
 #include "domain/ui_domain/models/navigation_intent.h"

@@ -8,7 +8,7 @@
 
 #include <lvgl.h>
 
-#include "subsys/event_bus/scoped_subscription.h"
+#include "subsys/event_bus/event_channel.h"
 
 #include "domain/ui_domain/lvgl_lock.h"
 

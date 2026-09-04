@@ -10,7 +10,7 @@
 #include <zephyr/ztest.h>
 
 #include "subsys/event_bus/event_bus.h"
-#include "subsys/event_bus/scoped_subscription.h"
+#include "subsys/event_bus/event_channel.h"
 
 #include "utilities/string/string_helpers.h"
 

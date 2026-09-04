@@ -1,5 +1,7 @@
 #pragma once
 
+#include <zephyr/kernel.h>
+
 namespace eerie_leap::domain::ui_domain {
 
 // Serializes all access to LVGL.

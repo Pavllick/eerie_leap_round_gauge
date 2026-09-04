@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "subsys/event_bus/scoped_subscription.h"
+#include "subsys/event_bus/event_channel.h"
 
 #include "domain/ui_domain/event_bus/ui_signal_channel.h"
 
