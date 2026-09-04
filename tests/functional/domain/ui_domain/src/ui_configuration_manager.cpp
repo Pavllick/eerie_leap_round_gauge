@@ -7,6 +7,7 @@
 #include "configuration/services/cbor_configuration_service.h"
 
 #include "domain/ui_domain/configuration/ui_configuration_manager.h"
+#include "domain/ui_domain/configuration/parsers/ui_configuration_cbor_parser.h"
 #include "domain/ui_domain/models/widget_property.h"
 
 #include "subsys/device_tree/dt_fs.h"
@@ -193,4 +194,29 @@ ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_and_Load
             }
         }
     }
+}
+
+ZTEST(ui_configuration_manager, test_UiConfigurationManager_falls_back_when_the_stored_version_is_stale) {
+    DtFs::InitInternalFs();
+    auto fs_service = std::make_shared<FsService>(DtFs::GetInternalFsMp());
+
+    fs_service->Format();
+
+    // A payload from before the schema bump: structurally valid, but unreadable now.
+    auto stale_config = make_unique_pmr<CborUiConfig>(Mrm::GetDefaultPmr());
+    stale_config->version = UiConfigurationCborParser::configuration_version - 1;
+    stale_config->active_screen_group_id = 3;
+
+    auto writer_service = std::make_unique<CborConfigurationService<CborUiConfig>>("ui_config", fs_service);
+    zassert_true(writer_service->Save(stale_config.get()));
+
+    auto cbor_ui_configuration_service = std::make_unique<CborConfigurationService<CborUiConfig>>("ui_config", fs_service);
+    auto ui_configuration_manager = std::make_shared<UiConfigurationManager>(
+        std::move(cbor_ui_configuration_service));
+
+    // The default configuration rather than a crash or a half-decoded one.
+    auto configuration = ui_configuration_manager->Get();
+
+    zassert_not_null(configuration.get());
+    zassert_true(configuration->screen_configurations.empty());
 }

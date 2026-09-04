@@ -1,4 +1,5 @@
 #include <memory>
+#include <stdexcept>
 
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
@@ -215,6 +216,34 @@ ZTEST(ui_configuration_parser, test_CborRoundTripKeepsAWidgetWithoutBindings) {
     auto deserialized = parser.Deserialize(Mrm::GetDefaultPmr(), *serialized.get());
 
     zassert_true(deserialized->screen_configurations[0]->widget_configurations[2]->bindings.empty());
+}
+
+ZTEST(ui_configuration_parser, test_CborSerializeStampsTheCurrentVersion) {
+    UiConfigurationCborParser parser;
+
+    auto ui_configuration = ui_configuration_parser_GetTestUiConfiguration();
+    auto serialized = parser.Serialize(*ui_configuration);
+
+    zassert_equal(serialized->version, UiConfigurationCborParser::configuration_version);
+}
+
+ZTEST(ui_configuration_parser, test_CborDeserializeRejectsAnotherVersion) {
+    UiConfigurationCborParser parser;
+
+    auto ui_configuration = ui_configuration_parser_GetTestUiConfiguration();
+    auto serialized = parser.Serialize(*ui_configuration);
+
+    serialized->version = UiConfigurationCborParser::configuration_version - 1;
+
+    bool threw = false;
+
+    try {
+        parser.Deserialize(Mrm::GetDefaultPmr(), *serialized.get());
+    } catch(const std::invalid_argument&) {
+        threw = true;
+    }
+
+    zassert_true(threw);
 }
 
 ZTEST(ui_configuration_parser, test_CborDeserializeOrdersWidgetsByZIndex) {

@@ -1,3 +1,5 @@
+#include <stdexcept>
+#include <string>
 #include <utility>
 
 #include "utilities/cbor/cbor_helpers.hpp"
@@ -209,6 +211,15 @@ pmr_unique_ptr<CborUiConfig> UiConfigurationCborParser::Serialize(const UiConfig
 pmr_unique_ptr<UiConfiguration> UiConfigurationCborParser::Deserialize(
     std::pmr::memory_resource* mr,
     const CborUiConfig& config) {
+
+    // Nothing migrates, so a mismatch lets UiConfigurationManager fall through to its default.
+    if(config.version != configuration_version)
+        throw std::invalid_argument(
+            "Invalid UI configuration. Unsupported version: "
+            + std::to_string(config.version)
+            + ". Expected: "
+            + std::to_string(configuration_version)
+            + ".");
 
     auto configuration = make_unique_pmr<UiConfiguration>(mr);
 
