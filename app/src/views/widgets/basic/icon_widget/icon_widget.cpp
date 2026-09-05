@@ -1,6 +1,3 @@
-#include <variant>
-
-#include "domain/ui_domain/event_bus/ui_signal_channel.h"
 #include "domain/ui_domain/models/widget_property.h"
 
 #include "views/utilitites/positioning_helpers.h"
@@ -18,10 +15,6 @@ using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 using namespace eerie_leap::views::themes;
 using namespace eerie_leap::views::widgets::basic::icons;
-
-using eerie_leap::domain::ui_domain::event_bus::UiSignalType;
-using eerie_leap::domain::ui_domain::event_bus::UiSignalChannel;
-using eerie_leap::domain::ui_domain::event_bus::UiSignalPayloadType;
 
 IconWidget::IconWidget(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context, IconType icon_type)
     : WidgetBase(id, std::move(parent), std::move(context)), icon_type_(icon_type) {}
@@ -70,7 +63,6 @@ void IconWidget::RegisterProperties(WidgetPropertyStore& store) {
     store.Register(WidgetPropertyType::ICON_TYPE, ConfigValue { 0 }, PropertyChangeEffect::Rebuild);
     store.Register(WidgetPropertyType::POSITION_X, ConfigValue { 0 }, PropertyChangeEffect::Relayout);
     store.Register(WidgetPropertyType::POSITION_Y, ConfigValue { 0 }, PropertyChangeEffect::Relayout);
-    store.Register(WidgetPropertyType::UI_SIGNAL_TYPE, ConfigValue { 0 }, PropertyChangeEffect::None);
     store.Register(WidgetPropertyType::IS_ACTIVE, ConfigValue { true }, PropertyChangeEffect::Repaint);
 
     // Consumed by the IIcon this widget builds in DoRender. Declared here because the icon is
@@ -107,23 +99,6 @@ void IconWidget::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& v
             WidgetBase::OnPropertyChanged(type, value);
             break;
     }
-}
-
-void IconWidget::OnConfigured() {
-    WidgetBase::OnConfigured();
-
-    auto signal = static_cast<UiSignalType>(properties_->GetAs<int>(WidgetPropertyType::UI_SIGNAL_TYPE, 0));
-    if(signal == UiSignalType::None)
-        return;
-
-    SubscribeWhileActive(
-        UiSignalChannel::GetInstance(),
-        signal,
-        [this](const UiSignalChannel::EventMessage& event) {
-            if(auto it = event.payload.find(UiSignalPayloadType::Value); it != event.payload.end())
-                if(const auto* is_active = std::get_if<bool>(&it->second))
-                    SetIsActive(*is_active);
-        });
 }
 
 } // namespace eerie_leap::views::widgets::basic

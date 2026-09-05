@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -11,6 +12,7 @@
 #include "subsys/event_bus/event_channel.h"
 
 #include "domain/ui_domain/lvgl_lock.h"
+#include "domain/ui_domain/models/property_binding.h"
 
 #include "views/renderable_base.h"
 #include "views/widgets/i_widget.h"
@@ -21,12 +23,27 @@
 namespace eerie_leap::views::widgets {
 
 using eerie_leap::domain::ui_domain::ScopedLvglLock;
-using eerie_leap::subsys::event_bus::AcceptAllFilter;
+using eerie_leap::domain::ui_domain::models::PropertyBinding;
 using eerie_leap::subsys::event_bus::AnySubscription;
-using eerie_leap::subsys::event_bus::CreateScopedSubscription;
+using eerie_leap::subsys::event_bus::ErasedEventFilter;
+using eerie_leap::subsys::event_bus::ErasedPayload;
+using eerie_leap::subsys::event_bus::ErasedPayloadView;
+using eerie_leap::subsys::event_bus::EventData;
+using eerie_leap::subsys::event_bus::IEventChannel;
 
 class WidgetBase : public IWidget, public RenderableBase {
 protected:
+    // A binding that writes back. Resolved once at configure time so user input costs a scan of a
+    // handful of entries rather than a registry lookup.
+    struct OutboundBinding {
+        WidgetPropertyType target;
+        IEventChannel* channel;
+        uint32_t event_type;
+        uint32_t payload_key;
+        uint32_t selector_key;
+        std::optional<EventData> selector_value;
+    };
+
     uint32_t id_;
 
     std::shared_ptr<WidgetConfiguration> configuration_;
@@ -37,6 +54,7 @@ protected:
     std::shared_ptr<Frame> parent_;
 
     std::vector<AnySubscription> subscriptions_;
+    std::vector<OutboundBinding> outbound_bindings_;
     std::shared_ptr<WidgetDispatchGuard> dispatch_guard_;
     WidgetContext context_;
 
@@ -44,53 +62,17 @@ protected:
 
     int SetVisibility(bool is_visible);
 
-    // Wraps a callback so it drops while the widget is unrendered or its group is
-    // hidden, and so a dispatch racing destruction becomes a no-op.
-    //
-    // LvglLock before the dispatch guard: ~WidgetBase runs under the LVGL lock and
-    // takes the guard second, so the reverse order deadlocks.
-    template<typename THandler>
-    auto GuardWhileActive(THandler handler) {
-        return [guard = dispatch_guard_, this, handler = std::move(handler)](auto&&... args) {
-            ScopedLvglLock lvgl_guard;
-
-            guard->Dispatch([&] {
-                if(IsReady() && IsActive())
-                    handler(std::forward<decltype(args)>(args)...);
-            });
-        };
-    }
-
-    // Subscribes and drops events while the widget is unrendered or its group is hidden,
-    // so a widget nobody can see never repaints or animates.
-    template<typename ChannelType, typename FilterType>
-    void SubscribeWhileActive(
-        ChannelType& channel,
-        typename ChannelType::EventTypeEnum type,
-        FilterType filter,
-        std::function<void(const typename ChannelType::EventMessage&)> handler) {
-
-        AddSubscription(CreateScopedSubscription(
-            channel,
-            type,
-            std::move(filter),
-            GuardWhileActive(std::move(handler))));
-    }
-
-    template<typename ChannelType>
-    void SubscribeWhileActive(
-        ChannelType& channel,
-        typename ChannelType::EventTypeEnum type,
-        std::function<void(const typename ChannelType::EventMessage&)> handler) {
-
-        SubscribeWhileActive(
-            channel,
-            type,
-            AcceptAllFilter<typename ChannelType::EventTypeEnum, typename ChannelType::PayloadTypeEnum>{ },
-            std::move(handler));
-    }
-
     void AddSubscription(AnySubscription subscription);
+
+    // Resolves configuration_->bindings against EventChannelRegistry. A binding naming an unknown
+    // channel or an unsupported property is dropped with a warning, never fatal: configuration
+    // outlives the code that reads it.
+    void ResolveBindings();
+
+    // User input. Unlike an inbound binding this publishes on the property's outbound bindings,
+    // which is the whole of the echo suppression rule - inbound never publishes, so there is no
+    // loop back through the owner.
+    void SetPropertyLocal(WidgetPropertyType type, const ConfigValue& value);
 
     // Declares what this widget understands, base class first. A derived override calls its base
     // before adding its own, so the replay below applies base properties first.
@@ -104,9 +86,9 @@ protected:
     // property changes again - subscriptions above all.
     virtual void OnConfigured();
 
-    // Inbound value from an event. Always updates the store, even while the widget is hidden or
-    // unrendered, so it never goes stale; only the effect is guarded and deferred.
-    void ApplyProperty(WidgetPropertyType type, const ConfigValue& value);
+    // Reacts to a value already written to the store. The caller holds the LVGL lock and the
+    // dispatch guard, in that order.
+    void NotifyPropertyChanged(WidgetPropertyType type, const ConfigValue& value, PropertyChangeEffect effect);
 
     // Applies the current stored value of every registered property and runs the strongest effect
     // once. Callers are already on the UI thread, so this skips the dispatch guard.

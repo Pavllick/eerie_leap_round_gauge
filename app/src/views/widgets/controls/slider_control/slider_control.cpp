@@ -102,8 +102,9 @@ void SliderControl::OnControlEvent(lv_event_code_t code) {
         if(max_ <= min_)
             return;
 
-        RequestSettingValue(ConfigValue { ToValue(lv_slider_get_value(lv_slider_)) });
-
+        SetPropertyLocal(
+            WidgetPropertyType::VALUE,
+            ConfigValue { ToValue(lv_slider_get_value(lv_slider_)) });
         return;
     }
 

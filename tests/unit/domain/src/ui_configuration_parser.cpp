@@ -50,7 +50,7 @@ pmr_unique_ptr<UiConfiguration> ui_configuration_parser_GetTestUiConfiguration()
     widget1->z_index = -1;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
-    widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    widget1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::LABEL)] = "sensor_1";
 
     // Two targets fed by one source, which is the fan-out the binding list exists for.
     PropertyBinding value_binding;
@@ -84,7 +84,7 @@ pmr_unique_ptr<UiConfiguration> ui_configuration_parser_GetTestUiConfiguration()
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_VISIBLE)] = false;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
-    widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    widget2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::LABEL)] = "sensor_1";
 
     // Two-way and unconditional: the selector stays unset and the outbound event carries the write.
     PropertyBinding setting_binding;
@@ -109,7 +109,7 @@ pmr_unique_ptr<UiConfiguration> ui_configuration_parser_GetTestUiConfiguration()
     widget3->z_index = 2;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100;
-    widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::LABEL)] = "sensor_1";
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::CHART_POINT_COUNT)] = 35;
     widget3->properties[WidgetProperty::GetTypeName(WidgetPropertyType::CHART_TYPE)] = static_cast<std::uint16_t>(HorizontalChartIndicatorType::Line);
     screen_configuration->AddWidget(std::move(widget3));

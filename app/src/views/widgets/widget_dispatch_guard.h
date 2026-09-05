@@ -15,7 +15,7 @@ using eerie_leap::subsys::threading::ScopedMutex;
 // race against destruction becomes a no-op instead of a dangling access.
 //
 // Lock order is always LvglLock (taken by the subscriber, see
-// WidgetBase::SubscribeWhileActive) then this lock; Detach() must never be
+// WidgetBase::ResolveBindings) then this lock; Detach() must never be
 // called while holding this lock.
 class WidgetDispatchGuard {
 private:

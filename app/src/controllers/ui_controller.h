@@ -21,8 +21,6 @@
 #include "domain/ui_domain/services/navigation_service.h"
 #include "domain/ui_domain/services/ui_input_service.h"
 
-#include "event_bus/ui_signal_bridge.h"
-
 #include "views/main_view.h"
 #include "views/screens/i_screen.h"
 #include "views/widgets/widget_context.h"
@@ -87,6 +85,10 @@ private:
     int Configure(std::shared_ptr<UiConfiguration> config);
 
     std::shared_ptr<IScreen> CreateScreen(std::shared_ptr<ScreenConfiguration> configuration);
+
+    // Asks every settings owner to republish, so a binding resolved just now is not left showing
+    // its default until the value happens to change.
+    void RequestSettingsState() const;
 
     void SubscribeToNavigation();
     void OnNavigationChanged(const NavigationEventChannel::EventMessage& event);

@@ -18,10 +18,8 @@ constexpr std::array all_types = {
     WidgetPropertyType::IS_SMOOTHED,
     WidgetPropertyType::MIN_VALUE,
     WidgetPropertyType::MAX_VALUE,
-    WidgetPropertyType::SENSOR_ID,
     WidgetPropertyType::CHART_POINT_COUNT,
     WidgetPropertyType::CHART_TYPE,
-    WidgetPropertyType::UI_SIGNAL_TYPE,
     WidgetPropertyType::LABEL,
     WidgetPropertyType::VALUE_PRECISION,
     WidgetPropertyType::EDGE_OFFSET,
@@ -41,7 +39,6 @@ constexpr std::array all_types = {
     WidgetPropertyType::STEP,
     WidgetPropertyType::UNIT,
     WidgetPropertyType::TARGET_GROUP,
-    WidgetPropertyType::VALUE_SOURCE,
     WidgetPropertyType::IS_VISIBLE,
     WidgetPropertyType::VALUE
 };

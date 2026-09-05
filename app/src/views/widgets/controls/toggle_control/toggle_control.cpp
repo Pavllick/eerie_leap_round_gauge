@@ -18,7 +18,7 @@ ToggleControl::ToggleControl(uint32_t id, std::shared_ptr<Frame> parent, WidgetC
 void ToggleControl::RegisterProperties(WidgetPropertyStore& store) {
     ControlBase::RegisterProperties(store);
 
-    store.Register(WidgetPropertyType::VALUE, ConfigValue { false }, PropertyChangeEffect::Repaint);
+    store.Register(WidgetPropertyType::VALUE, ConfigValue { false }, PropertyChangeEffect::None);
 }
 
 void ToggleControl::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
@@ -59,8 +59,9 @@ void ToggleControl::OnControlEvent(lv_event_code_t code) {
     if(code != LV_EVENT_VALUE_CHANGED)
         return;
 
-    RequestSettingValue(ConfigValue { lv_obj_has_state(lv_switch_, LV_STATE_CHECKED) });
-}
+    SetPropertyLocal(
+        WidgetPropertyType::VALUE,
+        ConfigValue { lv_obj_has_state(lv_switch_, LV_STATE_CHECKED) });}
 
 void ToggleControl::UpdateSwitch() {
     if(lv_switch_ == nullptr)

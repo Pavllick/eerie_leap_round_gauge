@@ -17,10 +17,8 @@ enum class WidgetPropertyType : std::uint16_t {
     IS_SMOOTHED,            // bool
     MIN_VALUE,              // float
     MAX_VALUE,              // float
-    SENSOR_ID,              // string
     CHART_POINT_COUNT,      // int
     CHART_TYPE,             // int (enum)
-    UI_SIGNAL_TYPE,         // UiSignalType
     LABEL,                  // string
     VALUE_PRECISION,        // int
     EDGE_OFFSET,            // int
@@ -40,7 +38,6 @@ enum class WidgetPropertyType : std::uint16_t {
     STEP,                   // double
     UNIT,                   // string
     TARGET_GROUP,           // int
-    VALUE_SOURCE,           // IndicatorValueSource
     IS_VISIBLE,             // bool
     VALUE,                  // double
 };
@@ -53,10 +50,8 @@ private:
         "IS_SMOOTHED"sv,
         "MIN_VALUE"sv,
         "MAX_VALUE"sv,
-        "SENSOR_ID"sv,
         "CHART_POINT_COUNT"sv,
         "CHART_TYPE"sv,
-        "UI_SIGNAL_TYPE"sv,
         "LABEL"sv,
         "VALUE_PRECISION"sv,
         "EDGE_OFFSET"sv,
@@ -76,7 +71,6 @@ private:
         "STEP"sv,
         "UNIT"sv,
         "TARGET_GROUP"sv,
-        "VALUE_SOURCE"sv,
         "IS_VISIBLE"sv,
         "VALUE"sv,
     };

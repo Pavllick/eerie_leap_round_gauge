@@ -31,7 +31,6 @@ public:
 protected:
     void RegisterProperties(WidgetPropertyStore& store) override;
     void OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) override;
-    void OnConfigured() override;
 
 public:
     int ApplyTheme(const ITheme& theme) override;

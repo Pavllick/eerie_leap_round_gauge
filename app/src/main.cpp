@@ -26,7 +26,6 @@
 #include "domain/settings_domain/services/settings_persistence_service.h"
 
 #include "event_bus/event_channels.h"
-#include "event_bus/ui_signal_bridge.h"
 
 #include "controllers/system_controller.h"
 #include "controllers/canbus_controller.h"
@@ -66,10 +65,6 @@ int main() {
     // Channels are inert until their bus registers them, thus this has to run before any
     // publisher does.
     InitializeEventChannels();
-
-    // Outlives every widget, so the UI signals stay bound for the life of the process.
-    UiSignalBridge ui_signal_bridge;
-    ui_signal_bridge.Initialize();
 
     DtConfigurator::Initialize(
         DtFeature::INTERNAL_FS

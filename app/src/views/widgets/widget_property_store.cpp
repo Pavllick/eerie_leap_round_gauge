@@ -27,14 +27,22 @@ WidgetPropertyStore::Entry* WidgetPropertyStore::Find(WidgetPropertyType type) {
 void WidgetPropertyStore::Register(WidgetPropertyType type, ConfigValue default_value, PropertyChangeEffect effect) {
     ScopedMutex guard(lock_);
 
+    auto alternative = static_cast<uint8_t>(default_value.index());
+
     if(auto* entry = Find(type)) {
         entry->effect = effect;
+        entry->declared_alternative = alternative;
         entry->value = std::move(default_value);
 
         return;
     }
 
-    entries_.push_back(Entry { .type = type, .effect = effect, .value = std::move(default_value) });
+    entries_.push_back(Entry {
+        .type = type,
+        .effect = effect,
+        .declared_alternative = alternative,
+        .value = std::move(default_value)
+    });
 }
 
 bool WidgetPropertyStore::IsRegistered(WidgetPropertyType type) const {
@@ -49,6 +57,14 @@ PropertyChangeEffect WidgetPropertyStore::GetEffect(WidgetPropertyType type) con
     const auto* entry = Find(type);
 
     return entry == nullptr ? PropertyChangeEffect::None : entry->effect;
+}
+
+size_t WidgetPropertyStore::GetDeclaredAlternative(WidgetPropertyType type) const {
+    ScopedMutex guard(lock_);
+
+    const auto* entry = Find(type);
+
+    return entry == nullptr ? 0 : entry->declared_alternative;
 }
 
 bool WidgetPropertyStore::Set(WidgetPropertyType type, const ConfigValue& value) {

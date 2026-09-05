@@ -1,27 +1,13 @@
 #include <cmath>
-#include <optional>
-#include <variant>
 
-#include "utilities/string/string_helpers.h"
-#include "domain/sensor_domain/event_bus/sensor_events_channel.h"
-#include "domain/ui_domain/event_bus/ui_signal_channel.h"
-#include "domain/ui_domain/models/indicator_value_source.h"
 #include "domain/ui_domain/models/widget_property.h"
-#include "views/widgets/event_bus_filters/sensor_filter.h"
 
 #include "indicator_base.h"
 
 namespace eerie_leap::views::widgets::indicators {
 
-using namespace eerie_leap::utilities::string;
 using namespace eerie_leap::utilities::type;
-using namespace eerie_leap::domain::sensor_domain::event_bus;
 using namespace eerie_leap::domain::ui_domain::models;
-using namespace eerie_leap::views::widgets::event_bus_filters;
-
-using eerie_leap::domain::ui_domain::event_bus::UiSignalType;
-using eerie_leap::domain::ui_domain::event_bus::UiSignalChannel;
-using eerie_leap::domain::ui_domain::event_bus::UiSignalPayloadType;
 
 IndicatorBase::IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : WidgetBase(id, std::move(parent), std::move(context)) , value_filter_(0) {
@@ -115,60 +101,15 @@ void IndicatorBase::OnDeactivated() {
     lv_anim_delete(this, UpdateIndicatorCallback);
 }
 
-std::optional<uint32_t> IndicatorBase::GetSensorIdHash() const {
-    return sensor_id_hash_;
-}
-
-void IndicatorBase::SubscribeToSensor() {
-    auto sensor_id = properties_->GetAs<std::pmr::string>(WidgetPropertyType::SENSOR_ID, "");
-    if(sensor_id.empty())
-        return;
-
-    sensor_id_hash_ = StringHelpers::GetHash(sensor_id);
-
-    SubscribeWhileActive(
-        SensorEventsChannel::GetInstance(),
-        SensorEventType::DataUpdated,
-        SensorFilter { sensor_id_hash_.value() },
-        [this](const SensorEventsChannel::EventMessage& event) {
-            if (auto it = event.payload.find(SensorPayloadType::Value); it != event.payload.end()) {
-                if (auto* value = std::get_if<float>(&it->second)) {
-                    this->Update(*value);
-                }
-            }
-        });
-}
-
-void IndicatorBase::SubscribeToUiSignal() {
-    auto signal = static_cast<UiSignalType>(
-        properties_->GetAs<int>(WidgetPropertyType::UI_SIGNAL_TYPE, 0));
-    if(signal == UiSignalType::None)
-        return;
-
-    SubscribeWhileActive(
-        UiSignalChannel::GetInstance(),
-        signal,
-        [this](const UiSignalChannel::EventMessage& event) {
-            if(auto it = event.payload.find(UiSignalPayloadType::Value); it != event.payload.end()) {
-                if(auto value = ValueToFloat(it->second)) {
-                    this->Update(*value);
-                }
-            }
-        });
-}
-
 void IndicatorBase::RegisterProperties(WidgetPropertyStore& store) {
     WidgetBase::RegisterProperties(store);
 
-    store.Register(WidgetPropertyType::MIN_VALUE, ConfigValue { 0 }, PropertyChangeEffect::Repaint);
-    store.Register(WidgetPropertyType::MAX_VALUE, ConfigValue { 100 }, PropertyChangeEffect::Repaint);
-    store.Register(WidgetPropertyType::VALUE, ConfigValue { 0.0 }, PropertyChangeEffect::Repaint);
-    store.Register(WidgetPropertyType::SENSOR_ID, ConfigValue { std::pmr::string { } }, PropertyChangeEffect::None);
-    store.Register(WidgetPropertyType::UI_SIGNAL_TYPE, ConfigValue { 0 }, PropertyChangeEffect::None);
-    store.Register(
-        WidgetPropertyType::VALUE_SOURCE,
-        ConfigValue { static_cast<int>(IndicatorValueSource::Sensor) },
-        PropertyChangeEffect::None);
+    store.Register(WidgetPropertyType::MIN_VALUE, ConfigValue { 0.0 }, PropertyChangeEffect::Repaint);
+    store.Register(WidgetPropertyType::MAX_VALUE, ConfigValue { 100.0 }, PropertyChangeEffect::Repaint);
+
+    // No effect: Update() drives the animation, which invalidates just the area it moves. Adding
+    // a container repaint here dirties the whole widget rect on every sample instead.
+    store.Register(WidgetPropertyType::VALUE, ConfigValue { 0.0 }, PropertyChangeEffect::None);
 }
 
 void IndicatorBase::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
@@ -189,31 +130,6 @@ void IndicatorBase::OnPropertyChanged(WidgetPropertyType type, const ConfigValue
             WidgetBase::OnPropertyChanged(type, value);
             break;
     }
-}
-
-void IndicatorBase::OnConfigured() {
-    WidgetBase::OnConfigured();
-
-    auto value_source = static_cast<IndicatorValueSource>(properties_->GetAs<int>(
-        WidgetPropertyType::VALUE_SOURCE,
-        static_cast<int>(IndicatorValueSource::Sensor)));
-
-    if(value_source == IndicatorValueSource::UiSignal)
-        SubscribeToUiSignal();
-    else
-        SubscribeToSensor();
-}
-
-// A signal carries whatever numeric type its source domain published.
-std::optional<float> IndicatorBase::ValueToFloat(const EventData& value) {
-    if(const auto* as_float = std::get_if<float>(&value))
-        return *as_float;
-    if(const auto* as_int = std::get_if<int>(&value))
-        return static_cast<float>(*as_int);
-    if(const auto* as_uint = std::get_if<uint32_t>(&value))
-        return static_cast<float>(*as_uint);
-
-    return std::nullopt;
 }
 
 } // namespace eerie_leap::views::widgets::indicators

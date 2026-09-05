@@ -49,6 +49,12 @@ bool IsBrightnessSetting(const SettingsEventsChannel::EventMessage& event) {
     return id != nullptr && *id == BrightnessSettingId();
 }
 
+// A request that names no setting is addressed to every owner.
+bool IsBrightnessStateRequest(const SettingsEventsChannel::EventMessage& event) {
+    return event.payload.find(SettingsPayloadType::SettingId) == event.payload.end()
+        || IsBrightnessSetting(event);
+}
+
 } // namespace
 
 DisplayService::DisplayService(
@@ -117,7 +123,7 @@ void DisplayService::SubscribeSettings() {
     state_requested_subscription_ = CreateScopedSubscription(
         SettingsEventsChannel::GetInstance(),
         SettingsEventType::StateRequested,
-        IsBrightnessSetting,
+        IsBrightnessStateRequest,
         [this](const SettingsEventsChannel::EventMessage&) {
             PublishBrightnessRange();
             PublishBrightnessValue();

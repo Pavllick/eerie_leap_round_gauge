@@ -31,6 +31,7 @@ private:
     struct Entry {
         WidgetPropertyType type;
         PropertyChangeEffect effect;
+        uint8_t declared_alternative;
         ConfigValue value;
     };
 
@@ -52,6 +53,10 @@ public:
 
     bool IsRegistered(WidgetPropertyType type) const;
     PropertyChangeEffect GetEffect(WidgetPropertyType type) const;
+
+    // The ConfigValue alternative the default was registered with. An inbound event coerces to
+    // it, so a publisher cannot change the type a widget reads back.
+    size_t GetDeclaredAlternative(WidgetPropertyType type) const;
 
     // False when the type was never registered, in which case the value is dropped.
     bool Set(WidgetPropertyType type, const ConfigValue& value);

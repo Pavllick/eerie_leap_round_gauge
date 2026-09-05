@@ -180,7 +180,7 @@ ZTEST(ui_configuration_validator, test_known_widget_properties_are_valid) {
     auto configuration = MakeConfiguration();
     auto& properties = configuration->screen_configurations[0]->widget_configurations[0]->properties;
 
-    properties[WidgetProperty::GetTypeName(WidgetPropertyType::SENSOR_ID)] = "sensor_1";
+    properties[WidgetProperty::GetTypeName(WidgetPropertyType::LABEL)] = "sensor_1";
     properties[WidgetProperty::GetTypeName(WidgetPropertyType::IS_SMOOTHED)] = true;
     properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 0;
     properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 100.5;

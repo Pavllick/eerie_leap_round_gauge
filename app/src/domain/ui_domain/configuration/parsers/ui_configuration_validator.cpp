@@ -27,7 +27,6 @@ static PropertyValueKind GetPropertyValueKind(WidgetPropertyType type) {
         case WidgetPropertyType::IS_VISIBLE:
             return PropertyValueKind::Boolean;
 
-        case WidgetPropertyType::SENSOR_ID:
         case WidgetPropertyType::LABEL:
         case WidgetPropertyType::FILE_PATH:
         case WidgetPropertyType::SETTING_ID:
