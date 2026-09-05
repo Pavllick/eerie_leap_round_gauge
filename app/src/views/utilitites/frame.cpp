@@ -1,10 +1,42 @@
 #include <stdexcept>
+#include <utility>
 
 #include "frame.h"
 
 namespace eerie_leap::views::utilitites {
 
 Frame::Frame() : lv_object_(nullptr) { }
+
+Frame::~Frame() {
+    child_.reset();
+
+    if(lv_object_ != nullptr) {
+        lv_obj_delete(lv_object_);
+        lv_object_ = nullptr;
+    }
+}
+
+Frame::Frame(Frame&& other) noexcept
+    : lv_object_(other.lv_object_), child_(std::move(other.child_)) {
+
+    other.lv_object_ = nullptr;
+}
+
+Frame& Frame::operator=(Frame&& other) noexcept {
+    if(this == &other)
+        return *this;
+
+    child_.reset();
+
+    if(lv_object_ != nullptr)
+        lv_obj_delete(lv_object_);
+
+    lv_object_ = other.lv_object_;
+    child_ = std::move(other.child_);
+    other.lv_object_ = nullptr;
+
+    return *this;
+}
 
 Frame Frame::Create(lv_obj_t* object) {
     Frame frame;
@@ -26,7 +58,7 @@ Frame Frame::CreateWrapped(lv_obj_t* object) {
 Frame Frame::Build() {
     Invalidate();
 
-    return *this;
+    return std::move(*this);
 }
 
 void Frame::ValidateFrame(const lv_obj_t* frame) {
@@ -34,7 +66,7 @@ void Frame::ValidateFrame(const lv_obj_t* frame) {
         throw std::runtime_error("Frame not created");
 }
 
-Frame Frame::Invalidate() {
+Frame& Frame::Invalidate() {
     ValidateFrame(lv_object_);
 
     lv_obj_invalidate(lv_object_);
@@ -42,7 +74,7 @@ Frame Frame::Invalidate() {
     return *this;
 }
 
-Frame Frame::CleanStyles() {
+Frame& Frame::CleanStyles() {
     ValidateFrame(lv_object_);
 
     lv_obj_remove_style_all(lv_object_);
@@ -50,7 +82,7 @@ Frame Frame::CleanStyles() {
     return *this;
 }
 
-Frame Frame::SetWidth(int32_t width, bool is_px) {
+Frame& Frame::SetWidth(int32_t width, bool is_px) {
     ValidateFrame(lv_object_);
 
     lv_obj_set_width(lv_object_, is_px ? width : lv_pct(width));
@@ -58,7 +90,7 @@ Frame Frame::SetWidth(int32_t width, bool is_px) {
     return *this;
 }
 
-Frame Frame::SetHeight(int32_t height, bool is_px) {
+Frame& Frame::SetHeight(int32_t height, bool is_px) {
     ValidateFrame(lv_object_);
 
     lv_obj_set_height(lv_object_, is_px ? height : lv_pct(height));
@@ -66,7 +98,7 @@ Frame Frame::SetHeight(int32_t height, bool is_px) {
     return *this;
 }
 
-Frame Frame::SetXOffset(int32_t offset, bool is_px) {
+Frame& Frame::SetXOffset(int32_t offset, bool is_px) {
     ValidateFrame(lv_object_);
 
     lv_obj_set_x(lv_object_, is_px ? offset : lv_pct(offset));
@@ -74,7 +106,7 @@ Frame Frame::SetXOffset(int32_t offset, bool is_px) {
     return *this;
 }
 
-Frame Frame::SetYOffset(int32_t offset, bool is_px) {
+Frame& Frame::SetYOffset(int32_t offset, bool is_px) {
     ValidateFrame(lv_object_);
 
     lv_obj_set_y(lv_object_, is_px ? offset : lv_pct(offset));
@@ -82,7 +114,7 @@ Frame Frame::SetYOffset(int32_t offset, bool is_px) {
     return *this;
 }
 
-Frame Frame::SetPaddingLeft(int32_t padding) {
+Frame& Frame::SetPaddingLeft(int32_t padding) {
     ValidateFrame(lv_object_);
 
     lv_obj_set_style_pad_left(lv_object_, padding, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -90,7 +122,7 @@ Frame Frame::SetPaddingLeft(int32_t padding) {
     return *this;
 }
 
-Frame Frame::SetPaddingRight(int32_t padding) {
+Frame& Frame::SetPaddingRight(int32_t padding) {
     ValidateFrame(lv_object_);
 
     lv_obj_set_style_pad_right(lv_object_, padding, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -98,7 +130,7 @@ Frame Frame::SetPaddingRight(int32_t padding) {
     return *this;
 }
 
-Frame Frame::SetPaddingTop(int32_t padding) {
+Frame& Frame::SetPaddingTop(int32_t padding) {
     ValidateFrame(lv_object_);
 
     lv_obj_set_style_pad_top(lv_object_, padding, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -106,7 +138,7 @@ Frame Frame::SetPaddingTop(int32_t padding) {
     return *this;
 }
 
-Frame Frame::SetPaddingBottom(int32_t padding) {
+Frame& Frame::SetPaddingBottom(int32_t padding) {
     ValidateFrame(lv_object_);
 
     lv_obj_set_style_pad_bottom(lv_object_, padding, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -114,7 +146,7 @@ Frame Frame::SetPaddingBottom(int32_t padding) {
     return *this;
 }
 
-Frame Frame::AlignBottom() {
+Frame& Frame::AlignBottom() {
     ValidateFrame(lv_object_);
 
     lv_obj_set_align(lv_object_, LV_ALIGN_BOTTOM_MID);
@@ -122,7 +154,7 @@ Frame Frame::AlignBottom() {
     return *this;
 }
 
-Frame Frame::AlignTop() {
+Frame& Frame::AlignTop() {
     ValidateFrame(lv_object_);
 
     lv_obj_set_align(lv_object_, LV_ALIGN_TOP_MID);
@@ -130,7 +162,7 @@ Frame Frame::AlignTop() {
     return *this;
 }
 
-Frame Frame::AlignLeft() {
+Frame& Frame::AlignLeft() {
     ValidateFrame(lv_object_);
 
     lv_obj_set_align(lv_object_, LV_ALIGN_LEFT_MID);
@@ -138,7 +170,7 @@ Frame Frame::AlignLeft() {
     return *this;
 }
 
-Frame Frame::AlignRight() {
+Frame& Frame::AlignRight() {
     ValidateFrame(lv_object_);
 
     lv_obj_set_align(lv_object_, LV_ALIGN_RIGHT_MID);
@@ -146,7 +178,7 @@ Frame Frame::AlignRight() {
     return *this;
 }
 
-Frame Frame::AlignCenter() {
+Frame& Frame::AlignCenter() {
     ValidateFrame(lv_object_);
 
     lv_obj_set_align(lv_object_, LV_ALIGN_CENTER);
