@@ -10,7 +10,7 @@ using namespace eerie_leap::utilities::type;
 using namespace eerie_leap::domain::ui_domain::models;
 
 IndicatorBase::IndicatorBase(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
-    : WidgetBase(id, std::move(parent), std::move(context)) , value_filter_(0) {
+    : WidgetBase(id, std::move(parent), std::move(context)) { // , value_filter_(0) {
 
     value_change_animation_ = CreateValueChangeAnimation();
 }
