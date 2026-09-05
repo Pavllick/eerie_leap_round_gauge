@@ -43,7 +43,6 @@ int UiRendererService::Initialize() {
     thread_->Initialize();
 
     auto* act_scr = lv_display_get_default();
-    lv_display_add_event_cb(act_scr, DisplayInvalidateCb, LV_EVENT_INVALIDATE_AREA, nullptr);
 
     lv_obj_t* screen = lv_screen_active();
     lv_obj_set_style_bg_color(screen, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -75,20 +74,6 @@ void UiRendererService::Render() {
     LvglLock::GetInstance().Unlock();
 
     k_msleep(MIN(sleep_ms, INT32_MAX));
-}
-
-// NOTE: Fixes incorrect invalidation of redrawn area
-// https://forum.lvgl.io/t/lvgl-9-2-esp32-s3-display-axs15321b/19735/5
-void UiRendererService::DisplayInvalidateCb(lv_event_t* e) {
-    auto* area = (lv_area_t*)lv_event_get_param(e);
-
-    // Round down to even
-    area->x1 &= ~1;
-    area->y1 &= ~1;
-
-    // Round up to odd
-    area->x2 |= 1;
-    area->y2 |= 1;
 }
 
 } // namespace eerie_leap::domain::ui_domain::services
