@@ -329,6 +329,32 @@ ZTEST(navigation_service, test_CloseOverlay_without_an_overlay_reports_ENOENT) {
     zassert_false(service.IsOverlayActive());
 }
 
+// Only one overlay is tracked, so a second one would leave a single CloseOverlay
+// unblocking group navigation with an overlay still up.
+ZTEST(navigation_service, test_a_second_overlay_is_rejected) {
+    NavigationService service;
+    NavigationProbe probe;
+    zassert_true(probe.IsSubscribed());
+
+    Configure(service, {0, 1}, 0);
+
+    zassert_equal(service.ShowOverlay(5), 0);
+    zassert_true(probe.WaitForEvent(), "ShowOverlay was not dispatched.");
+
+    zassert_equal(service.ShowOverlay(6), -EBUSY);
+
+    // A rejected request must not reach the view, or it would push a second overlay
+    // that nothing tracks.
+    zassert_false(probe.WaitForEvent(), "The rejected overlay was dispatched.");
+    zassert_equal(probe.Count(), 1U);
+    zassert_equal(probe.TargetScreenIds().front(), 5U);
+
+    // The first overlay still owns the state, so closing it releases navigation.
+    zassert_equal(service.CloseOverlay(), 0);
+    zassert_false(service.IsOverlayActive());
+    zassert_equal(service.Next(), 0);
+}
+
 ZTEST(navigation_service, test_Handle_routes_every_intent) {
     NavigationService service;
     Configure(service, {0, 1, 2}, 0);

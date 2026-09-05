@@ -184,8 +184,18 @@ int NavigationService::Back() {
 
 int NavigationService::ShowOverlay(uint32_t screen_id) {
     k_mutex_lock(&lock_, K_FOREVER);
-    active_overlay_screen_id_ = screen_id;
+
+    // Only one overlay is tracked here, while OverlayHost can stack several. Letting
+    // a second one through would make a single CloseOverlay unblock group navigation
+    // with an overlay still on screen.
+    bool is_busy = active_overlay_screen_id_.has_value();
+    if(!is_busy)
+        active_overlay_screen_id_ = screen_id;
+
     k_mutex_unlock(&lock_);
+
+    if(is_busy)
+        return -EBUSY;
 
     PublishNavigation(NavigationAction::ShowOverlay, NavigationPayloadType::TargetScreenId, screen_id);
 

@@ -22,6 +22,7 @@
 #include "domain/ui_domain/services/ui_input_service.h"
 
 #include "views/main_view.h"
+#include "views/overlay_host.h"
 #include "views/screens/i_screen.h"
 #include "views/widgets/widget_context.h"
 
@@ -45,6 +46,7 @@ using eerie_leap::domain::ui_domain::services::NavigationService;
 using eerie_leap::domain::ui_domain::services::UiInputService;
 
 using eerie_leap::views::MainView;
+using eerie_leap::views::OverlayHost;
 using eerie_leap::views::screens::IScreen;
 using eerie_leap::views::widgets::WidgetContext;
 
@@ -70,6 +72,7 @@ private:
 
     // Declared before ui_input_service_, which detaches from the view's LVGL object on teardown.
     std::unique_ptr<MainView> main_view_;
+    std::unique_ptr<OverlayHost> overlay_host_;
     std::shared_ptr<UiInputService> ui_input_service_;
 
     std::unique_ptr<WorkQueueThread> ui_render_work_queue_thread_;
@@ -84,7 +87,8 @@ private:
     AnySubscription navigation_subscription_;
     int Configure(std::shared_ptr<UiConfiguration> config);
 
-    std::shared_ptr<IScreen> CreateScreen(std::shared_ptr<ScreenConfiguration> configuration);
+    std::shared_ptr<IScreen> CreateScreen(std::shared_ptr<ScreenConfiguration> configuration, std::shared_ptr<Frame> parent);
+    std::shared_ptr<ScreenConfiguration> FindOverlayConfiguration(uint32_t screen_id) const;
 
     // Asks every settings owner to republish, so a binding resolved just now is not left showing
     // its default until the value happens to change.
@@ -92,6 +96,9 @@ private:
 
     void SubscribeToNavigation();
     void OnNavigationChanged(const NavigationEventChannel::EventMessage& event);
+    void ShowGroup(uint32_t group_id);
+    void ShowOverlay(uint32_t screen_id);
+    void CloseOverlay();
 
     // TODO: For test purposes only
     void SetupTestConfiguration();

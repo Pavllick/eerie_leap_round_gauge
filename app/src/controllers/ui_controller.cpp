@@ -60,8 +60,26 @@ using eerie_leap::domain::settings_domain::event_bus::SettingsEventsChannel;
 using eerie_leap::subsys::event_bus::CreateScopedSubscription;
 using eerie_leap::utilities::reflection::GetCallerName;
 using eerie_leap::domain::settings_domain::models::SettingId;
+using eerie_leap::views::utilitites::Frame;
 
 LOG_MODULE_REGISTER(ui_controller_logger);
+
+namespace {
+
+std::optional<uint32_t> GetPayloadId(
+    const NavigationEventChannel::EventMessage& event,
+    NavigationPayloadType key) {
+
+    auto it = event.payload.find(key);
+    if(it == event.payload.end())
+        return std::nullopt;
+
+    const auto* value = std::get_if<uint32_t>(&it->second);
+
+    return value != nullptr ? std::optional<uint32_t>(*value) : std::nullopt;
+}
+
+} // namespace
 
 // TODO: For test purposes only
 namespace {
@@ -176,6 +194,13 @@ int UiController::Initialize() {
     main_view_ = std::make_unique<MainView>();
     navigation_service_ = std::make_shared<NavigationService>();
 
+    try {
+        overlay_host_ = std::make_unique<OverlayHost>(navigation_service_);
+    } catch(const std::exception& e) {
+        // Only a missing display gets here; the rest of the UI is still usable.
+        LOG_ERR("Failed to create the overlay host. %s", e.what());
+    }
+
     ui_render_work_queue_thread_ = std::make_unique<WorkQueueThread>(
         "ui_render_work_q",
         ui_render_work_queue_stack_size_,
@@ -225,6 +250,10 @@ int UiController::Start() {
     {
         ScopedLvglLock lvgl_guard;
         res = main_view_->Render();
+
+        // Nothing to draw yet, but a rendered host is what gets told about theme changes.
+        if(overlay_host_ != nullptr && overlay_host_->Render() != 0)
+            LOG_ERR("Failed to render the overlay host.");
     }
 
     if(res != 0)
@@ -244,7 +273,11 @@ int UiController::Configure(std::shared_ptr<UiConfiguration> config) {
     ScopedLvglLock lvgl_guard;
 
     for(auto& screen_config : configuration_->screen_configurations) {
-        auto screen = CreateScreen(screen_config);
+        // An overlay is built on demand by OverlayHost; it belongs to no group.
+        if(screen_config->is_overlay)
+            continue;
+
+        auto screen = CreateScreen(screen_config, main_view_->GetGroupContainer(screen_config->group_id));
 
         if(screen != nullptr)
             main_view_->AddScreen(std::move(screen));
@@ -299,31 +332,30 @@ void UiController::OnNavigationChanged(const NavigationEventChannel::EventMessag
     ScopedLvglLock lvgl_guard;
 
     try {
-        auto action_it = event.payload.find(NavigationPayloadType::Action);
-        if(action_it == event.payload.end())
+        auto action = GetPayloadId(event, NavigationPayloadType::Action);
+        if(!action.has_value())
             return;
 
-        const auto* action_raw = std::get_if<uint32_t>(&action_it->second);
-        if(action_raw == nullptr)
-            return;
+        switch(static_cast<NavigationAction>(*action)) {
+            case NavigationAction::ShowGroup:
+                if(auto group_id = GetPayloadId(event, NavigationPayloadType::TargetGroupId))
+                    ShowGroup(*group_id);
 
-        if(static_cast<NavigationAction>(*action_raw) != NavigationAction::ShowGroup)
-            return;
+                break;
 
-        auto group_it = event.payload.find(NavigationPayloadType::TargetGroupId);
-        if(group_it == event.payload.end())
-            return;
+            case NavigationAction::ShowOverlay:
+                if(auto screen_id = GetPayloadId(event, NavigationPayloadType::TargetScreenId))
+                    ShowOverlay(*screen_id);
 
-        const auto* group_id = std::get_if<uint32_t>(&group_it->second);
-        if(group_id == nullptr)
-            return;
+                break;
 
-        if(main_view_->SetActiveGroup(*group_id) != 0)
-            LOG_ERR("Failed to show screen group %u.", *group_id);
+            case NavigationAction::CloseOverlay:
+                CloseOverlay();
+                break;
 
-        // The view is the source of truth; reconcile the service's optimistic state.
-        if(auto active_group_id = main_view_->GetActiveGroupId())
-            navigation_service_->SetActiveGroupId(*active_group_id);
+            default:
+                break;
+        }
     } catch(const std::exception& e) {
         LOG_ERR("Failed to apply navigation change. %s", e.what());
     } catch(...) {
@@ -331,20 +363,76 @@ void UiController::OnNavigationChanged(const NavigationEventChannel::EventMessag
     }
 }
 
+void UiController::ShowGroup(uint32_t group_id) {
+    if(main_view_->SetActiveGroup(group_id) != 0)
+        LOG_ERR("Failed to show screen group %u.", group_id);
+
+    // The view is the source of truth; reconcile the service's optimistic state.
+    if(auto active_group_id = main_view_->GetActiveGroupId())
+        navigation_service_->SetActiveGroupId(*active_group_id);
+}
+
+void UiController::ShowOverlay(uint32_t screen_id) {
+    // Every failure below has to tell navigation, whose overlay state blocks group
+    // switching until something closes it. That state clears as the call is made;
+    // only the matching Pop() comes back around through the bus.
+    if(overlay_host_ == nullptr) {
+        LOG_ERR("No overlay host to show screen %u on.", screen_id);
+        navigation_service_->CloseOverlay();
+
+        return;
+    }
+
+    auto configuration = FindOverlayConfiguration(screen_id);
+    if(configuration == nullptr) {
+        LOG_ERR("Screen %u is not a configured overlay.", screen_id);
+        navigation_service_->CloseOverlay();
+
+        return;
+    }
+
+    // Built fresh on every show: Pop() destroys the screen it was given.
+    auto screen = CreateScreen(std::move(configuration), overlay_host_->GetContainer());
+    if(screen == nullptr || overlay_host_->Push(std::move(screen)) != 0) {
+        LOG_ERR("Failed to show overlay screen %u.", screen_id);
+        navigation_service_->CloseOverlay();
+    }
+}
+
+void UiController::CloseOverlay() {
+    // -ENOENT is expected here: a failed show reconciles by asking navigation to close.
+    if(overlay_host_ != nullptr)
+        overlay_host_->Pop();
+}
+
 std::shared_ptr<NavigationService> UiController::GetNavigationService() const {
     return navigation_service_;
 }
 
-std::shared_ptr<IScreen> UiController::CreateScreen(std::shared_ptr<ScreenConfiguration> configuration) {
+std::shared_ptr<IScreen> UiController::CreateScreen(
+    std::shared_ptr<ScreenConfiguration> configuration,
+    std::shared_ptr<Frame> parent) {
+
     try {
         return ScreenFactory::GetInstance().CreateScreen(
             configuration,
-            main_view_->GetGroupContainer(configuration->group_id),
+            std::move(parent),
             widget_context_);
     } catch(const std::exception& e) {
         LOG_ERR("Failed to create screen with ID: %d. %s", configuration->id, e.what());
         return nullptr;
     }
+}
+
+std::shared_ptr<ScreenConfiguration> UiController::FindOverlayConfiguration(uint32_t screen_id) const {
+    if(configuration_ == nullptr)
+        return nullptr;
+
+    for(const auto& screen_config : configuration_->screen_configurations)
+        if(screen_config->is_overlay && screen_config->id == screen_id)
+            return screen_config;
+
+    return nullptr;
 }
 
 void UiController::SetupTestConfiguration() {
