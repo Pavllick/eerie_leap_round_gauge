@@ -57,7 +57,7 @@ void ArcFillIndicator::UpdateIndicator(float value) {
     lv_arc_set_value(lv_arc_, static_cast<int32_t>(value));
 }
 
-void ArcFillIndicator::RegisterProperties(WidgetPropertyStore& store) {
+void ArcFillIndicator::RegisterProperties(WidgetPropertyStore& store) const {
     IndicatorBase::RegisterProperties(store);
 
     store.Register(WidgetPropertyType::START_ANGLE, ConfigValue { DEFAULT_START_ANGLE }, PropertyChangeEffect::Repaint);

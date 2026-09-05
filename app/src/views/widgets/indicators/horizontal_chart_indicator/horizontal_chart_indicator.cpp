@@ -89,7 +89,7 @@ void HorizontalChartIndicator::Update(float value) {
     UpdateIndicator(value);
 }
 
-void HorizontalChartIndicator::RegisterProperties(WidgetPropertyStore& store) {
+void HorizontalChartIndicator::RegisterProperties(WidgetPropertyStore& store) const {
     IndicatorBase::RegisterProperties(store);
 
     store.Register(WidgetPropertyType::CHART_POINT_COUNT, ConfigValue { 30 }, PropertyChangeEffect::Rebuild);

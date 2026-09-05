@@ -33,7 +33,7 @@ int ArcIconWidget::ApplyTheme(const ITheme& theme) {
     return 0;
 }
 
-void ArcIconWidget::RegisterProperties(WidgetPropertyStore& store) {
+void ArcIconWidget::RegisterProperties(WidgetPropertyStore& store) const {
     IconWidget::RegisterProperties(store);
 
     store.Register(WidgetPropertyType::POSITION_ANGLE, ConfigValue { -90.0 }, PropertyChangeEffect::Relayout);

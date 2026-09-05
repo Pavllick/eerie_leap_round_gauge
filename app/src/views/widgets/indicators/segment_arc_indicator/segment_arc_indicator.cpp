@@ -96,7 +96,7 @@ void SegmentArcIndicator::UpdateIndicator(float value) {
     }
 }
 
-void SegmentArcIndicator::RegisterProperties(WidgetPropertyStore& store) {
+void SegmentArcIndicator::RegisterProperties(WidgetPropertyStore& store) const {
     IndicatorBase::RegisterProperties(store);
 
     store.Register(WidgetPropertyType::START_ANGLE, ConfigValue { 45 }, PropertyChangeEffect::Repaint);

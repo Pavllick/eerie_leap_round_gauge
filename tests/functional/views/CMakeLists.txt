@@ -22,6 +22,13 @@ file(GLOB_RECURSE APP_SRC_UI_DOMAIN
   ${APP_SRC_UI_DOMAIN_DIR}/*.cpp
 )
 
+# WidgetBase resolves its bindings through EventChannelRegistry.
+set(APP_SRC_EVENT_BUS_DIR ${APP_SRC_DIR}/event_bus)
+file(GLOB_RECURSE APP_SRC_EVENT_BUS
+  ${APP_SRC_EVENT_BUS_DIR}/*.c
+  ${APP_SRC_EVENT_BUS_DIR}/*.cpp
+)
+
 set(APP_SRC_VIEWS_DIR ${APP_SRC_DIR}/views)
 file(GLOB_RECURSE APP_SRC_VIEWS
   ${APP_SRC_VIEWS_DIR}/*.c
@@ -37,6 +44,7 @@ file(GLOB_RECURSE TEST_SOURCES src/*.c src/*.cpp)
 # Add all source files to the app target
 target_sources(app PRIVATE
   ${APP_SRC_CONFIGURATION}
+  ${APP_SRC_EVENT_BUS}
   ${APP_SRC_UI_DOMAIN}
   ${APP_SRC_VIEWS}
   ${TEST_SOURCES}

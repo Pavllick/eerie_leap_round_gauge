@@ -71,7 +71,7 @@ void BarIndicator::UpdateIndicator(float value) {
     lv_bar_set_value(lv_bar_, static_cast<int32_t>(value), LV_ANIM_OFF);
 }
 
-void BarIndicator::RegisterProperties(WidgetPropertyStore& store) {
+void BarIndicator::RegisterProperties(WidgetPropertyStore& store) const {
     IndicatorBase::RegisterProperties(store);
 
     store.Register(

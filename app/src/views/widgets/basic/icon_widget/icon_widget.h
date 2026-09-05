@@ -29,7 +29,7 @@ public:
     void SetIsActive(bool is_active);
 
 protected:
-    void RegisterProperties(WidgetPropertyStore& store) override;
+    void RegisterProperties(WidgetPropertyStore& store) const override;
     void OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) override;
 
 public:

@@ -101,7 +101,7 @@ void IndicatorBase::OnDeactivated() {
     lv_anim_delete(this, UpdateIndicatorCallback);
 }
 
-void IndicatorBase::RegisterProperties(WidgetPropertyStore& store) {
+void IndicatorBase::RegisterProperties(WidgetPropertyStore& store) const {
     WidgetBase::RegisterProperties(store);
 
     store.Register(WidgetPropertyType::MIN_VALUE, ConfigValue { 0.0 }, PropertyChangeEffect::Repaint);

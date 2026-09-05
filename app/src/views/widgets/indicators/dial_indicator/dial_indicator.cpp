@@ -14,7 +14,13 @@ using namespace eerie_leap::domain::ui_domain::models;
 using namespace eerie_leap::views::utilitites;
 
 DialIndicator::DialIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
-    : IndicatorBase(id, std::move(parent), std::move(context)) {}
+    : IndicatorBase(id, std::move(parent), std::move(context)) {
+
+    // Built here rather than in Create() so it is declarable as a dependency before any render.
+    needle_icon_ = std::make_unique<IconWidget>(id_, container_, context_, IconType::Image);
+
+    AddDependency(*needle_icon_);
+}
 
 int DialIndicator::DoRender() {
     auto lv_obj = Create();
@@ -35,8 +41,6 @@ int DialIndicator::ApplyTheme(const ITheme& theme) {
 }
 
 lv_obj_t* DialIndicator::Create() {
-    needle_icon_ = std::make_unique<IconWidget>(id_, container_, context_, IconType::Image);
-    needle_icon_->Configure(configuration_);
     if(needle_icon_->Render() != 0)
         return nullptr;
 
@@ -68,7 +72,7 @@ void DialIndicator::UpdateIndicator(float value) {
     //     LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
-void DialIndicator::RegisterProperties(WidgetPropertyStore& store) {
+void DialIndicator::RegisterProperties(WidgetPropertyStore& store) const {
     IndicatorBase::RegisterProperties(store);
 
     store.Register(WidgetPropertyType::START_ANGLE, ConfigValue { DEFAULT_START_ANGLE }, PropertyChangeEffect::Repaint);

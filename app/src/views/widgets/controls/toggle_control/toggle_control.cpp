@@ -15,7 +15,7 @@ ToggleControl::ToggleControl(uint32_t id, std::shared_ptr<Frame> parent, WidgetC
     : ControlBase(id, std::move(parent), std::move(context), true) {}
 
 // A toggle carries a boolean where the base assumes a number.
-void ToggleControl::RegisterProperties(WidgetPropertyStore& store) {
+void ToggleControl::RegisterProperties(WidgetPropertyStore& store) const {
     ControlBase::RegisterProperties(store);
 
     store.Register(WidgetPropertyType::VALUE, ConfigValue { false }, PropertyChangeEffect::None);

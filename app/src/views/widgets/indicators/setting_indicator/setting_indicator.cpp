@@ -17,7 +17,7 @@ using namespace eerie_leap::views::themes;
 SettingIndicator::SettingIndicator(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : SettingWidgetBase(id, std::move(parent), std::move(context)) {}
 
-void SettingIndicator::RegisterProperties(WidgetPropertyStore& store) {
+void SettingIndicator::RegisterProperties(WidgetPropertyStore& store) const {
     SettingWidgetBase::RegisterProperties(store);
 
     store.Register(WidgetPropertyType::LABEL, ConfigValue { std::pmr::string { } }, PropertyChangeEffect::Repaint);

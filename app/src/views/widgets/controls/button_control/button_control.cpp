@@ -21,7 +21,7 @@ static constexpr int32_t no_target_group = -1;
 ButtonControl::ButtonControl(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : ControlBase(id, std::move(parent), std::move(context), false) {}
 
-void ButtonControl::RegisterProperties(WidgetPropertyStore& store) {
+void ButtonControl::RegisterProperties(WidgetPropertyStore& store) const {
     ControlBase::RegisterProperties(store);
 
     store.Register(WidgetPropertyType::LABEL, ConfigValue { std::pmr::string { } }, PropertyChangeEffect::Repaint);

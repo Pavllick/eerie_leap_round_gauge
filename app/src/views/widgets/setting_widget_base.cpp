@@ -13,7 +13,7 @@ using namespace eerie_leap::domain::ui_domain::models;
 SettingWidgetBase::SettingWidgetBase(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : WidgetBase(id, std::move(parent), std::move(context)) { }
 
-void SettingWidgetBase::RegisterProperties(WidgetPropertyStore& store) {
+void SettingWidgetBase::RegisterProperties(WidgetPropertyStore& store) const {
     WidgetBase::RegisterProperties(store);
 
     store.Register(WidgetPropertyType::SETTING_ID, ConfigValue { std::pmr::string { } }, PropertyChangeEffect::None);

@@ -55,6 +55,7 @@ protected:
 
     std::vector<AnySubscription> subscriptions_;
     std::vector<OutboundBinding> outbound_bindings_;
+    std::vector<WidgetBase*> dependencies_;
     std::shared_ptr<WidgetDispatchGuard> dispatch_guard_;
     WidgetContext context_;
 
@@ -76,7 +77,7 @@ protected:
 
     // Declares what this widget understands, base class first. A derived override calls its base
     // before adding its own, so the replay below applies base properties first.
-    virtual void RegisterProperties(WidgetPropertyStore& store);
+    virtual void RegisterProperties(WidgetPropertyStore& store) const;
 
     // Reacts to one property. A derived override handles its own keys and delegates the rest.
     // Runs before the LVGL objects exist, so it may only touch members and the container.
@@ -96,6 +97,17 @@ protected:
 
     void RunEffect(PropertyChangeEffect effect);
 
+    // A widget this one builds and drives from the same configuration. Declaring it is enough:
+    // the base seeds it, reports its properties as configurable here, and keeps the bindings to
+    // itself. Nothing about what the dependency reads belongs in the widget that owns it.
+    void AddDependency(WidgetBase& dependency);
+
+    void ApplyConfiguration(std::shared_ptr<WidgetConfiguration> configuration, bool is_owner);
+
+    // A dependency shares its owner's configuration, so it neither resolves the bindings - which
+    // would subscribe and publish twice - nor reports the owner's properties as unsupported.
+    void ConfigureAsPart(std::shared_ptr<WidgetConfiguration> configuration);
+
     // Every destructor that runs before ~WidgetBase must call this first, or a
     // dispatch already in flight can reach members that have just been destroyed.
     void DetachDispatch();
@@ -112,9 +124,11 @@ public:
     void OnActivated() override;
     void OnDeactivated() override;
 
-    // Sealed: the configuration path is register -> seed -> replay -> OnConfigured, and a derived
-    // override would run its own reads after the replay had already used the defaults.
+    // Sealed: the configuration path is register -> seed -> replay -> OnConfigured -> bindings,
+    // and a derived override would run its own reads after the replay had already used the defaults.
     void Configure(std::shared_ptr<WidgetConfiguration> configuration) final;
+
+    std::vector<WidgetPropertyType> GetSupportedProperties() const override;
     std::shared_ptr<WidgetConfiguration> GetConfiguration() const override;
 
     WidgetPosition GetPositionPx() const override;

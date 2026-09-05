@@ -57,7 +57,7 @@ void IconWidget::SetIsActive(bool is_active) {
         icon_->SetIsActive(is_active);
 }
 
-void IconWidget::RegisterProperties(WidgetPropertyStore& store) {
+void IconWidget::RegisterProperties(WidgetPropertyStore& store) const {
     WidgetBase::RegisterProperties(store);
 
     store.Register(WidgetPropertyType::ICON_TYPE, ConfigValue { 0 }, PropertyChangeEffect::Rebuild);

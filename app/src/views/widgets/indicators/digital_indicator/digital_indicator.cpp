@@ -53,7 +53,7 @@ void DigitalIndicator::UpdateIndicator(float value) {
     lv_label_set_text(lv_label_, value_str);
 }
 
-void DigitalIndicator::RegisterProperties(WidgetPropertyStore& store) {
+void DigitalIndicator::RegisterProperties(WidgetPropertyStore& store) const {
     IndicatorBase::RegisterProperties(store);
 
     store.Register(WidgetPropertyType::VALUE_PRECISION, ConfigValue { 0 }, PropertyChangeEffect::Repaint);

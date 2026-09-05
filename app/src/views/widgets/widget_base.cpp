@@ -115,7 +115,7 @@ void WidgetBase::OnDeactivated() {
     is_active_ = false;
 }
 
-void WidgetBase::RegisterProperties(WidgetPropertyStore& store) {
+void WidgetBase::RegisterProperties(WidgetPropertyStore& store) const {
     store.Register(WidgetPropertyType::IS_VISIBLE, ConfigValue { true }, PropertyChangeEffect::None);
     store.Register(WidgetPropertyType::IS_SMOOTHED, ConfigValue { false }, PropertyChangeEffect::None);
 }
@@ -126,6 +126,27 @@ void WidgetBase::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& v
 }
 
 void WidgetBase::OnConfigured() { }
+
+void WidgetBase::AddDependency(WidgetBase& dependency) {
+    dependencies_.push_back(&dependency);
+}
+
+std::vector<WidgetPropertyType> WidgetBase::GetSupportedProperties() const {
+    WidgetPropertyStore declared;
+
+    RegisterProperties(declared);
+
+    auto supported = declared.GetRegisteredTypes();
+
+    for(const auto* dependency : dependencies_) {
+        for(auto type : dependency->GetSupportedProperties()) {
+            if(std::find(supported.begin(), supported.end(), type) == supported.end())
+                supported.push_back(type);
+        }
+    }
+
+    return supported;
+}
 
 void WidgetBase::RunEffect(PropertyChangeEffect effect) {
     if(effect == PropertyChangeEffect::None || !IsReady())
@@ -262,13 +283,28 @@ void WidgetBase::ReplayProperties() {
 }
 
 void WidgetBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
+    ApplyConfiguration(std::move(configuration), true);
+}
+
+void WidgetBase::ConfigureAsPart(std::shared_ptr<WidgetConfiguration> configuration) {
+    ApplyConfiguration(std::move(configuration), false);
+}
+
+void WidgetBase::ApplyConfiguration(std::shared_ptr<WidgetConfiguration> configuration, bool is_owner) {
     configuration_ = std::move(configuration);
 
     RegisterProperties(*properties_);
 
+    // A dependency reads its own store, so its properties are configurable here but legitimately
+    // absent from this one.
+    auto supported = is_owner ? GetSupportedProperties() : std::vector<WidgetPropertyType> { };
+
     for(const auto& [key, value] : configuration_->properties) {
         try {
-            if(!properties_->Set(WidgetProperty::GetType(key), value))
+            auto type = WidgetProperty::GetType(key);
+
+            if(!properties_->Set(type, value) && is_owner
+                && std::find(supported.begin(), supported.end(), type) == supported.end())
                 LOG_WRN("Widget %u does not support property '%s'.", id_, key.c_str());
         } catch(const std::exception&) {
             LOG_WRN("Widget %u carries unknown property '%s'.", id_, key.c_str());
@@ -276,8 +312,14 @@ void WidgetBase::Configure(std::shared_ptr<WidgetConfiguration> configuration) {
     }
 
     ReplayProperties();
+
+    for(auto* dependency : dependencies_)
+        dependency->ConfigureAsPart(configuration_);
+
     OnConfigured();
-    ResolveBindings();
+
+    if(is_owner)
+        ResolveBindings();
 }
 
 std::shared_ptr<WidgetConfiguration> WidgetBase::GetConfiguration() const {

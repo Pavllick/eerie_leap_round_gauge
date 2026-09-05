@@ -1,18 +1,22 @@
 #pragma once
 
 #include <memory>
+#include <vector>
+
 #include <lvgl.h>
 
 #include "domain/ui_domain/models/widget_type.h"
 #include "domain/ui_domain/models/widget_position.h"
 #include "domain/ui_domain/models/widget_size.h"
 #include "domain/ui_domain/models/widget_configuration.h"
+#include "domain/ui_domain/models/widget_property.h"
 #include "views/i_renderable.h"
 
 namespace eerie_leap::views::widgets {
 
 using eerie_leap::domain::ui_domain::models::WidgetConfiguration;
 using eerie_leap::domain::ui_domain::models::WidgetPosition;
+using eerie_leap::domain::ui_domain::models::WidgetPropertyType;
 using eerie_leap::domain::ui_domain::models::WidgetSize;
 using eerie_leap::domain::ui_domain::models::WidgetType;
 
@@ -32,6 +36,11 @@ public:
     virtual void Configure(std::shared_ptr<WidgetConfiguration> configuration) = 0;
     virtual std::shared_ptr<WidgetConfiguration> GetConfiguration() const = 0;
     virtual bool IsSmoothed() const = 0;
+
+    // Every property a configuration for this widget may carry: what it reads itself, plus what it
+    // forwards to a part it builds. Answers "what can I configure here?" without an instance
+    // having been configured, and is derived from the registration itself so it cannot drift.
+    virtual std::vector<WidgetPropertyType> GetSupportedProperties() const = 0;
 
     // Layout
     virtual WidgetPosition GetPositionPx() const = 0;
