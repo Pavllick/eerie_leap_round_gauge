@@ -12,7 +12,7 @@ namespace eerie_leap::domain::ui_domain::configuration::parsers {
 using namespace eerie_leap::domain::ui_domain::models;
 
 // Matches the screen count the persisted CBOR schema allows.
-static constexpr std::size_t max_screen_count = 10;
+static constexpr std::size_t max_screen_count = 24;
 
 enum class PropertyValueKind {
     Numeric,

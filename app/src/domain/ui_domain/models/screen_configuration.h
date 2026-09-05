@@ -19,6 +19,9 @@ struct ScreenConfiguration {
     ScreenType type;
     int32_t z_index = 0;
     bool is_visible = true;
+
+    // An overlay is hosted by OverlayHost on the top layer instead of joining a screen group.
+    bool is_overlay = false;
     GridSettings grid;
     std::pmr::vector<std::shared_ptr<WidgetConfiguration>> widget_configurations;
 
@@ -37,6 +40,7 @@ struct ScreenConfiguration {
           type(other.type),
           z_index(other.z_index),
           is_visible(other.is_visible),
+          is_overlay(other.is_overlay),
           grid(other.grid),
           widget_configurations(std::move(other.widget_configurations), alloc) {}
 

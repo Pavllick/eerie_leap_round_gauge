@@ -166,15 +166,16 @@ static bool encode_CborScreenConfig(
 
     size_t CborWidgetConfig_m_count = input->CborWidgetConfig_m.size();
 
-	bool res = (((zcbor_list_start_encode(state, 7) && ((
+	bool res = (((zcbor_list_start_encode(state, 8) && ((
        ((zcbor_uint32_encode(state, (&(*input).id))))
     && ((zcbor_uint32_encode(state, (&(*input).group_id))))
     && ((zcbor_uint32_encode(state, (&(*input).type))))
 	&& ((zcbor_int32_encode(state, (&(*input).z_index))))
 	&& ((zcbor_bool_encode(state, (&(*input).is_visible))))
+	&& ((zcbor_bool_encode(state, (&(*input).is_overlay))))
 	&& ((encode_CborGridSettingsConfig(state, (&(*input).grid))))
 	&& ((zcbor_list_start_encode(state, CborWidgetConfig_m_count) && ((zcbor_multi_encode(CborWidgetConfig_m_count, (zcbor_encoder_t *)encode_CborWidgetConfig, state, input->CborWidgetConfig_m.data(), sizeof(struct CborWidgetConfig))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, CborWidgetConfig_m_count)))
-	) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 7))));
+	) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 8))));
 
 	log_result(state, res, __func__);
 	return res;

@@ -84,7 +84,8 @@ static size_t cbor_get_size_CborUiConfig(const CborUiConfig& config) {
             .AddUint(screen.group_id)
             .AddUint(screen.type)
             .AddInt(screen.z_index)
-            .AddBool(screen.is_visible);
+            .AddBool(screen.is_visible)
+            .AddBool(screen.is_overlay);
 
         // CborGridSettingsConfig
         builder.AddIndefiniteArrayStart();

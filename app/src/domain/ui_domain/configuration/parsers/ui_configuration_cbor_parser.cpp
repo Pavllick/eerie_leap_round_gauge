@@ -173,6 +173,7 @@ pmr_unique_ptr<CborUiConfig> UiConfigurationCborParser::Serialize(const UiConfig
         screen_config.type = static_cast<uint32_t>(configuration.screen_configurations[i]->type);
         screen_config.z_index = configuration.screen_configurations[i]->z_index;
         screen_config.is_visible = configuration.screen_configurations[i]->is_visible;
+        screen_config.is_overlay = configuration.screen_configurations[i]->is_overlay;
         screen_config.grid.snap_enabled = configuration.screen_configurations[i]->grid.snap_enabled;
         screen_config.grid.width = configuration.screen_configurations[i]->grid.width;
         screen_config.grid.height = configuration.screen_configurations[i]->grid.height;
@@ -235,6 +236,7 @@ pmr_unique_ptr<UiConfiguration> UiConfigurationCborParser::Deserialize(
         screen_configuration->type = static_cast<ScreenType>(config.CborScreenConfig_m[i].type);
         screen_configuration->z_index = config.CborScreenConfig_m[i].z_index;
         screen_configuration->is_visible = config.CborScreenConfig_m[i].is_visible;
+        screen_configuration->is_overlay = config.CborScreenConfig_m[i].is_overlay;
 
         screen_configuration->grid.snap_enabled = config.CborScreenConfig_m[i].grid.snap_enabled;
         screen_configuration->grid.width = config.CborScreenConfig_m[i].grid.width;

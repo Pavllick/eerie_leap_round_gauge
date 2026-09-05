@@ -372,6 +372,11 @@ static bool decode_CborScreenConfig(
 		return false;
 	}
 
+	if (!zcbor_bool_decode(state, &result->is_overlay)) {
+		zcbor_list_end_decode(state);
+		return false;
+	}
+
 	if (!decode_CborGridSettingsConfig(state, &result->grid)) {
 		zcbor_list_end_decode(state);
 		return false;

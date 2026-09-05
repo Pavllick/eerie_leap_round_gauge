@@ -97,10 +97,20 @@ ZTEST(ui_configuration_validator, test_empty_configuration_is_valid) {
     zassert_true(Validates(*configuration));
 }
 
+ZTEST(ui_configuration_validator, test_the_screen_count_limit_matches_the_schema) {
+    auto configuration = MakeConfiguration();
+
+    // MakeConfiguration() already holds one, so this fills the schema's 24 slots.
+    for(uint32_t i = 1; i < 24; i++)
+        configuration->screen_configurations.push_back(MakeScreen(i, 1));
+
+    zassert_true(Validates(*configuration));
+}
+
 ZTEST(ui_configuration_validator, test_too_many_screens_is_invalid) {
     auto configuration = MakeConfiguration();
 
-    for(uint32_t i = 1; i <= 10; i++)
+    for(uint32_t i = 1; i <= 24; i++)
         configuration->screen_configurations.push_back(MakeScreen(i, 1));
 
     zassert_false(Validates(*configuration));

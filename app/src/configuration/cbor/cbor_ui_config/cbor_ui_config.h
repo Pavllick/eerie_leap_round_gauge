@@ -189,6 +189,7 @@ struct CborScreenConfig {
     uint32_t type{};
 	int32_t z_index{};
 	bool is_visible{};
+	bool is_overlay{};
 	CborGridSettingsConfig grid{};
 	std::pmr::vector<CborWidgetConfig> CborWidgetConfig_m;
 	allocator_type allocator;
@@ -208,6 +209,7 @@ struct CborScreenConfig {
 		type(other.type),
 		z_index(other.z_index),
 		is_visible(other.is_visible),
+		is_overlay(other.is_overlay),
 		grid(other.grid),
 		CborWidgetConfig_m(std::move(other.CborWidgetConfig_m), alloc),
 		allocator(alloc) {}

@@ -33,6 +33,7 @@ pmr_unique_ptr<UiConfiguration> ui_configuration_parser_GetTestUiConfiguration()
     screen_configuration->type = ScreenType::Gauge;
     screen_configuration->z_index = -2;
     screen_configuration->is_visible = true;
+    screen_configuration->is_overlay = true;
 
     screen_configuration->grid.snap_enabled = true;
     screen_configuration->grid.width = 3;
@@ -128,6 +129,7 @@ void ui_configuration_parser_CompareUiConfigurations(UiConfiguration& ui_configu
         zassert_equal(deserialized_ui_configuration.screen_configurations[i]->type, ui_configuration.screen_configurations[i]->type);
         zassert_equal(deserialized_ui_configuration.screen_configurations[i]->z_index, ui_configuration.screen_configurations[i]->z_index);
         zassert_equal(deserialized_ui_configuration.screen_configurations[i]->is_visible, ui_configuration.screen_configurations[i]->is_visible);
+        zassert_equal(deserialized_ui_configuration.screen_configurations[i]->is_overlay, ui_configuration.screen_configurations[i]->is_overlay);
         zassert_equal(deserialized_ui_configuration.screen_configurations[i]->grid.snap_enabled, ui_configuration.screen_configurations[i]->grid.snap_enabled);
         zassert_equal(deserialized_ui_configuration.screen_configurations[i]->grid.width, ui_configuration.screen_configurations[i]->grid.width);
         zassert_equal(deserialized_ui_configuration.screen_configurations[i]->grid.height, ui_configuration.screen_configurations[i]->grid.height);
@@ -216,6 +218,33 @@ ZTEST(ui_configuration_parser, test_CborRoundTripKeepsAWidgetWithoutBindings) {
     auto deserialized = parser.Deserialize(Mrm::GetDefaultPmr(), *serialized.get());
 
     zassert_true(deserialized->screen_configurations[0]->widget_configurations[2]->bindings.empty());
+}
+
+// is_visible and is_overlay are adjacent bools on the wire, so only distinct
+// values catch a field shift between them.
+ZTEST(ui_configuration_parser, test_CborRoundTripKeepsOverlayApartFromVisibility) {
+    UiConfigurationCborParser parser;
+
+    auto ui_configuration = ui_configuration_parser_GetTestUiConfiguration();
+    auto& screen = *ui_configuration->screen_configurations[0];
+    screen.is_visible = false;
+    screen.is_overlay = true;
+
+    auto serialized = parser.Serialize(*ui_configuration);
+
+    zassert_false(serialized->CborScreenConfig_m[0].is_visible);
+    zassert_true(serialized->CborScreenConfig_m[0].is_overlay);
+
+    auto deserialized = parser.Deserialize(Mrm::GetDefaultPmr(), *serialized.get());
+
+    zassert_false(deserialized->screen_configurations[0]->is_visible);
+    zassert_true(deserialized->screen_configurations[0]->is_overlay);
+}
+
+ZTEST(ui_configuration_parser, test_AScreenIsNotAnOverlayByDefault) {
+    auto screen_configuration = make_shared_pmr<ScreenConfiguration>(Mrm::GetDefaultPmr());
+
+    zassert_false(screen_configuration->is_overlay);
 }
 
 ZTEST(ui_configuration_parser, test_CborSerializeStampsTheCurrentVersion) {
