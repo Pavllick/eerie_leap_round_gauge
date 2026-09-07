@@ -38,9 +38,10 @@ constexpr std::array all_types = {
     WidgetPropertyType::SETTING_ID,
     WidgetPropertyType::STEP,
     WidgetPropertyType::UNIT,
-    WidgetPropertyType::TARGET_GROUP,
+    WidgetPropertyType::TARGET_SCREEN_GROUP,
     WidgetPropertyType::IS_VISIBLE,
-    WidgetPropertyType::VALUE
+    WidgetPropertyType::VALUE,
+    WidgetPropertyType::NAVIGATION_INTENT
 };
 
 } // namespace
@@ -59,7 +60,7 @@ ZTEST(widget_property, test_phase_four_names) {
     zassert_equal(std::string_view(WidgetProperty::GetTypeName(WidgetPropertyType::SETTING_ID)), "SETTING_ID");
     zassert_equal(std::string_view(WidgetProperty::GetTypeName(WidgetPropertyType::STEP)), "STEP");
     zassert_equal(std::string_view(WidgetProperty::GetTypeName(WidgetPropertyType::UNIT)), "UNIT");
-    zassert_equal(std::string_view(WidgetProperty::GetTypeName(WidgetPropertyType::TARGET_GROUP)), "TARGET_GROUP");
+    zassert_equal(std::string_view(WidgetProperty::GetTypeName(WidgetPropertyType::TARGET_SCREEN_GROUP)), "TARGET_SCREEN_GROUP");
 }
 
 ZTEST(widget_property, test_unknown_name_is_rejected) {

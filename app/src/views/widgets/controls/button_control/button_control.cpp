@@ -15,8 +15,8 @@ using namespace eerie_leap::views::themes;
 
 LOG_MODULE_REGISTER(button_control_logger);
 
-// A button carries no setting, so an unset TARGET_GROUP means "no navigation".
-static constexpr int32_t no_target_group = -1;
+// A button carries no setting, so an unset target means "no navigation".
+static constexpr int32_t no_target = -1;
 
 ButtonControl::ButtonControl(uint32_t id, std::shared_ptr<Frame> parent, WidgetContext context)
     : ControlBase(id, std::move(parent), std::move(context), false) {}
@@ -25,7 +25,11 @@ void ButtonControl::RegisterProperties(WidgetPropertyStore& store) const {
     ControlBase::RegisterProperties(store);
 
     store.Register(WidgetPropertyType::LABEL, ConfigValue { std::pmr::string { } }, PropertyChangeEffect::Repaint);
-    store.Register(WidgetPropertyType::TARGET_GROUP, ConfigValue { no_target_group }, PropertyChangeEffect::None);
+    store.Register(WidgetPropertyType::TARGET_SCREEN_GROUP, ConfigValue { no_target }, PropertyChangeEffect::None);
+    store.Register(
+        WidgetPropertyType::NAVIGATION_INTENT,
+        ConfigValue { static_cast<int>(NavigationIntent::None) },
+        PropertyChangeEffect::None);
 }
 
 void ButtonControl::OnPropertyChanged(WidgetPropertyType type, const ConfigValue& value) {
@@ -34,14 +38,19 @@ void ButtonControl::OnPropertyChanged(WidgetPropertyType type, const ConfigValue
             label_ = ConfigValueAs<std::pmr::string>(value, "");
             break;
 
-        case WidgetPropertyType::TARGET_GROUP: {
-            auto target_group = ConfigValueAs<int>(value, no_target_group);
+        case WidgetPropertyType::TARGET_SCREEN_GROUP: {
+            auto target = ConfigValueAs<int>(value, no_target);
 
-            if(target_group >= 0)
-                target_group_id_ = static_cast<uint32_t>(target_group);
+            if(target >= 0)
+                target_id_ = static_cast<uint32_t>(target);
 
             break;
         }
+
+        case WidgetPropertyType::NAVIGATION_INTENT:
+            intent_ = static_cast<NavigationIntent>(
+                ConfigValueAs<int>(value, static_cast<int>(NavigationIntent::None)));
+            break;
 
         default:
             ControlBase::OnPropertyChanged(type, value);
@@ -81,15 +90,38 @@ int ButtonControl::ApplyTheme(const ITheme& theme) {
 }
 
 void ButtonControl::OnControlEvent(lv_event_code_t code) {
-    if(code != LV_EVENT_CLICKED)
+    if(code != LV_EVENT_CLICKED || context_.navigation_service == nullptr)
         return;
 
-    if(!target_group_id_.has_value() || context_.navigation_service == nullptr)
+    auto navigation = ResolveNavigation();
+    if(!navigation.has_value())
         return;
 
-    // Publishes an event; the group switch itself happens on the event bus thread.
-    if(context_.navigation_service->GoToGroup(*target_group_id_) != 0)
-        LOG_WRN("Widget %u failed to navigate to screen group %u.", id_, *target_group_id_);
+    // Publishes an event; the view change itself happens on the event bus thread.
+    if(context_.navigation_service->Handle(navigation->first, navigation->second) != 0)
+        LOG_WRN("Widget %u failed navigation intent %u.", id_, static_cast<uint32_t>(navigation->first));
+}
+
+std::optional<std::pair<NavigationIntent, uint32_t>> ButtonControl::ResolveNavigation() const {
+    // A button configured with only a target predates NAVIGATION_INTENT.
+    auto intent = intent_ == NavigationIntent::None && target_id_.has_value()
+        ? NavigationIntent::GoToGroup
+        : intent_;
+
+    switch(intent) {
+        case NavigationIntent::GoToGroup:
+        case NavigationIntent::ShowOverlay:
+            if(target_id_.has_value())
+                return std::pair { intent, *target_id_ };
+
+            return std::nullopt;
+
+        case NavigationIntent::None:
+            return std::nullopt;
+
+        default:
+            return std::pair { intent, uint32_t { 0 } };
+    }
 }
 
 } // namespace eerie_leap::views::widgets::controls

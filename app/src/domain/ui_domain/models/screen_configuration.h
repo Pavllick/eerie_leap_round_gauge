@@ -15,7 +15,7 @@ struct ScreenConfiguration {
     using allocator_type = std::pmr::polymorphic_allocator<>;
 
     uint32_t id;
-    uint32_t group_id;
+    uint32_t screen_group_id;
     ScreenType type;
     int32_t z_index = 0;
     bool is_visible = true;
@@ -36,7 +36,7 @@ struct ScreenConfiguration {
 
     ScreenConfiguration(ScreenConfiguration&& other, allocator_type alloc)
         : id(other.id),
-          group_id(other.group_id),
+          screen_group_id(other.screen_group_id),
           type(other.type),
           z_index(other.z_index),
           is_visible(other.is_visible),

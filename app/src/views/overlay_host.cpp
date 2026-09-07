@@ -27,17 +27,17 @@ OverlayHost::Entry::~Entry() {
         lv_timer_delete(auto_close_timer);
 
     // Teardown also runs on the push failure path, so it may not throw its way out.
-    if(is_activated && screen != nullptr) {
+    if(screen_group != nullptr) {
         try {
-            screen->OnDeactivated();
+            screen_group->Deactivate();
         } catch(const std::exception& e) {
-            LOG_ERR("Failed to deactivate an overlay screen. %s", e.what());
+            LOG_ERR("Failed to deactivate an overlay group. %s", e.what());
         } catch(...) {
-            LOG_ERR("Failed to deactivate an overlay screen.");
+            LOG_ERR("Failed to deactivate an overlay group.");
         }
     }
 
-    // screen and scrim follow, each taking its LVGL objects with it.
+    // screen_group and scrim follow, each taking its LVGL objects with it.
 }
 
 OverlayHost::OverlayHost(std::shared_ptr<NavigationService> navigation_service)
@@ -64,8 +64,12 @@ OverlayHost::~OverlayHost() {
     DismissAll();
 }
 
-int OverlayHost::Push(std::shared_ptr<IScreen> screen, const OverlayOptions& options) {
-    if(screen == nullptr)
+std::unique_ptr<ScreenGroup> OverlayHost::CreateGroup(uint32_t screen_group_id) {
+    return std::make_unique<ScreenGroup>(screen_group_id, container_);
+}
+
+int OverlayHost::Push(std::unique_ptr<ScreenGroup> screen_group, const OverlayOptions& options) {
+    if(screen_group == nullptr || screen_group->IsEmpty())
         return -EINVAL;
 
     if(entries_.size() >= k_max_depth) {
@@ -74,7 +78,7 @@ int OverlayHost::Push(std::shared_ptr<IScreen> screen, const OverlayOptions& opt
     }
 
     auto entry = std::make_unique<Entry>();
-    entry->screen = std::move(screen);
+    entry->screen_group = std::move(screen_group);
 
     int res = -EIO;
 
@@ -101,20 +105,19 @@ int OverlayHost::Mount(Entry& entry, const OverlayOptions& options) {
     if(options.is_modal)
         entry.scrim = CreateScrim(options.close_on_scrim_tap);
 
-    int res = entry.screen->IsReady() ? 0 : entry.screen->Render();
+    int res = entry.screen_group->EnsureRendered();
     if(res != 0) {
-        LOG_ERR("Failed to render overlay screen %u. Error: %d.", entry.screen->GetId(), res);
+        LOG_ERR("Failed to render overlay group %u. Error: %d.", entry.screen_group->GetGroupId(), res);
 
         return res;
     }
 
-    // The scrim was created after the screen's container, so it would otherwise
+    // The scrim was created after the group's container, so it would otherwise
     // cover the overlay it is supposed to sit behind.
-    if(auto container = entry.screen->GetContainer())
+    if(auto container = entry.screen_group->GetContainer())
         lv_obj_move_foreground(container->GetObject());
 
-    entry.screen->OnActivated();
-    entry.is_activated = true;
+    entry.screen_group->Activate();
 
     if(options.auto_close_ms > 0) {
         entry.auto_close_timer = lv_timer_create(AutoCloseCb, options.auto_close_ms, this);
@@ -147,8 +150,8 @@ size_t OverlayHost::GetDepth() const {
     return entries_.size();
 }
 
-std::shared_ptr<IScreen> OverlayHost::GetTopScreen() const {
-    return entries_.empty() ? nullptr : entries_.back()->screen;
+ScreenGroup* OverlayHost::GetTopGroup() const {
+    return entries_.empty() ? nullptr : entries_.back()->screen_group.get();
 }
 
 std::shared_ptr<Frame> OverlayHost::CreateScrim(bool close_on_tap) {

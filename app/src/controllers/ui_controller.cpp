@@ -60,7 +60,6 @@ using eerie_leap::domain::settings_domain::event_bus::SettingsEventsChannel;
 using eerie_leap::subsys::event_bus::CreateScopedSubscription;
 using eerie_leap::utilities::reflection::GetCallerName;
 using eerie_leap::domain::settings_domain::models::SettingId;
-using eerie_leap::views::utilitites::Frame;
 
 LOG_MODULE_REGISTER(ui_controller_logger);
 
@@ -241,7 +240,24 @@ int UiController::Initialize() {
     if(ui_input_service_->Initialize(main_view_->GetContainer()->GetObject()) != 0)
         LOG_ERR("Failed to initialize the UI input service.");
 
+    ConfigureGestures();
+
     return 0;
+}
+
+void UiController::ConfigureGestures() {
+    if(ui_input_service_ == nullptr)
+        return;
+
+    ui_input_service_->SetGestureMapping(
+        LV_DIR_BOTTOM,
+        NavigationIntent::CloseOverlay);
+
+    if(default_overlay_screen_id_.has_value())
+        ui_input_service_->SetGestureMapping(
+            LV_DIR_TOP,
+            NavigationIntent::ShowOverlay,
+            *default_overlay_screen_id_);
 }
 
 int UiController::Start() {
@@ -274,10 +290,14 @@ int UiController::Configure(std::shared_ptr<UiConfiguration> config) {
 
     for(auto& screen_config : configuration_->screen_configurations) {
         // An overlay is built on demand by OverlayHost; it belongs to no group.
-        if(screen_config->is_overlay)
-            continue;
+        if(screen_config->is_overlay) {
+            if(!default_overlay_screen_id_.has_value() || screen_config->id < *default_overlay_screen_id_)
+                default_overlay_screen_id_ = screen_config->id;
 
-        auto screen = CreateScreen(screen_config, main_view_->GetGroupContainer(screen_config->group_id));
+            continue;
+        }
+
+        auto screen = CreateScreen(screen_config, main_view_->GetGroupContainer(screen_config->screen_group_id));
 
         if(screen != nullptr)
             main_view_->AddScreen(std::move(screen));
@@ -285,21 +305,21 @@ int UiController::Configure(std::shared_ptr<UiConfiguration> config) {
 
     main_view_->PruneEmptyGroups();
 
-    auto group_ids = main_view_->GetGroupIds();
-    if(group_ids.empty()) {
+    auto screen_group_ids = main_view_->GetGroupIds();
+    if(screen_group_ids.empty()) {
         LOG_ERR("No usable screen groups were configured.");
         return -ENOENT;
     }
 
     int res = main_view_->SetActiveGroup(configuration_->active_screen_group_id);
     if(res != 0) {
-        LOG_WRN("Falling back to screen group %u.", group_ids.front());
-        res = main_view_->SetActiveGroup(group_ids.front());
+        LOG_WRN("Falling back to screen group %u.", screen_group_ids.front());
+        res = main_view_->SetActiveGroup(screen_group_ids.front());
     }
 
-    navigation_service_->SetGroupIds(std::move(group_ids));
-    if(auto active_group_id = main_view_->GetActiveGroupId())
-        navigation_service_->SetActiveGroupId(*active_group_id);
+    navigation_service_->SetGroupIds(std::move(screen_group_ids));
+    if(auto active_screen_group_id = main_view_->GetActiveGroupId())
+        navigation_service_->SetActiveGroupId(*active_screen_group_id);
 
     RequestSettingsState();
 
@@ -338,8 +358,8 @@ void UiController::OnNavigationChanged(const NavigationEventChannel::EventMessag
 
         switch(static_cast<NavigationAction>(*action)) {
             case NavigationAction::ShowGroup:
-                if(auto group_id = GetPayloadId(event, NavigationPayloadType::TargetGroupId))
-                    ShowGroup(*group_id);
+                if(auto screen_group_id = GetPayloadId(event, NavigationPayloadType::TargetGroupId))
+                    ShowGroup(*screen_group_id);
 
                 break;
 
@@ -363,13 +383,13 @@ void UiController::OnNavigationChanged(const NavigationEventChannel::EventMessag
     }
 }
 
-void UiController::ShowGroup(uint32_t group_id) {
-    if(main_view_->SetActiveGroup(group_id) != 0)
-        LOG_ERR("Failed to show screen group %u.", group_id);
+void UiController::ShowGroup(uint32_t screen_group_id) {
+    if(main_view_->SetActiveGroup(screen_group_id) != 0)
+        LOG_ERR("Failed to show screen group %u.", screen_group_id);
 
     // The view is the source of truth; reconcile the service's optimistic state.
-    if(auto active_group_id = main_view_->GetActiveGroupId())
-        navigation_service_->SetActiveGroupId(*active_group_id);
+    if(auto active_screen_group_id = main_view_->GetActiveGroupId())
+        navigation_service_->SetActiveGroupId(*active_screen_group_id);
 }
 
 void UiController::ShowOverlay(uint32_t screen_id) {
@@ -391,12 +411,28 @@ void UiController::ShowOverlay(uint32_t screen_id) {
         return;
     }
 
-    // Built fresh on every show: Pop() destroys the screen it was given.
-    auto screen = CreateScreen(std::move(configuration), overlay_host_->GetContainer());
-    if(screen == nullptr || overlay_host_->Push(std::move(screen)) != 0) {
+    // Built fresh on every show: Pop() destroys the group and everything under it.
+    auto screen_group = overlay_host_->CreateGroup(configuration->screen_group_id);
+    auto screen = CreateScreen(std::move(configuration), screen_group->GetContainer());
+    if(screen == nullptr) {
+        LOG_ERR("Failed to build overlay screen %u.", screen_id);
+        navigation_service_->CloseOverlay();
+
+        return;
+    }
+
+    screen_group->AddScreen(std::move(screen));
+
+    if(overlay_host_->Push(std::move(screen_group)) != 0) {
         LOG_ERR("Failed to show overlay screen %u.", screen_id);
         navigation_service_->CloseOverlay();
+
+        return;
     }
+
+    // This screen did not exist for the broadcast in Configure(), and settings owners
+    // only publish on change, so its bindings would sit on their defaults.
+    RequestSettingsState();
 }
 
 void UiController::CloseOverlay() {
@@ -441,7 +477,7 @@ void UiController::SetupTestConfiguration() {
 
     auto screen_configuration = make_shared_pmr<ScreenConfiguration>(Mrm::GetExtPmr());
     screen_configuration->id = 0;
-    screen_configuration->group_id = 0;
+    screen_configuration->screen_group_id = 0;
     screen_configuration->z_index = 0;
     screen_configuration->is_visible = true;
     screen_configuration->type = ScreenType::Gauge;
@@ -664,7 +700,7 @@ void UiController::SetupTestConfiguration() {
 
     auto screen_configuration_1 = make_shared_pmr<ScreenConfiguration>(Mrm::GetExtPmr());
     screen_configuration_1->id = 1;
-    screen_configuration_1->group_id = 1;
+    screen_configuration_1->screen_group_id = 1;
     screen_configuration_1->z_index = 0;
     screen_configuration_1->is_visible = true;
     screen_configuration_1->type = ScreenType::Gauge;
@@ -694,7 +730,7 @@ void UiController::SetupTestConfiguration() {
     // A settings screen is pure configuration: no C++ is written per config screen.
     auto screen_configuration_2 = make_shared_pmr<ScreenConfiguration>(Mrm::GetExtPmr());
     screen_configuration_2->id = 2;
-    screen_configuration_2->group_id = 2;
+    screen_configuration_2->screen_group_id = 2;
     screen_configuration_2->z_index = 0;
     screen_configuration_2->is_visible = true;
     screen_configuration_2->type = ScreenType::Settings;
@@ -740,10 +776,55 @@ void UiController::SetupTestConfiguration() {
     widget2_2->size_grid.height = 60;
     widget2_2->z_index = 0;
     widget2_2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::LABEL)] = "Back";
-    widget2_2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::TARGET_GROUP)] = 0;
+    widget2_2->properties[WidgetProperty::GetTypeName(WidgetPropertyType::TARGET_SCREEN_GROUP)] = 0;
     screen_configuration_2->AddWidget(std::move(widget2_2));
 
     ui_configuration->screen_configurations.push_back(std::move(screen_configuration_2));
+
+    // Screen 3: an overlay. It belongs to no group - a swipe up or a button shows it,
+    // a swipe down or its own button closes it.
+    auto screen_configuration_3 = make_shared_pmr<ScreenConfiguration>(Mrm::GetExtPmr());
+    screen_configuration_3->id = 3;
+    screen_configuration_3->screen_group_id = 0;
+    screen_configuration_3->z_index = 0;
+    screen_configuration_3->is_visible = true;
+    screen_configuration_3->is_overlay = true;
+    screen_configuration_3->type = ScreenType::Settings;
+    screen_configuration_3->grid.snap_enabled = true;
+    screen_configuration_3->grid.width = 466;
+    screen_configuration_3->grid.height = 466;
+    screen_configuration_3->grid.spacing_px = 0;
+
+    // Widget 3_0: ControlSlider - the same setting, reachable without leaving the gauge
+    auto widget3_0 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
+    widget3_0->type = WidgetType::ControlSlider;
+    widget3_0->id = 0;
+    widget3_0->position_grid.x = 80;
+    widget3_0->position_grid.y = 240;
+    widget3_0->size_grid.width = 300;
+    widget3_0->size_grid.height = 60;
+    widget3_0->z_index = 0;
+    widget3_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::SETTING_ID)] = SettingId::DISPLAY_BRIGHTNESS;
+    widget3_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MIN_VALUE)] = 10;
+    widget3_0->properties[WidgetProperty::GetTypeName(WidgetPropertyType::MAX_VALUE)] = 255;
+    AddSettingBindings(*widget3_0, SettingId::DISPLAY_BRIGHTNESS, PropertyBindingDirection::InOut);
+    screen_configuration_3->AddWidget(std::move(widget3_0));
+
+    // Widget 3_1: ControlButton - an explicit dismiss, for when the gesture is not discoverable
+    auto widget3_1 = make_shared_pmr<WidgetConfiguration>(Mrm::GetExtPmr());
+    widget3_1->type = WidgetType::ControlButton;
+    widget3_1->id = 1;
+    widget3_1->position_grid.x = 160;
+    widget3_1->position_grid.y = 160;
+    widget3_1->size_grid.width = 160;
+    widget3_1->size_grid.height = 60;
+    widget3_1->z_index = 0;
+    widget3_1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::LABEL)] = "Close";
+    widget3_1->properties[WidgetProperty::GetTypeName(WidgetPropertyType::NAVIGATION_INTENT)] =
+        static_cast<int>(NavigationIntent::CloseOverlay);
+    screen_configuration_3->AddWidget(std::move(widget3_1));
+
+    ui_configuration->screen_configurations.push_back(std::move(screen_configuration_3));
 
     ui_configuration_manager_->Update(*ui_configuration);
 }

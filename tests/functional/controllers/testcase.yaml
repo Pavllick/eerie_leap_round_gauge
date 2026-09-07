@@ -1,0 +1,11 @@
+common:
+  tags:
+    - functional
+    - controllers
+  # UiController links ~870 KB of demo image data and needs a bound display; only
+  # native_sim is provisioned for that here.
+  platform_allow:
+    - native_sim
+
+tests:
+  functional.controllers: {}

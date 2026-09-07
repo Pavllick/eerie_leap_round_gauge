@@ -49,9 +49,11 @@ int UiInputService::Initialize(lv_obj_t* root) {
     return 0;
 }
 
-void UiInputService::SetGestureMapping(lv_dir_t direction, NavigationIntent intent) {
-    if(auto index = ToIndex(direction))
+void UiInputService::SetGestureMapping(lv_dir_t direction, NavigationIntent intent, uint32_t argument) {
+    if(auto index = ToIndex(direction)) {
+        gesture_argument_[*index].store(argument, std::memory_order_relaxed);
         gesture_map_[*index].store(intent, std::memory_order_relaxed);
+    }
 }
 
 // Invoked by LVGL on the renderer thread, which already holds the LVGL lock.
@@ -91,7 +93,7 @@ void UiInputService::HandleGesture() {
 
     last_gesture_tick_ = lv_tick_get();
 
-    navigation_service_->Handle(intent);
+    navigation_service_->Handle(intent, gesture_argument_[*index].load(std::memory_order_relaxed));
 }
 
 } // namespace eerie_leap::domain::ui_domain::services

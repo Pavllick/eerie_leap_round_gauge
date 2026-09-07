@@ -3,12 +3,12 @@
 #include <zephyr/ztest.h>
 #include <lvgl.h>
 
-#include "views/screen_group.h"
+#include "views/screens/screen_group.h"
 #include "views/utilitites/frame.h"
 
 #include "views_test_support.h"
 
-using eerie_leap::views::ScreenGroup;
+using eerie_leap::views::screens::ScreenGroup;
 using eerie_leap::views::utilitites::Frame;
 using views_test::CleanTestDisplay;
 using views_test::EnsureTestDisplay;

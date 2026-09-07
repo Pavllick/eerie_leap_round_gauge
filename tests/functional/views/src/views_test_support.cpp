@@ -52,12 +52,12 @@ void CleanTestDisplay(void* fixture) {
 
 FakeScreen::FakeScreen(
     uint32_t id,
-    uint32_t group_id,
+    uint32_t screen_group_id,
     int32_t z_index,
     bool is_visible,
     std::shared_ptr<Frame> parent)
     : id_(id),
-      group_id_(group_id),
+      screen_group_id_(screen_group_id),
       z_index_(z_index),
       is_visible_(is_visible),
       parent_(std::move(parent)) {}
@@ -99,7 +99,7 @@ uint32_t FakeScreen::GetId() const {
 }
 
 uint32_t FakeScreen::GetGroupId() const {
-    return group_id_;
+    return screen_group_id_;
 }
 
 int32_t FakeScreen::GetZIndex() const {

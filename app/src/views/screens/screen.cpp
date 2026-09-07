@@ -67,7 +67,7 @@ uint32_t Screen::GetId() const {
 }
 
 uint32_t Screen::GetGroupId() const {
-    return configuration_ != nullptr ? configuration_->group_id : 0;
+    return configuration_ != nullptr ? configuration_->screen_group_id : 0;
 }
 
 int32_t Screen::GetZIndex() const {

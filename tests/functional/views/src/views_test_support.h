@@ -27,7 +27,7 @@ class FakeScreen : public eerie_leap::views::RenderableBase,
                    public eerie_leap::views::screens::IScreen {
 private:
     uint32_t id_;
-    uint32_t group_id_;
+    uint32_t screen_group_id_;
     int32_t z_index_;
     bool is_visible_;
     std::shared_ptr<eerie_leap::views::utilitites::Frame> parent_;
@@ -39,7 +39,7 @@ private:
 public:
     FakeScreen(
         uint32_t id,
-        uint32_t group_id,
+        uint32_t screen_group_id,
         int32_t z_index,
         bool is_visible,
         std::shared_ptr<eerie_leap::views::utilitites::Frame> parent);

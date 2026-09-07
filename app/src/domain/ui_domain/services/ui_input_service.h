@@ -27,6 +27,10 @@ private:
     // Read on the LVGL renderer thread, written by whoever configures the mapping.
     std::array<std::atomic<NavigationIntent>, k_direction_count> gesture_map_{};
 
+    // Only ShowOverlay/GoToGroup need one; written together with the intent above,
+    // before the gesture callback is ever attached.
+    std::array<std::atomic<uint32_t>, k_direction_count> gesture_argument_{};
+
     lv_obj_t* root_ = nullptr;
     uint32_t last_gesture_tick_ = 0;
 
@@ -42,7 +46,7 @@ public:
     UiInputService& operator=(const UiInputService&) = delete;
 
     int Initialize(lv_obj_t* root);
-    void SetGestureMapping(lv_dir_t direction, NavigationIntent intent);
+    void SetGestureMapping(lv_dir_t direction, NavigationIntent intent, uint32_t argument = 0);
 };
 
 } // namespace eerie_leap::domain::ui_domain::services

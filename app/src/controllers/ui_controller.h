@@ -24,6 +24,7 @@
 #include "views/main_view.h"
 #include "views/overlay_host.h"
 #include "views/screens/i_screen.h"
+#include "views/utilitites/frame.h"
 #include "views/widgets/widget_context.h"
 
 namespace eerie_leap::controllers {
@@ -48,6 +49,7 @@ using eerie_leap::domain::ui_domain::services::UiInputService;
 using eerie_leap::views::MainView;
 using eerie_leap::views::OverlayHost;
 using eerie_leap::views::screens::IScreen;
+using eerie_leap::views::utilitites::Frame;
 using eerie_leap::views::widgets::WidgetContext;
 
 class UiController {
@@ -84,6 +86,9 @@ private:
     WidgetContext widget_context_;
     std::shared_ptr<UiConfiguration> configuration_;
 
+    // What a swipe-down opens, resolved from the configured overlays.
+    std::optional<uint32_t> default_overlay_screen_id_;
+
     AnySubscription navigation_subscription_;
     int Configure(std::shared_ptr<UiConfiguration> config);
 
@@ -96,9 +101,10 @@ private:
 
     void SubscribeToNavigation();
     void OnNavigationChanged(const NavigationEventChannel::EventMessage& event);
-    void ShowGroup(uint32_t group_id);
+    void ShowGroup(uint32_t screen_group_id);
     void ShowOverlay(uint32_t screen_id);
     void CloseOverlay();
+    void ConfigureGestures();
 
     // TODO: For test purposes only
     void SetupTestConfiguration();

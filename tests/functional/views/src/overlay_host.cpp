@@ -9,6 +9,7 @@
 #include "domain/ui_domain/services/navigation_service.h"
 
 #include "views/overlay_host.h"
+#include "views/screens/screen_group.h"
 #include "views/utilitites/frame.h"
 
 #include "views_test_support.h"
@@ -16,6 +17,8 @@
 using eerie_leap::domain::ui_domain::services::NavigationService;
 using eerie_leap::views::OverlayHost;
 using eerie_leap::views::OverlayOptions;
+using eerie_leap::views::screens::ScreenGroup;
+using eerie_leap::views::utilitites::Frame;
 using views_test::CleanTestDisplay;
 using views_test::EnsureTestDisplay;
 using views_test::FakeScreen;
@@ -23,6 +26,23 @@ using views_test::FakeScreen;
 namespace {
 
 constexpr uint32_t overlay_screen_id = 7;
+
+// Pop() destroys the group and every screen in it, so a test that asserts on a
+// dismissed overlay has to outlive the screen with its own counter.
+class CountingScreen : public FakeScreen {
+private:
+    std::shared_ptr<int> deactivations_;
+
+public:
+    CountingScreen(uint32_t id, std::shared_ptr<Frame> parent, std::shared_ptr<int> deactivations)
+        : FakeScreen(id, id, 0, true, std::move(parent)), deactivations_(std::move(deactivations)) {}
+
+    void OnDeactivated() override {
+        FakeScreen::OnDeactivated();
+
+        (*deactivations_)++;
+    }
+};
 
 // Activation reaches widget code, which can throw - a failed push still has to
 // leave the host and the top layer as it found them.
@@ -50,8 +70,31 @@ std::shared_ptr<OverlayHost> MakeHost(std::shared_ptr<NavigationService> navigat
     return std::make_shared<OverlayHost>(std::move(navigation_service));
 }
 
-std::shared_ptr<FakeScreen> MakeScreen(const std::shared_ptr<OverlayHost>& host, uint32_t id) {
-    return std::make_shared<FakeScreen>(id, 0, 0, true, host->GetContainer());
+struct Overlay {
+    std::unique_ptr<ScreenGroup> screen_group;
+    std::shared_ptr<FakeScreen> screen;
+    std::shared_ptr<int> deactivations;
+};
+
+// A screen is never rendered on its own, so every overlay is a group of one here.
+Overlay MakeOverlay(const std::shared_ptr<OverlayHost>& host, uint32_t id) {
+    auto deactivations = std::make_shared<int>(0);
+    auto screen_group = host->CreateGroup(id);
+    auto screen = std::make_shared<CountingScreen>(id, screen_group->GetContainer(), deactivations);
+
+    screen_group->AddScreen(screen);
+
+    return Overlay { std::move(screen_group), std::move(screen), std::move(deactivations) };
+}
+
+int PushOverlay(
+    const std::shared_ptr<OverlayHost>& host,
+    uint32_t id,
+    const OverlayOptions& options = {}) {
+
+    auto overlay = MakeOverlay(host, id);
+
+    return host->Push(std::move(overlay.screen_group), options);
 }
 
 bool IsHidden(const std::shared_ptr<OverlayHost>& host) {
@@ -86,7 +129,7 @@ ZTEST(overlay_host, test_a_new_host_is_empty_and_hidden) {
 
     zassert_true(host->IsEmpty());
     zassert_equal(host->GetDepth(), 0);
-    zassert_true(host->GetTopScreen() == nullptr);
+    zassert_true(host->GetTopGroup() == nullptr);
     zassert_true(IsHidden(host));
 }
 
@@ -107,21 +150,29 @@ ZTEST(overlay_host, test_the_container_does_not_take_input) {
 
 ZTEST(overlay_host, test_push_renders_activates_and_shows) {
     auto host = MakeHost();
-    auto screen = MakeScreen(host, 1);
+    auto overlay = MakeOverlay(host, 1);
 
-    zassert_ok(host->Push(screen));
+    zassert_ok(host->Push(std::move(overlay.screen_group)));
 
-    zassert_equal(screen->render_count, 1);
-    zassert_equal(screen->activated_count, 1);
+    zassert_equal(overlay.screen->render_count, 1);
+    zassert_equal(overlay.screen->activated_count, 1);
     zassert_equal(host->GetDepth(), 1);
-    zassert_equal(host->GetTopScreen(), screen);
+    zassert_equal(host->GetTopGroup()->GetGroupId(), 1);
     zassert_false(IsHidden(host));
 }
 
-ZTEST(overlay_host, test_push_rejects_a_missing_screen) {
+ZTEST(overlay_host, test_push_rejects_a_missing_group) {
     auto host = MakeHost();
 
     zassert_equal(host->Push(nullptr), -EINVAL);
+    zassert_true(host->IsEmpty());
+}
+
+// A group with nothing in it would show as a bare scrim.
+ZTEST(overlay_host, test_push_rejects_an_empty_group) {
+    auto host = MakeHost();
+
+    zassert_equal(host->Push(host->CreateGroup(1)), -EINVAL);
     zassert_true(host->IsEmpty());
 }
 
@@ -130,7 +181,7 @@ ZTEST(overlay_host, test_push_refuses_to_stack_without_bound) {
 
     int pushed = 0;
     for(uint32_t id = 0; id < 16; id++) {
-        if(host->Push(MakeScreen(host, id)) != 0)
+        if(PushOverlay(host, id) != 0)
             break;
 
         pushed++;
@@ -138,46 +189,47 @@ ZTEST(overlay_host, test_push_refuses_to_stack_without_bound) {
 
     zassert_true(pushed > 0);
     zassert_equal(host->GetDepth(), static_cast<size_t>(pushed));
-    zassert_equal(host->Push(MakeScreen(host, 99)), -ENOSPC);
+    zassert_equal(PushOverlay(host, 99), -ENOSPC);
 }
 
 // A modal overlay needs the scrim under it, not over it.
-ZTEST(overlay_host, test_a_modal_push_puts_the_screen_above_its_scrim) {
+ZTEST(overlay_host, test_a_modal_push_puts_the_group_above_its_scrim) {
     auto host = MakeHost();
-    auto screen = MakeScreen(host, 1);
 
-    zassert_ok(host->Push(screen, OverlayOptions { .is_modal = true }));
+    zassert_ok(PushOverlay(host, 1, OverlayOptions { .is_modal = true }));
 
     zassert_equal(ChildCount(host), 2);
 
-    auto* screen_object = screen->GetContainer()->GetObject();
-    zassert_equal(lv_obj_get_index(screen_object), 1);
+    auto* group_object = host->GetTopGroup()->GetContainer()->GetObject();
+    zassert_equal(lv_obj_get_index(group_object), 1);
 
     auto* scrim = lv_obj_get_child(host->GetContainer()->GetObject(), 0);
-    zassert_not_equal(scrim, screen_object);
+    zassert_not_equal(scrim, group_object);
     zassert_true(lv_obj_has_flag(scrim, LV_OBJ_FLAG_CLICKABLE));
 }
 
 ZTEST(overlay_host, test_a_non_modal_push_has_no_scrim) {
     auto host = MakeHost();
-    auto screen = MakeScreen(host, 1);
 
-    zassert_ok(host->Push(screen, OverlayOptions { .is_modal = false }));
+    zassert_ok(PushOverlay(host, 1, OverlayOptions { .is_modal = false }));
 
     zassert_equal(ChildCount(host), 1);
 }
 
 ZTEST(overlay_host, test_a_failing_screen_leaves_the_host_empty) {
     auto host = MakeHost();
-    auto screen = MakeScreen(host, 1);
-    screen->FailNextRenders();
+    auto overlay = MakeOverlay(host, 1);
+    overlay.screen->FailNextRenders();
 
-    zassert_not_equal(host->Push(screen), 0);
+    zassert_not_equal(host->Push(std::move(overlay.screen_group)), 0);
 
     zassert_true(host->IsEmpty());
     zassert_true(IsHidden(host));
-    zassert_equal(screen->activated_count, 0);
-    zassert_equal(screen->deactivated_count, 0);
+    zassert_equal(overlay.screen->activated_count, 0);
+    zassert_equal(overlay.screen->deactivated_count, 0);
+
+    // A screen holds the frame it was built on, which is the group's container.
+    overlay.screen.reset();
 
     // The push was modal by default, so this also says the scrim was taken back.
     zassert_equal(ChildCount(host), 0);
@@ -185,8 +237,10 @@ ZTEST(overlay_host, test_a_failing_screen_leaves_the_host_empty) {
 
 ZTEST(overlay_host, test_a_screen_that_throws_while_activating_leaves_the_host_empty) {
     auto host = MakeHost();
+    auto screen_group = host->CreateGroup(1);
+    screen_group->AddScreen(std::make_shared<ThrowingScreen>(1, 1, 0, true, screen_group->GetContainer()));
 
-    zassert_not_equal(host->Push(std::make_shared<ThrowingScreen>(1, 0, 0, true, host->GetContainer())), 0);
+    zassert_not_equal(host->Push(std::move(screen_group)), 0);
 
     zassert_true(host->IsEmpty());
     zassert_true(IsHidden(host));
@@ -195,17 +249,18 @@ ZTEST(overlay_host, test_a_screen_that_throws_while_activating_leaves_the_host_e
 
 ZTEST(overlay_host, test_pop_deactivates_and_hides) {
     auto host = MakeHost();
-    auto screen = MakeScreen(host, 1);
+    auto overlay = MakeOverlay(host, 1);
 
-    zassert_ok(host->Push(screen));
+    zassert_ok(host->Push(std::move(overlay.screen_group)));
+
+    // The host owns the screen now; keeping it would outlive the objects Pop() frees.
+    overlay.screen.reset();
+
     zassert_ok(host->Pop());
 
-    zassert_equal(screen->deactivated_count, 1);
+    zassert_equal(*overlay.deactivations, 1);
     zassert_true(host->IsEmpty());
     zassert_true(IsHidden(host));
-
-    // The overlay's objects belong to the screen's Frames, so they go when it does.
-    screen.reset();
     zassert_equal(ChildCount(host), 0);
 }
 
@@ -217,47 +272,50 @@ ZTEST(overlay_host, test_pop_on_an_empty_host_is_reported) {
 
 ZTEST(overlay_host, test_pop_removes_only_the_top_overlay) {
     auto host = MakeHost();
-    auto bottom = MakeScreen(host, 1);
-    auto top = MakeScreen(host, 2);
+    auto bottom = MakeOverlay(host, 1);
+    auto top = MakeOverlay(host, 2);
 
-    zassert_ok(host->Push(bottom));
-    zassert_ok(host->Push(top));
-    zassert_equal(host->GetTopScreen(), top);
+    zassert_ok(host->Push(std::move(bottom.screen_group)));
+    zassert_ok(host->Push(std::move(top.screen_group)));
+    zassert_equal(host->GetTopGroup()->GetGroupId(), 2);
+
+    bottom.screen.reset();
+    top.screen.reset();
 
     zassert_ok(host->Pop());
 
     zassert_equal(host->GetDepth(), 1);
-    zassert_equal(host->GetTopScreen(), bottom);
-    zassert_equal(top->deactivated_count, 1);
-    zassert_equal(bottom->deactivated_count, 0);
+    zassert_equal(host->GetTopGroup()->GetGroupId(), 1);
+    zassert_equal(*top.deactivations, 1);
+    zassert_equal(*bottom.deactivations, 0);
     zassert_false(IsHidden(host));
 }
 
 ZTEST(overlay_host, test_dismiss_all_clears_the_stack) {
     auto host = MakeHost();
-    auto first = MakeScreen(host, 1);
-    auto second = MakeScreen(host, 2);
+    auto first = MakeOverlay(host, 1);
+    auto second = MakeOverlay(host, 2);
 
-    zassert_ok(host->Push(first));
-    zassert_ok(host->Push(second));
+    zassert_ok(host->Push(std::move(first.screen_group)));
+    zassert_ok(host->Push(std::move(second.screen_group)));
+
+    first.screen.reset();
+    second.screen.reset();
 
     host->DismissAll();
 
     zassert_true(host->IsEmpty());
     zassert_true(IsHidden(host));
-    zassert_equal(first->deactivated_count, 1);
-    zassert_equal(second->deactivated_count, 1);
-
-    first.reset();
-    second.reset();
+    zassert_equal(*first.deactivations, 1);
+    zassert_equal(*second.deactivations, 1);
     zassert_equal(ChildCount(host), 0);
 }
 
-// Nothing but the host holds the screen, so popping takes its objects with it.
+// Nothing but the host holds the screen_group, so popping takes its objects with it.
 ZTEST(overlay_host, test_pop_releases_the_overlays_objects) {
     auto host = MakeHost();
 
-    zassert_ok(host->Push(MakeScreen(host, 1)));
+    zassert_ok(PushOverlay(host, 1));
     zassert_equal(ChildCount(host), 2);
 
     zassert_ok(host->Pop());
@@ -271,7 +329,7 @@ ZTEST(overlay_host, test_destruction_leaves_nothing_on_the_top_layer) {
 
     {
         auto host = MakeHost();
-        zassert_ok(host->Push(MakeScreen(host, 1)));
+        zassert_ok(PushOverlay(host, 1));
         zassert_equal(lv_obj_get_child_count(lv_layer_top()), before + 1);
     }
 
@@ -282,7 +340,7 @@ ZTEST(overlay_host, test_a_scrim_tap_closes_through_navigation) {
     auto navigation_service = MakeNavigationWithOverlay();
     auto host = MakeHost(navigation_service);
 
-    zassert_ok(host->Push(MakeScreen(host, 1)));
+    zassert_ok(PushOverlay(host, 1));
     zassert_true(navigation_service->IsOverlayActive());
 
     lv_obj_send_event(lv_obj_get_child(host->GetContainer()->GetObject(), 0), LV_EVENT_CLICKED, nullptr);
@@ -297,7 +355,7 @@ ZTEST(overlay_host, test_a_scrim_tap_is_ignored_when_it_cannot_dismiss) {
     auto navigation_service = MakeNavigationWithOverlay();
     auto host = MakeHost(navigation_service);
 
-    zassert_ok(host->Push(MakeScreen(host, 1), OverlayOptions { .close_on_scrim_tap = false }));
+    zassert_ok(PushOverlay(host, 1, OverlayOptions { .close_on_scrim_tap = false }));
 
     lv_obj_send_event(lv_obj_get_child(host->GetContainer()->GetObject(), 0), LV_EVENT_CLICKED, nullptr);
 
@@ -308,7 +366,7 @@ ZTEST(overlay_host, test_an_overlay_closes_itself_when_its_time_is_up) {
     auto navigation_service = MakeNavigationWithOverlay();
     auto host = MakeHost(navigation_service);
 
-    zassert_ok(host->Push(MakeScreen(host, 1), OverlayOptions { .auto_close_ms = 10 }));
+    zassert_ok(PushOverlay(host, 1, OverlayOptions { .auto_close_ms = 10 }));
     zassert_true(navigation_service->IsOverlayActive());
 
     RunTimersFor(40);
@@ -322,7 +380,7 @@ ZTEST(overlay_host, test_popping_cancels_a_pending_auto_close) {
     auto navigation_service = MakeNavigationWithOverlay();
     auto host = MakeHost(navigation_service);
 
-    zassert_ok(host->Push(MakeScreen(host, 1), OverlayOptions { .auto_close_ms = 10 }));
+    zassert_ok(PushOverlay(host, 1, OverlayOptions { .auto_close_ms = 10 }));
     zassert_ok(host->Pop());
 
     RunTimersFor(40);
@@ -334,8 +392,8 @@ ZTEST(overlay_host, test_an_overlay_stacked_on_top_takes_over_closing) {
     auto navigation_service = MakeNavigationWithOverlay();
     auto host = MakeHost(navigation_service);
 
-    zassert_ok(host->Push(MakeScreen(host, 1), OverlayOptions { .auto_close_ms = 10 }));
-    zassert_ok(host->Push(MakeScreen(host, 2)));
+    zassert_ok(PushOverlay(host, 1, OverlayOptions { .auto_close_ms = 10 }));
+    zassert_ok(PushOverlay(host, 2));
 
     RunTimersFor(40);
 

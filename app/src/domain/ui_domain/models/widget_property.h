@@ -37,9 +37,10 @@ enum class WidgetPropertyType : std::uint16_t {
     SETTING_ID,             // string
     STEP,                   // double
     UNIT,                   // string
-    TARGET_GROUP,           // int
+    TARGET_SCREEN_GROUP,           // int (a screen group, or a screen for ShowOverlay)
     IS_VISIBLE,             // bool
     VALUE,                  // double
+    NAVIGATION_INTENT,      // int (NavigationIntent)
 };
 
 class WidgetProperty {
@@ -70,9 +71,10 @@ private:
         "SETTING_ID"sv,
         "STEP"sv,
         "UNIT"sv,
-        "TARGET_GROUP"sv,
+        "TARGET_SCREEN_GROUP"sv,
         "IS_VISIBLE"sv,
         "VALUE"sv,
+        "NAVIGATION_INTENT"sv,
     };
 
 public:

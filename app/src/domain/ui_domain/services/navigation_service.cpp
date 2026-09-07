@@ -40,30 +40,30 @@ NavigationService::NavigationService() {
     k_mutex_init(&lock_);
 }
 
-void NavigationService::SetGroupIds(std::vector<uint32_t> group_ids) {
+void NavigationService::SetGroupIds(std::vector<uint32_t> screen_group_ids) {
     k_mutex_lock(&lock_, K_FOREVER);
 
-    group_ids_ = std::move(group_ids);
-    std::sort(group_ids_.begin(), group_ids_.end());
+    screen_group_ids_ = std::move(screen_group_ids);
+    std::sort(screen_group_ids_.begin(), screen_group_ids_.end());
 
     k_mutex_unlock(&lock_);
 }
 
-void NavigationService::SetActiveGroupId(uint32_t group_id) {
+void NavigationService::SetActiveGroupId(uint32_t screen_group_id) {
     k_mutex_lock(&lock_, K_FOREVER);
 
-    active_group_id_ = group_id;
+    active_screen_group_id_ = screen_group_id;
 
     k_mutex_unlock(&lock_);
 }
 
-void NavigationService::PushHistory(uint32_t group_id) {
+void NavigationService::PushHistory(uint32_t screen_group_id) {
     if(history_count_ == k_history_depth) {
         std::rotate(history_.begin(), history_.begin() + 1, history_.end());
         --history_count_;
     }
 
-    history_[history_count_++] = group_id;
+    history_[history_count_++] = screen_group_id;
 }
 
 std::optional<uint32_t> NavigationService::PeekHistory() const {
@@ -79,96 +79,96 @@ void NavigationService::PopHistory() {
 }
 
 std::optional<size_t> NavigationService::GetActiveIndex() const {
-    if(!active_group_id_.has_value())
+    if(!active_screen_group_id_.has_value())
         return std::nullopt;
 
-    auto it = std::find(group_ids_.begin(), group_ids_.end(), *active_group_id_);
-    if(it == group_ids_.end())
+    auto it = std::find(screen_group_ids_.begin(), screen_group_ids_.end(), *active_screen_group_id_);
+    if(it == screen_group_ids_.end())
         return std::nullopt;
 
-    return static_cast<size_t>(std::distance(group_ids_.begin(), it));
+    return static_cast<size_t>(std::distance(screen_group_ids_.begin(), it));
 }
 
-int NavigationService::RequestGroup(uint32_t group_id, bool record_history, std::optional<uint32_t>& group_to_publish) {
+int NavigationService::RequestGroup(uint32_t screen_group_id, bool record_history, std::optional<uint32_t>& screen_group_to_publish) {
     if(active_overlay_screen_id_.has_value())
         return -EBUSY;
 
-    if(std::find(group_ids_.begin(), group_ids_.end(), group_id) == group_ids_.end()) {
-        LOG_WRN("Screen group %u is not available.", group_id);
+    if(std::find(screen_group_ids_.begin(), screen_group_ids_.end(), screen_group_id) == screen_group_ids_.end()) {
+        LOG_WRN("Screen group %u is not available.", screen_group_id);
         return -ENOENT;
     }
 
-    if(active_group_id_ == group_id)
+    if(active_screen_group_id_ == screen_group_id)
         return 0;
 
-    if(record_history && active_group_id_.has_value())
-        PushHistory(*active_group_id_);
+    if(record_history && active_screen_group_id_.has_value())
+        PushHistory(*active_screen_group_id_);
 
     // Advance intent now; the view reconciles it via SetActiveGroupId once applied.
     // Without this, requests issued back to back would all target the same group.
-    active_group_id_ = group_id;
-    group_to_publish = group_id;
+    active_screen_group_id_ = screen_group_id;
+    screen_group_to_publish = screen_group_id;
 
     return 0;
 }
 
-void NavigationService::PublishGroup(const std::optional<uint32_t>& group_to_publish) {
-    if(group_to_publish.has_value())
-        PublishNavigation(NavigationAction::ShowGroup, NavigationPayloadType::TargetGroupId, *group_to_publish);
+void NavigationService::PublishGroup(const std::optional<uint32_t>& screen_group_to_publish) {
+    if(screen_group_to_publish.has_value())
+        PublishNavigation(NavigationAction::ShowGroup, NavigationPayloadType::TargetGroupId, *screen_group_to_publish);
 }
 
-int NavigationService::GoToGroup(uint32_t group_id) {
-    std::optional<uint32_t> group_to_publish;
+int NavigationService::GoToGroup(uint32_t screen_group_id) {
+    std::optional<uint32_t> screen_group_to_publish;
 
     k_mutex_lock(&lock_, K_FOREVER);
-    int res = RequestGroup(group_id, true, group_to_publish);
+    int res = RequestGroup(screen_group_id, true, screen_group_to_publish);
     k_mutex_unlock(&lock_);
 
-    PublishGroup(group_to_publish);
+    PublishGroup(screen_group_to_publish);
 
     return res;
 }
 
 int NavigationService::Next() {
-    std::optional<uint32_t> group_to_publish;
+    std::optional<uint32_t> screen_group_to_publish;
 
     k_mutex_lock(&lock_, K_FOREVER);
 
     int res = -ENOENT;
     if(auto index = GetActiveIndex())
-        res = RequestGroup(group_ids_[(*index + 1) % group_ids_.size()], true, group_to_publish);
+        res = RequestGroup(screen_group_ids_[(*index + 1) % screen_group_ids_.size()], true, screen_group_to_publish);
 
     k_mutex_unlock(&lock_);
 
-    PublishGroup(group_to_publish);
+    PublishGroup(screen_group_to_publish);
 
     return res;
 }
 
 int NavigationService::Previous() {
-    std::optional<uint32_t> group_to_publish;
+    std::optional<uint32_t> screen_group_to_publish;
 
     k_mutex_lock(&lock_, K_FOREVER);
 
     int res = -ENOENT;
     if(auto index = GetActiveIndex())
-        res = RequestGroup(group_ids_[(*index + group_ids_.size() - 1) % group_ids_.size()], true, group_to_publish);
+        res = RequestGroup(screen_group_ids_[(*index + screen_group_ids_.size() - 1) % screen_group_ids_.size()], true, screen_group_to_publish);
 
     k_mutex_unlock(&lock_);
 
-    PublishGroup(group_to_publish);
+    PublishGroup(screen_group_to_publish);
 
     return res;
 }
 
 int NavigationService::Back() {
-    std::optional<uint32_t> group_to_publish;
+    std::optional<uint32_t> screen_group_to_publish;
 
     k_mutex_lock(&lock_, K_FOREVER);
 
     int res = -ENOENT;
-    if(auto group_id = PeekHistory()) {
-        res = RequestGroup(*group_id, false, group_to_publish);
+    if(auto screen_group_id = PeekHistory()) {
+        res = RequestGroup(*screen_group_id, false, screen_group_to_publish);
 
         // Only consume the entry once the request was accepted.
         if(res == 0)
@@ -177,7 +177,7 @@ int NavigationService::Back() {
 
     k_mutex_unlock(&lock_);
 
-    PublishGroup(group_to_publish);
+    PublishGroup(screen_group_to_publish);
 
     return res;
 }
@@ -238,10 +238,10 @@ int NavigationService::Handle(NavigationIntent intent, uint32_t argument) {
 
 std::optional<uint32_t> NavigationService::GetActiveGroupId() const {
     k_mutex_lock(&lock_, K_FOREVER);
-    auto active_group_id = active_group_id_;
+    auto active_screen_group_id = active_screen_group_id_;
     k_mutex_unlock(&lock_);
 
-    return active_group_id;
+    return active_screen_group_id;
 }
 
 bool NavigationService::IsOverlayActive() const {

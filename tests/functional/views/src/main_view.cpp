@@ -42,15 +42,15 @@ public:
     }
 };
 
-std::shared_ptr<FakeScreen> AddScreen(MainView& view, uint32_t id, uint32_t group_id) {
-    auto screen = std::make_shared<FakeScreen>(id, group_id, 0, true, view.GetGroupContainer(group_id));
+std::shared_ptr<FakeScreen> AddScreen(MainView& view, uint32_t id, uint32_t screen_group_id) {
+    auto screen = std::make_shared<FakeScreen>(id, screen_group_id, 0, true, view.GetGroupContainer(screen_group_id));
     view.AddScreen(screen);
 
     return screen;
 }
 
-bool IsGroupHidden(MainView& view, uint32_t group_id) {
-    return lv_obj_has_flag(view.GetGroupContainer(group_id)->GetObject(), LV_OBJ_FLAG_HIDDEN);
+bool IsGroupHidden(MainView& view, uint32_t screen_group_id) {
+    return lv_obj_has_flag(view.GetGroupContainer(screen_group_id)->GetObject(), LV_OBJ_FLAG_HIDDEN);
 }
 
 void* SetUp() {
@@ -220,9 +220,9 @@ ZTEST(main_view, test_empty_groups_are_pruned) {
 
     view.PruneEmptyGroups();
 
-    auto group_ids = view.GetGroupIds();
-    zassert_equal(group_ids.size(), 1);
-    zassert_equal(group_ids[0], 0);
+    auto screen_group_ids = view.GetGroupIds();
+    zassert_equal(screen_group_ids.size(), 1);
+    zassert_equal(screen_group_ids[0], 0);
 }
 
 ZTEST(main_view, test_group_ids_are_sorted) {
@@ -232,12 +232,12 @@ ZTEST(main_view, test_group_ids_are_sorted) {
     AddScreen(view, 1, 2);
     AddScreen(view, 2, 5);
 
-    auto group_ids = view.GetGroupIds();
+    auto screen_group_ids = view.GetGroupIds();
 
-    zassert_equal(group_ids.size(), 3);
-    zassert_equal(group_ids[0], 2);
-    zassert_equal(group_ids[1], 5);
-    zassert_equal(group_ids[2], 7);
+    zassert_equal(screen_group_ids.size(), 3);
+    zassert_equal(screen_group_ids[0], 2);
+    zassert_equal(screen_group_ids[1], 5);
+    zassert_equal(screen_group_ids[2], 7);
 }
 
 ZTEST(main_view, test_screens_are_found_across_groups) {

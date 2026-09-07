@@ -7,14 +7,12 @@
 #include "views/renderable_base.h"
 #include "views/screens/i_screen.h"
 
-namespace eerie_leap::views {
-
-using eerie_leap::views::screens::IScreen;
+namespace eerie_leap::views::screens {
 
 // A set of screens rendered on top of each other and shown/hidden as a unit.
 class ScreenGroup : public RenderableBase {
 private:
-    uint32_t group_id_;
+    uint32_t screen_group_id_;
     bool is_rendered_ = false;
     bool is_activated_ = false;
 
@@ -30,7 +28,7 @@ private:
     int ApplyTheme(const ITheme& theme) override;
 
 public:
-    ScreenGroup(uint32_t group_id, std::shared_ptr<Frame> parent);
+    ScreenGroup(uint32_t screen_group_id, std::shared_ptr<Frame> parent);
 
     uint32_t GetGroupId() const;
 
@@ -47,4 +45,4 @@ public:
     bool IsActivated() const;
 };
 
-} // namespace eerie_leap::views
+} // namespace eerie_leap::views::screens

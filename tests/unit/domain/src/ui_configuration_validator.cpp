@@ -35,10 +35,10 @@ std::shared_ptr<WidgetConfiguration> MakeWidget(uint32_t id) {
     return widget_configuration;
 }
 
-std::shared_ptr<ScreenConfiguration> MakeScreen(uint32_t id, uint32_t group_id) {
+std::shared_ptr<ScreenConfiguration> MakeScreen(uint32_t id, uint32_t screen_group_id) {
     auto screen_configuration = make_shared_pmr<ScreenConfiguration>(Mrm::GetDefaultPmr());
     screen_configuration->id = id;
-    screen_configuration->group_id = group_id;
+    screen_configuration->screen_group_id = screen_group_id;
     screen_configuration->type = ScreenType::Gauge;
     screen_configuration->grid.snap_enabled = true;
     screen_configuration->grid.width = 3;
@@ -262,7 +262,7 @@ ZTEST(ui_configuration_validator, test_control_widget_properties_are_valid) {
     properties[WidgetProperty::GetTypeName(WidgetPropertyType::SETTING_ID)] = "display.brightness";
     properties[WidgetProperty::GetTypeName(WidgetPropertyType::UNIT)] = "%";
     properties[WidgetProperty::GetTypeName(WidgetPropertyType::STEP)] = 5.0;
-    properties[WidgetProperty::GetTypeName(WidgetPropertyType::TARGET_GROUP)] = 2;
+    properties[WidgetProperty::GetTypeName(WidgetPropertyType::TARGET_SCREEN_GROUP)] = 2;
 
     zassert_true(Validates(*configuration));
 }

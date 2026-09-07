@@ -5,12 +5,12 @@
 
 #include "screen_group.h"
 
-namespace eerie_leap::views {
+namespace eerie_leap::views::screens {
 
 LOG_MODULE_REGISTER(screen_group_logger);
 
-ScreenGroup::ScreenGroup(uint32_t group_id, std::shared_ptr<Frame> parent)
-    : group_id_(group_id) {
+ScreenGroup::ScreenGroup(uint32_t screen_group_id, std::shared_ptr<Frame> parent)
+    : screen_group_id_(screen_group_id) {
 
     container_ = std::make_shared<Frame>(Frame::CreateWrapped(parent->GetObject())
         .SetWidth(100, false)
@@ -21,7 +21,7 @@ ScreenGroup::ScreenGroup(uint32_t group_id, std::shared_ptr<Frame> parent)
 }
 
 uint32_t ScreenGroup::GetGroupId() const {
-    return group_id_;
+    return screen_group_id_;
 }
 
 void ScreenGroup::AddScreen(std::shared_ptr<IScreen> screen) {
@@ -55,7 +55,7 @@ int ScreenGroup::EnsureRendered() {
 
     int res = Render();
     if(res != 0) {
-        LOG_ERR("Failed to render screen group %u.", group_id_);
+        LOG_ERR("Failed to render screen group %u.", screen_group_id_);
         return res;
     }
 
@@ -126,7 +126,7 @@ int ScreenGroup::DoRender() {
     for(auto& screen : screens_) {
         int res = screen->Render();
         if(res != 0) {
-            LOG_ERR("Failed to render screen %u in group %u.", screen->GetId(), group_id_);
+            LOG_ERR("Failed to render screen %u in group %u.", screen->GetId(), screen_group_id_);
             return res;
         }
     }
@@ -140,4 +140,4 @@ int ScreenGroup::ApplyTheme(const ITheme& theme) {
     return 0;
 }
 
-} // namespace eerie_leap::views
+} // namespace eerie_leap::views::screens

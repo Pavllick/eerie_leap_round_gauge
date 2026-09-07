@@ -166,7 +166,7 @@ void UiConfigurationValidator::ValidateActiveScreenGroupId(const UiConfiguration
         return;
 
     for(const auto& screen_configuration : configuration.screen_configurations) {
-        if(screen_configuration->group_id == configuration.active_screen_group_id)
+        if(screen_configuration->screen_group_id == configuration.active_screen_group_id)
             return;
     }
 

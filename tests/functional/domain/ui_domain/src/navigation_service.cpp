@@ -39,16 +39,16 @@ public:
 
 // NavigationService never applies a change itself - it publishes an intent and the
 // view calls SetActiveGroupId back. These helpers stand in for that view.
-void Configure(NavigationService& service, std::vector<uint32_t> group_ids, uint32_t active_group_id) {
-    service.SetGroupIds(std::move(group_ids));
-    service.SetActiveGroupId(active_group_id);
+void Configure(NavigationService& service, std::vector<uint32_t> screen_group_ids, uint32_t active_screen_group_id) {
+    service.SetGroupIds(std::move(screen_group_ids));
+    service.SetActiveGroupId(active_screen_group_id);
 }
 
 uint32_t ActiveGroupId(const NavigationService& service) {
-    auto active_group_id = service.GetActiveGroupId();
-    zassert_true(active_group_id.has_value(), "Expected an active screen group.");
+    auto active_screen_group_id = service.GetActiveGroupId();
+    zassert_true(active_screen_group_id.has_value(), "Expected an active screen group.");
 
-    return *active_group_id;
+    return *active_screen_group_id;
 }
 
 // The channel is a singleton, so a probe subscribes for the lifetime of one test only.
@@ -89,8 +89,8 @@ private:
                 actions_.push_back(static_cast<NavigationAction>(*action));
 
         if(auto it = event.payload.find(NavigationPayloadType::TargetGroupId); it != event.payload.end())
-            if(const auto* group_id = std::get_if<uint32_t>(&it->second))
-                target_group_ids_.push_back(*group_id);
+            if(const auto* screen_group_id = std::get_if<uint32_t>(&it->second))
+                target_group_ids_.push_back(*screen_group_id);
 
         if(auto it = event.payload.find(NavigationPayloadType::TargetScreenId); it != event.payload.end())
             if(const auto* screen_id = std::get_if<uint32_t>(&it->second))
@@ -284,8 +284,8 @@ ZTEST(navigation_service, test_the_history_drops_the_oldest_entry_when_it_is_ful
     Configure(service, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 0);
 
     // Nine hops record nine entries into an eight deep history.
-    for(uint32_t group_id = 1; group_id <= 9; ++group_id)
-        zassert_equal(service.GoToGroup(group_id), 0);
+    for(uint32_t screen_group_id = 1; screen_group_id <= 9; ++screen_group_id)
+        zassert_equal(service.GoToGroup(screen_group_id), 0);
 
     for(uint32_t expected = 8; expected >= 1; --expected) {
         zassert_equal(service.Back(), 0);

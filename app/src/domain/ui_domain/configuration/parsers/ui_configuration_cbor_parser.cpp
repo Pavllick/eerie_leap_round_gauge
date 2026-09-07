@@ -169,7 +169,7 @@ pmr_unique_ptr<CborUiConfig> UiConfigurationCborParser::Serialize(const UiConfig
         CborScreenConfig screen_config(std::allocator_arg, Mrm::GetExtPmr());;
 
         screen_config.id = configuration.screen_configurations[i]->id;
-        screen_config.group_id = configuration.screen_configurations[i]->group_id;
+        screen_config.group_id = configuration.screen_configurations[i]->screen_group_id;
         screen_config.type = static_cast<uint32_t>(configuration.screen_configurations[i]->type);
         screen_config.z_index = configuration.screen_configurations[i]->z_index;
         screen_config.is_visible = configuration.screen_configurations[i]->is_visible;
@@ -232,7 +232,7 @@ pmr_unique_ptr<UiConfiguration> UiConfigurationCborParser::Deserialize(
     for(int i = 0; i < config.CborScreenConfig_m.size(); i++) {
         auto screen_configuration = make_shared_pmr<ScreenConfiguration>(mr);
         screen_configuration->id = config.CborScreenConfig_m[i].id;
-        screen_configuration->group_id = config.CborScreenConfig_m[i].group_id;
+        screen_configuration->screen_group_id = config.CborScreenConfig_m[i].group_id;
         screen_configuration->type = static_cast<ScreenType>(config.CborScreenConfig_m[i].type);
         screen_configuration->z_index = config.CborScreenConfig_m[i].z_index;
         screen_configuration->is_visible = config.CborScreenConfig_m[i].is_visible;

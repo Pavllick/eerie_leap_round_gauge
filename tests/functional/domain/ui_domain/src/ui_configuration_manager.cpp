@@ -31,7 +31,7 @@ std::shared_ptr<UiConfiguration> ui_configuration_manager_test_SetupTestUiConfig
 
     auto screen_configuration = make_shared_pmr<ScreenConfiguration>(Mrm::GetDefaultPmr());
     screen_configuration->id = 8;
-    screen_configuration->group_id = 3;
+    screen_configuration->screen_group_id = 3;
     screen_configuration->type = ScreenType::Gauge;
     screen_configuration->z_index = -2;
     screen_configuration->is_visible = true;
@@ -154,7 +154,7 @@ ZTEST(ui_configuration_manager, test_UiConfigurationManager_Save_config_and_Load
 
     for(std::size_t i = 0; i < ui_configuration->screen_configurations.size(); i++) {
         zassert_equal(saved_ui_configuration->screen_configurations[i]->id, ui_configuration->screen_configurations[i]->id);
-        zassert_equal(saved_ui_configuration->screen_configurations[i]->group_id, ui_configuration->screen_configurations[i]->group_id);
+        zassert_equal(saved_ui_configuration->screen_configurations[i]->screen_group_id, ui_configuration->screen_configurations[i]->screen_group_id);
         zassert_equal(saved_ui_configuration->screen_configurations[i]->type, ui_configuration->screen_configurations[i]->type);
         zassert_equal(saved_ui_configuration->screen_configurations[i]->z_index, ui_configuration->screen_configurations[i]->z_index);
         zassert_equal(saved_ui_configuration->screen_configurations[i]->is_visible, ui_configuration->screen_configurations[i]->is_visible);

@@ -18,8 +18,8 @@ class NavigationService {
 private:
     static constexpr size_t k_history_depth = 8;
 
-    std::vector<uint32_t> group_ids_;
-    std::optional<uint32_t> active_group_id_;
+    std::vector<uint32_t> screen_group_ids_;
+    std::optional<uint32_t> active_screen_group_id_;
 
     std::array<uint32_t, k_history_depth> history_{};
     size_t history_count_ = 0;
@@ -28,11 +28,11 @@ private:
 
     mutable k_mutex lock_;
 
-    void PushHistory(uint32_t group_id);
+    void PushHistory(uint32_t screen_group_id);
     std::optional<uint32_t> PeekHistory() const;
     void PopHistory();
-    int RequestGroup(uint32_t group_id, bool record_history, std::optional<uint32_t>& group_to_publish);
-    static void PublishGroup(const std::optional<uint32_t>& group_to_publish);
+    int RequestGroup(uint32_t screen_group_id, bool record_history, std::optional<uint32_t>& screen_group_to_publish);
+    static void PublishGroup(const std::optional<uint32_t>& screen_group_to_publish);
     std::optional<size_t> GetActiveIndex() const;
 
 public:
@@ -42,10 +42,10 @@ public:
     NavigationService(const NavigationService&) = delete;
     NavigationService& operator=(const NavigationService&) = delete;
 
-    void SetGroupIds(std::vector<uint32_t> group_ids);
-    void SetActiveGroupId(uint32_t group_id);
+    void SetGroupIds(std::vector<uint32_t> screen_group_ids);
+    void SetActiveGroupId(uint32_t screen_group_id);
 
-    int GoToGroup(uint32_t group_id);
+    int GoToGroup(uint32_t screen_group_id);
     int Next();
     int Previous();
     int Back();
